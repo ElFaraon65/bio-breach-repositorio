@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIO-BREACH: THE LAST TRACE</title>
+    <style>
+        :root {
+            --gold: #ffd700;
+            --dark-red: #8b0000;
+            --bg-dark: #07070a;
+            --terminal-green: #00ff41;
+            --victory: #00ff88;
+            --hazard: #ff4400;
+            --ribbon-male: #0088ff;
+            --ribbon-female: #ff0077;
+            --disabled: #444;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            margin: 0; padding: 10px;
+            font-family: 'Consolas', monospace;
+            color: #eee;
+            display: flex; flex-direction: column; align-items: center;
+            overflow-x: hidden;
+            height: 100vh;
+        }
+
+        #wallet-display {
+            position: absolute; top: 20px; right: 20px;
+            border-left: 3px solid var(--gold); padding: 5px 15px;
+            background: rgba(255, 215, 0, 0.05);
+            text-align: right;
+        }
+        .currency { color: var(--gold); font-size: 1.2rem; font-weight: bold; }
+
+        #main-menu {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, #1a1a1a 0%, #000 100%);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 3000;
+            transition: opacity 0.5s ease;
+        }
+
+        .menu-title {
+            font-size: 3.5rem; color: var(--gold);
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+            margin-bottom: 50px; text-align: center; letter-spacing: 5px;
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .btn-play {
+            background: var(--dark-red); color: white; border: 2px solid #ff4400;
+            padding: 20px 60px; font-size: 1.5rem; font-weight: bold;
+            cursor: pointer; text-transform: uppercase; letter-spacing: 3px;
+            transition: all 0.2s;
+        }
+
+        .btn-exit {
+            background: #222; color: #888; border: 2px solid #444;
+            padding: 10px 40px; font-size: 1rem; font-weight: bold;
+            cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
+            transition: all 0.2s;
+        }
+        .btn-exit:hover {
+            background: #333; color: white; border-color: #666;
+        }
+
+        #tutorial-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.98);
+            display: none; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 4000; padding: 20px;
+        }
+
+        .tutorial-box {
+            max-width: 500px; border: 1px solid var(--gold);
+            padding: 30px; background: #0a0a0a; text-align: center;
+        }
+
+        .step { margin-bottom: 20px; text-align: left; border-left: 2px solid var(--dark-red); padding-left: 15px; }
+        .step b { color: var(--gold); display: block; margin-bottom: 5px; }
+
+        #overlay, #abort-confirm {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 2000; text-align: center;
+        }
+        #overlay.active, #abort-confirm.active { display: flex; opacity: 1; }
+
+        .machine-body {
+            background: linear-gradient(145deg, #1a1a1a, #000);
+            width: 100%; max-width: 900px; padding: 20px;
+            border: 2px solid #333; border-radius: 12px; display: none;
+        }
+
+        .blur-effect { filter: blur(15px) grayscale(1); transition: filter 0.4s; }
+
+        .board-grid {
+            display: grid; grid-template-columns: repeat(5, 1fr);
+            gap: 8px; margin-bottom: 20px; min-height: 500px;
+        }
+
+        .suspect-card {
+            background: #111; border: 1px solid #444; border-radius: 4px;
+            padding: 8px 4px 4px 4px; height: 135px; cursor: pointer;
+            transition: all 0.3s ease; position: relative;
+        }
+        .suspect-card.discarded { transform: scale(0.8); opacity: 0.1; pointer-events: none; filter: grayscale(1); }
+
+        .gender-ribbon { position: absolute; top: 0; left: 0; width: 100%; height: 3px; }
+        .ribbon-male { background: var(--ribbon-male); }
+        .ribbon-female { background: var(--ribbon-female); }
+
+        .card-header { font-size: 0.65rem; font-weight: bold; color: var(--gold); border-bottom: 1px solid #333; margin-bottom: 4px; text-align: center; }
+        .card-body { font-size: 0.42rem; color: #aaa; }
+
+        .terminal-zone { background: #000; border: 1px solid #222; padding: 15px; border-radius: 5px; }
+        #queryInput { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--terminal-green); color: #fff; padding: 5px; font-family: 'Consolas', monospace; outline: none; }
+        .output { color: var(--terminal-green); font-size: 0.7rem; min-height: 60px; margin-top: 10px; line-height: 1.4; }
+        
+        .btn-main { width: 100%; padding: 15px; background: var(--dark-red); color: white; border: 1px solid #ff4400; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        .btn-abort { background: #222; border-color: #444; margin-top: 15px; font-size: 0.8rem; }
+        .btn-abort:hover { background: #440000; border-color: var(--hazard); }
+        
+        .btn-mini { 
+            background: #222; color: var(--gold); border: 1px solid var(--gold); 
+            padding: 2px 10px; font-size: 0.65rem; cursor: pointer; text-transform: uppercase;
+            transition: all 0.2s;
+        }
+        .btn-mini:hover { background: var(--gold); color: #000; }
+
+        #case-info-bar { display: flex; justify-content: space-between; align-items: center; color: var(--gold); margin-bottom: 10px; font-size: 0.75rem; border-bottom: 1px solid #222; padding-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+    <div id="main-menu">
+        <div id="wallet-display">
+            <div style="font-size: 0.6rem; color: #666;">SALDO NETO</div>
+            <div class="currency"><span id="total-money">0</span> S/</div>
+        </div>
+        <h1 class="menu-title">BIO-BREACH<br><span style="font-size: 1.2rem; color: #555;">SISTEMA DE RASTREO</span></h1>
+        <div class="menu-buttons">
+            <button class="btn-play" onclick="showTutorial()">INICIAR OPERACIÓN</button>
+            <button class="btn-exit" onclick="exitGame()">SALIR DEL SISTEMA</button>
+        </div>
+    </div>
+
+    <div id="tutorial-screen">
+        <div class="tutorial-box">
+            <h2 style="color: var(--gold); margin-top: 0;">MANUAL DE CAMPO</h2>
+            <div class="step">
+                <b>1. FILTRADO BIOMÉTRICO</b>
+                Pregunta por: País, Inicial, Biometría o Accesorios (Cabeza, Ojos, Mano).
+            </div>
+            <div class="step">
+                <b>2. ELIMINACIÓN</b>
+                Haz clic en los sospechosos para descartarlos. <b>Requiere consulta previa.</b>
+            </div>
+            <div class="step">
+                <b>3. OBJETIVO ÚNICO</b>
+                La misión termina cuando solo queda un sospechoso. ¡No lo descartes por error!
+            </div>
+            <button class="btn-main" onclick="startGame()">ENTENDIDO</button>
+        </div>
+    </div>
+
+    <div id="abort-confirm">
+        <div class="tutorial-box">
+            <h2 style="color: var(--hazard);">¿ESTÁS SEGURO?</h2>
+            <p>Perderás el monto de <span id="penalty-amount" style="color:var(--gold)">0</span> S/ del contrato actual.</p>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-main" style="background:var(--hazard)" onclick="confirmAbort()">ESTOY SEGURO</button>
+                <button class="btn-main" style="background:#333" onclick="closeAbortModal()">CANCELAR</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="overlay">
+        <h1 id="overlay-title"></h1>
+        <p id="overlay-desc"></p>
+        <p id="overlay-reward-msg"></p>
+        <button class="btn-main" style="width: 250px;" onclick="initGame()">SIGUIENTE CASO</button>
+    </div>
+
+    <div class="machine-body" id="main-ui">
+        <div id="case-info-bar">
+            <span id="case-id-display">CASO #----</span>
+            <button class="btn-mini" onclick="initGame()">NUEVO CASO</button>
+            <span style="color: var(--victory)">RECOMPENSA: <span id="case-reward-display">0</span> S/</span>
+        </div>
+        <div class="board-grid" id="board"></div>
+        <div class="terminal-zone">
+            <input type="text" id="queryInput" autocomplete="off" placeholder="INTERROGAR SISTEMA (Accesorio mano/cabeza/ojos, País, Inicial)...">
+            <div class="output" id="out">> AGUARDANDO COMANDOS...</div>
+        </div>
+        <button class="btn-main btn-abort" onclick="openAbortModal()">ABORTAR CASO</button>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN DE AUDIO Y VOLUMEN
+        const AUDIO_CONFIG = {
+            paper: { src: 'https://assets.mixkit.co/active_storage/sfx/2047/2047-preview.mp3', vol: 0.6 },
+            fail: { src: 'https://assets.mixkit.co/active_storage/sfx/2805/2805-preview.mp3', vol: 0.4 }, 
+            error: { src: 'https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3', vol: 0.5 }, 
+            win: { src: 'https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3', vol: 0.5 },
+            click: { src: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3', vol: 0.4 },
+            type: { src: 'https://assets.mixkit.co/active_storage/sfx/2544/2544-preview.mp3', vol: 0.015 },
+            newCase: { src: 'https://assets.mixkit.co/active_storage/sfx/2047/2047-preview.mp3', vol: 1 },
+            discard: { src: 'https://assets.mixkit.co/active_storage/sfx/2567/2567-preview.mp3', vol: 0.3 }
+        };
+
+        const SFX_CACHE = {};
+        let activeSounds = [];
+
+        Object.keys(AUDIO_CONFIG).forEach(key => {
+            const audio = new Audio(AUDIO_CONFIG[key].src);
+            audio.volume = AUDIO_CONFIG[key].vol;
+            SFX_CACHE[key] = audio;
+        });
+
+        function playSFX(key, interrupt = false) {
+            if (!SFX_CACHE[key]) return;
+            if (interrupt || key === 'error' || key === 'fail' || key === 'win') {
+                activeSounds.forEach(s => {
+                    s.pause();
+                    s.currentTime = 0;
+                });
+                activeSounds = [];
+            }
+            const sound = SFX_CACHE[key].cloneNode();
+            sound.volume = AUDIO_CONFIG[key].vol;
+            if (key === 'discard') { sound.currentTime = 0.05; }
+            activeSounds.push(sound);
+            sound.onended = () => {
+                activeSounds = activeSounds.filter(s => s !== sound);
+            };
+            sound.play().catch(() => {});
+        }
+
+        let personas = [], objetivo = null, gameActive = false;
+        let currentReward = 0;
+        let totalMoney = parseInt(localStorage.getItem('bioBreachMoney')) || 0;
+        let consultaRealizada = false;
+        let mensajeDesbloqueoMostrado = false;
+        let isTyping = false;
+
+        async function typeWriter(text, elementId, speed = 20) {
+            if (isTyping) return;
+            isTyping = true;
+            const element = document.getElementById(elementId);
+            element.innerHTML = "> ";
+            let currentHTML = "> ";
+            const parts = text.split(/(<[^>]*>)/g);
+            for (const part of parts) {
+                if (part.startsWith('<')) {
+                    currentHTML += part;
+                    element.innerHTML = currentHTML;
+                } else {
+                    for (const char of part) {
+                        currentHTML += char;
+                        element.innerHTML = currentHTML;
+                        if (char !== " " && char !== "\n") playSFX('type');
+                        await new Promise(resolve => setTimeout(resolve, speed));
+                    }
+                }
+            }
+            isTyping = false;
+        }
+
+        function updateWalletUI() {
+            document.getElementById('total-money').innerText = totalMoney.toLocaleString();
+            localStorage.setItem('bioBreachMoney', totalMoney);
+        }
+
+        function showTutorial() {
+            playSFX('click');
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('tutorial-screen').style.display = 'flex';
+        }
+
+        function exitGame() {
+            playSFX('click');
+            // Ya no intentamos cerrar la ventana web. 
+            // Llamamos directamente a la función de cierre del lanzador (index.html)
+            if (window.parent && typeof window.parent.cerrarMotor === 'function') {
+                window.parent.cerrarMotor();
+            } else {
+                // Si se abre fuera del launcher, simplemente muestra un aviso elegante
+                alert("SISTEMA DESCONECTADO DEL NÚCLEO.");
+            }
+        }
+
+        function startGame() {
+            playSFX('click');
+            document.getElementById('tutorial-screen').style.display = 'none';
+            document.getElementById('main-ui').style.display = 'block';
+            initGame();
+        }
+
+        function openAbortModal() {
+            if (!gameActive) return;
+            playSFX('click');
+            document.getElementById('penalty-amount').innerText = currentReward;
+            document.getElementById('main-ui').classList.add('blur-effect');
+            document.getElementById('abort-confirm').classList.add('active');
+        }
+
+        function closeAbortModal() {
+            playSFX('click');
+            document.getElementById('main-ui').classList.remove('blur-effect');
+            document.getElementById('abort-confirm').classList.remove('active');
+        }
+
+        function confirmAbort() {
+            playSFX('click', true); 
+            gameActive = false;
+            closeAbortModal();
+            document.getElementById('main-ui').style.display = 'none';
+            document.getElementById('main-menu').style.display = 'flex';
+        }
+
+        function initGame() {
+            document.getElementById('overlay').classList.remove('active');
+            document.getElementById('main-ui').classList.remove('blur-effect');
+            document.getElementById('out').style.color = "var(--terminal-green)";
+            playSFX('newCase', true);
+            currentReward = Math.floor(Math.random() * 500) + 100;
+            document.getElementById('case-id-display').innerText = `CASO #${Math.floor(Math.random() * 9000) + 1000}`;
+            document.getElementById('case-reward-display').innerText = currentReward;
+            generateNewSquad();
+            objetivo = personas[Math.floor(Math.random() * personas.length)];
+            gameActive = true;
+            consultaRealizada = false;
+            mensajeDesbloqueoMostrado = false;
+            document.getElementById('queryInput').disabled = false;
+            typeWriter("ESCANEO FINALIZADO. REALICE UNA CONSULTA PARA HABILITAR DESCARTES.", "out", 15);
+            renderBoard();
+            updateWalletUI();
+        }
+
+        function generateNewSquad() {
+            personas = [];
+            const DP = {
+                M: ["LEON", "MARC", "OTTO", "IVAN", "ERIC", "HUAN", "KURT", "NOAH", "AXEL", "SAUL", "IGOR", "LIAM", "ENZO", "HUGO", "OMAR", "LUC", "YURI", "RYAN", "FINN", "EZRA", "MILO", "IAN", "ALAN", "KAI", "BORIS"],
+                F: ["MIA", "LARA", "YUNA", "OLGA", "ADRI", "ZOE", "INÉS", "KIRA", "EMMA", "RUTH", "SARA", "LUNA", "VERA", "NORA", "MAYA", "LEA", "IRIS", "ALBA", "GALA", "JUNE", "CLEO", "ANA", "EVA", "LISA"],
+                P: [
+                    {n: "ALEMANIA", c: "EUROPA"}, {n: "ESPAÑA", c: "EUROPA"}, {n: "ITALIA", c: "EUROPA"},
+                    {n: "JAPÓN", c: "ASIA"}, {n: "CHINA", c: "ASIA"}, {n: "COREA", c: "ASIA"},
+                    {n: "MÉXICO", c: "AMÉRICA"}, {n: "BRASIL", c: "AMÉRICA"}, {n: "USA", c: "AMÉRICA"},
+                    {n: "AUSTRALIA", c: "OCEANÍA"}
+                ],
+                T: ["PÁLIDA", "OLIVA", "BRONCE", "OSCURA", "ÉBANO"],
+                O: ["AZULES", "VERDES", "NEGROS", "CAFÉS", "GRISES", "MIEL"],
+                A: [
+                    {n: "GORRA", u: "CABEZA"}, {n: "CASCO", u: "CABEZA"}, {n: "SOMBRERO", u: "CABEZA"},
+                    {n: "GAFAS", u: "OJOS"}, {n: "MONÓCULO", u: "OJOS"}, {n: "VISOR", u: "OJOS"},
+                    {n: "MALETÍN", u: "MANO"}, {n: "TABLETA", u: "MANO"}, {n: "RELOJ", u: "MANO"}
+                ]
+            };
+            for (let i = 0; i < 25; i++) {
+                const genero = Math.random() > 0.5 ? "MASCULINO" : "FEMENINO";
+                const pais = DP.P[Math.floor(Math.random() * DP.P.length)];
+                const acc = DP.A[Math.floor(Math.random() * DP.A.length)];
+                personas.push({
+                    n: (genero === "MASCULINO" ? DP.M : DP.F)[i % 24], g: genero, p: pais.n, cont: pais.c,
+                    t: DP.T[Math.floor(Math.random() * DP.T.length)], o: DP.O[Math.floor(Math.random() * DP.O.length)],
+                    edad: Math.floor(Math.random() * 50) + 18, altura: (Math.random() * 0.5 + 1.5).toFixed(2),
+                    accName: acc.n, accUbi: acc.u
+                });
+            }
+        }
+
+        function renderBoard() {
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+            personas.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'suspect-card';
+                card.id = `card-${p.n}`;
+                card.onclick = () => { 
+                    if(gameActive) { 
+                        if(!consultaRealizada) {
+                            playSFX('error');
+                            document.getElementById('out').style.color = "var(--hazard)";
+                            typeWriter("ERROR: DEBE REALIZAR UNA CONSULTA VÁLIDA ANTES DE DESCARTAR.", "out", 10);
+                            return;
+                        }
+                        playSFX('discard');
+                        card.classList.toggle('discarded'); 
+                        checkStatus(); 
+                    } 
+                };
+                const rib = p.g === "MASCULINO" ? "ribbon-male" : "ribbon-female";
+                card.innerHTML = `<div class="gender-ribbon ${rib}"></div><div class="card-header">${p.n}</div><div class="card-body"><b>ORG:</b> ${p.p}<br><b>TEZ:</b> ${p.t}<br><b>OJO:</b> ${p.o}<br><b>EDA:</b> ${p.edad}<br><b>ALT:</b> ${p.altura}M<br><b>ACC:</b> ${p.accName}</div>`;
+                board.appendChild(card);
+            });
+        }
+
+        function checkStatus() {
+            const active = Array.from(document.querySelectorAll('.suspect-card:not(.discarded)'));
+            if (document.getElementById(`card-${objetivo.n}`).classList.contains('discarded')) return endGame(false);
+            if (active.length === 1 && active[0].id === `card-${objetivo.n}`) endGame(true);
+        }
+
+        function endGame(win) {
+            gameActive = false;
+            document.getElementById('main-ui').classList.add('blur-effect');
+            document.getElementById('overlay').classList.add('active');
+            const rewardMsg = document.getElementById('overlay-reward-msg');
+            if (win) { 
+                playSFX('win', true); 
+                totalMoney += currentReward;
+                document.getElementById('overlay-title').innerText = "OBJETIVO LOCALIZADO"; 
+                document.getElementById('overlay-title').style.color = "var(--victory)";
+                rewardMsg.innerText = `+${currentReward} S/ TRANSFERIDOS`;
+            } else { 
+                playSFX('fail', true);
+                document.getElementById('overlay-title').innerText = "OBJETIVO PERDIDO"; 
+                document.getElementById('overlay-title').style.color = "var(--hazard)";
+                rewardMsg.innerText = "CONTRATO CANCELADO";
+            }
+            document.getElementById('overlay-desc').innerText = `IDENTIDAD: ${objetivo.n}`;
+            updateWalletUI();
+        }
+
+        document.getElementById('queryInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !isTyping) {
+                const q = this.value.toUpperCase();
+                this.value = '';
+                let resp = "DATOS NO RECONOCIDOS.";
+                let consultaValida = false;
+                if (q.includes("ACCESORIO") || q.includes("OBJETO")) {
+                    consultaValida = true;
+                    if (q.includes("CABEZA") || q.includes("PELO")) resp = (objetivo.accUbi === "CABEZA") ? "SÍ." : "NO.";
+                    else if (q.includes("OJOS") || q.includes("CARA")) resp = (objetivo.accUbi === "OJOS") ? "SÍ." : "NO.";
+                    else if (q.includes("MANO") || q.includes("BRAZO")) resp = (objetivo.accUbi === "MANO") ? "SÍ." : "NO.";
+                    else if (["GORRA", "CASCO", "SOMBRERO", "GAFAS", "MONÓCULO", "VISOR", "MALETÍN", "TABLETA", "RELOJ"].some(a => q.includes(a))) {
+                        const accBuscado = ["GORRA", "CASCO", "SOMBRERO", "GAFAS", "MONÓCULO", "VISOR", "MALETÍN", "TABLETA", "RELOJ"].find(a => q.includes(a));
+                        resp = (objetivo.accName === accBuscado) ? "SÍ." : "NO.";
+                    } else { consultaValida = false; }
+                }
+                else if (q.includes("EUROPA") || q.includes("EUROPEO")) { resp = (objetivo.cont === "EUROPA") ? "SÍ." : "NO."; consultaValida = true; }
+                else if (q.includes("ASIA") || q.includes("ASIÁTIC")) { resp = (objetivo.cont === "ASIA") ? "SÍ." : "NO."; consultaValida = true; }
+                else if (q.includes("AMÉRICA") || q.includes("AMERICANO")) { resp = (objetivo.cont === "AMÉRICA") ? "SÍ." : "NO."; consultaValida = true; }
+                else if (q.includes("OCEANÍA") || q.includes("OCEANIC") || q.includes("AUSTRAL")) { resp = (objetivo.cont === "OCEANÍA") ? "SÍ." : "NO."; consultaValida = true; }
+                else if (["ALEMANIA", "ESPAÑA", "ITALIA", "JAPÓN", "CHINA", "COREA", "MÉXICO", "BRASIL", "USA", "AUSTRALIA"].some(p => q.includes(p))) {
+                    const paisBuscado = ["ALEMANIA", "ESPAÑA", "ITALIA", "JAPÓN", "CHINA", "COREA", "MÉXICO", "BRASIL", "USA", "AUSTRALIA"].find(p => q.includes(p));
+                    resp = (objetivo.p === paisBuscado) ? "SÍ." : "NO.";
+                    consultaValida = true;
+                }
+                else if (q.includes("INICIAL") || q.includes("EMPIEZA POR")) {
+                    const letraMatch = q.match(/\b[A-Z]\b/);
+                    if (letraMatch) { resp = (objetivo.n.startsWith(letraMatch[0])) ? "SÍ." : "NO."; consultaValida = true; }
+                    else resp = "ESPECIFIQUE UNA LETRA.";
+                }
+                else if (q.includes("EDAD") || q.includes("MIDE") || q.includes("ALTO") || q.includes("ESTATURA")) {
+                    const numMatch = q.match(/\d+(\.\d+)?/);
+                    if (numMatch) {
+                        consultaValida = true;
+                        const valNum = parseFloat(numMatch[0]);
+                        const targetVal = (q.includes("EDAD")) ? objetivo.edad : parseFloat(objetivo.altura);
+                        if (q.includes("MAYOR") || q.includes("MÁS")) resp = (targetVal > valNum) ? "SÍ." : "NO.";
+                        else if (q.includes("MENOR") || q.includes("MENOS")) resp = (targetVal < valNum) ? "SÍ." : "NO.";
+                        else resp = (Math.abs(targetVal - valNum) < 0.05) ? "SÍ." : "NO.";
+                    }
+                }
+                else if (q.includes("HOMBRE") || q.includes("MASCULINO")) { resp = (objetivo.g === "MASCULINO") ? "SÍ." : "NO."; consultaValida = true; }
+                else if (q.includes("MUJER") || q.includes("FEMENINO")) { resp = (objetivo.g === "FEMENINO") ? "SÍ." : "NO."; consultaValida = true; }
+                else if (["AZULES", "VERDES", "NEGROS", "CAFÉS", "GRISES", "MIEL"].some(c => q.includes(c))) {
+                    const color = ["AZULES", "VERDES", "NEGROS", "CAFÉS", "GRISES", "MIEL"].find(c => q.includes(c));
+                    resp = (objetivo.o === color) ? "SÍ." : "NO.";
+                    consultaValida = true;
+                }
+                else if (["PÁLIDA", "OLIVA", "BRONCE", "OSCURA", "ÉBANO"].some(t => q.includes(t))) {
+                    const tez = ["PÁLIDA", "OLIVA", "BRONCE", "OSCURA", "ÉBANO"].find(t => q.includes(t));
+                    resp = (objetivo.t === tez) ? "SÍ." : "NO.";
+                    consultaValida = true;
+                }
+                let finalMsg = `CONSULTA: ${q}<br>RESPUESTA: ${resp}`;
+                if(consultaValida) {
+                    playSFX('click');
+                    document.getElementById('out').style.color = "var(--terminal-green)";
+                    consultaRealizada = true;
+                    if (!mensajeDesbloqueoMostrado) {
+                        finalMsg += "<br><span style='color:var(--victory)'>SISTEMA DESBLOQUEADO PARA DESCARTES.</span>";
+                        mensajeDesbloqueoMostrado = true;
+                    }
+                } else {
+                    playSFX('error');
+                    document.getElementById('out').style.color = "var(--hazard)";
+                }
+                typeWriter(finalMsg, "out", 20);
+            }
+        });
+
+        updateWalletUI();
+    </script>
+</body>
+</html>
