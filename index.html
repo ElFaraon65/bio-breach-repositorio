@@ -19,7 +19,6 @@
         .v-status { font-size: 0.8rem; color: #888; display: flex; align-items: center; gap: 6px; }
         .dot { width: 8px; height: 8px; border-radius: 50%; background: #444; }
         .dot.active { background: var(--green); box-shadow: 0 0 8px var(--green); }
-        .dot.sync { background: var(--orange); box-shadow: 0 0 8px var(--orange); }
 
         .progress-container { width: 100%; background: #333; height: 10px; border-radius: 5px; overflow: hidden; display: none; margin-top: 10px; }
         .progress-bar { width: 0%; height: 100%; background: var(--blue); transition: width 0.1s; }
@@ -27,7 +26,6 @@
         .btn { border: none; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; text-align: center; transition: 0.2s; margin-top: 5px; color: white; }
         .btn-play { background: var(--green); }
         .btn-download { background: var(--blue); }
-        .btn-update { background: var(--orange); }
 
         #game-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; }
         iframe { width: 100%; height: 100%; border: none; }
@@ -64,7 +62,6 @@
                 renderNube(nube);
             } catch (e) {
                 console.log("Error de conexión con el repositorio.");
-                // Si falla la nube y no hay nada local, avisar
                 const lista = document.getElementById('lista-versiones');
                 if (lista.innerHTML.includes('Buscando...')) {
                     lista.innerHTML = `<div style="text-align:center; padding:40px; color:#666;">Sin conexión al servidor</div>`;
@@ -78,85 +75,117 @@
             
             datosNube.forEach(item => {
                 const local = locales[item.id];
-                
-                // Si hay contenido en la nube, quitamos el mensaje de "Buscando..."
                 const emptyMsg = lista.querySelector('.empty-msg');
                 if(emptyMsg) emptyMsg.remove();
 
                 if (!local) {
+                    // Si no existe localmente, mostrar opción de descarga con barra
                     const card = document.createElement('div');
                     card.className = 'project-card';
                     card.style.border = "1px dashed var(--blue)";
-                    card.innerHTML = `<div class="v-name">${item.nombre}</div><div class="v-status"><div class="dot"></div> Disponible</div><div class="progress-container" id="prog-cont-${item.id}"><div class="progress-bar" id="prog-bar-${item.id}"></div></div><button class="btn btn-download" id="btn-dl-${item.id}" onclick="descargarEInstalar('${item.url}', '${item.id}', '${item.nombre}', '${item.version || '1.0'}')">DESCARGAR</button>`;
+                    card.innerHTML = `
+                        <div class="v-name">${item.nombre}</div>
+                        <div class="v-status"><div class="dot"></div> Disponible</div>
+                        <div class="progress-container" id="prog-cont-${item.id}">
+                            <div class="progress-bar" id="prog-bar-${item.id}"></div>
+                        </div>
+                        <button class="btn btn-download" id="btn-dl-${item.id}" onclick="descargarEInstalar('${item.url}', '${item.id}', '${item.nombre}', '${item.version || '1.0'}', true)">DESCARGAR</button>
+                    `;
                     lista.appendChild(card);
-                } else if (item.version && item.version !== local.version) {
-                    const cardExistente = document.getElementById(`card-local-${item.id}`);
-                    if (cardExistente && !cardExistente.querySelector(`.btn-update`)) {
-                        const status = cardExistente.querySelector('.v-status');
-                        status.innerHTML = `<div class="dot sync"></div> Actualización disponible (${item.version})`;
-                        const updateBtn = document.createElement('button');
-                        updateBtn.className = 'btn btn-update';
-                        updateBtn.id = `btn-dl-${item.id}`;
-                        updateBtn.innerText = "ACTUALIZAR DATOS";
-                        updateBtn.onclick = () => descargarEInstalar(item.url, item.id, item.nombre, item.version);
-                        const pb = document.createElement('div');
-                        pb.className = "progress-container"; pb.id = `prog-cont-${item.id}`;
-                        pb.innerHTML = `<div class="progress-bar" id="prog-bar-${item.id}"></div>`;
-                        cardExistente.appendChild(updateBtn); cardExistente.appendChild(pb);
-                    }
+                } else {
+                    // SI YA EXISTE: Verificar silenciosamente si el contenido ha cambiado en GitHub
+                    verificarActualizacionSilenciosa(item, local);
                 }
             });
         }
 
-        async function descargarEInstalar(url, id, nombre, versionNube) {
+        async function verificarActualizacionSilenciosa(itemNube, itemLocal) {
+            try {
+                // Descargamos el código actual de la nube para comparar
+                const res = await fetch(itemNube.url + "?t=" + new Date().getTime());
+                const nuevoCodigo = await res.text();
+                
+                // Si el código es distinto al guardado, sobreescribimos sin avisar
+                if (nuevoCodigo !== itemLocal.codigo) {
+                    console.log(`Cambio detectado en ${itemNube.nombre}. Actualizando datos...`);
+                    let locales = getVersionesLocales();
+                    locales[itemNube.id] = { 
+                        nombre: itemNube.nombre, 
+                        codigo: nuevoCodigo, 
+                        version: itemNube.version, 
+                        fecha: new Date().toLocaleString() 
+                    };
+                    localStorage.setItem('bio_breach_v_data', JSON.stringify(locales));
+                    // No reiniciamos la interfaz para no interrumpir al usuario, 
+                    // los cambios se aplicarán la próxima vez que presione INICIAR.
+                }
+            } catch (e) {
+                console.log("Error en verificación silenciosa");
+            }
+        }
+
+        async function descargarEInstalar(url, id, nombre, versionNube, mostrarProgreso = false) {
             const btn = document.getElementById(`btn-dl-${id}`);
             const pCont = document.getElementById(`prog-cont-${id}`);
             const pBar = document.getElementById(`prog-bar-${id}`);
-            if(btn) btn.style.display = "none";
-            if(pCont) pCont.style.display = "block";
+            
+            if(mostrarProgreso && btn) btn.style.display = "none";
+            if(mostrarProgreso && pCont) pCont.style.display = "block";
+
             try {
                 const response = await fetch(url + "?t=" + new Date().getTime());
                 if (!response.ok) throw new Error("Error");
-                let progreso = 0;
-                const intervalo = setInterval(() => {
-                    progreso += 20;
-                    if(pBar) pBar.style.width = progreso + "%";
-                    if (progreso >= 100) {
-                        clearInterval(intervalo);
-                        response.text().then(codigo => {
-                            let locales = getVersionesLocales();
-                            locales[id] = { nombre: nombre, codigo: codigo, version: versionNube, fecha: new Date().toLocaleString() };
-                            localStorage.setItem('bio_breach_v_data', JSON.stringify(locales));
-                            actualizarInterfaz();
-                        });
-                    }
-                }, 100);
-            } catch (error) { alert("Error"); if(btn) btn.style.display = "block"; }
+                
+                const codigo = await response.text();
+                
+                if (mostrarProgreso) {
+                    let progreso = 0;
+                    const intervalo = setInterval(() => {
+                        progreso += 20;
+                        if(pBar) pBar.style.width = progreso + "%";
+                        if (progreso >= 100) {
+                            clearInterval(intervalo);
+                            guardarYActualizar(id, nombre, codigo, versionNube);
+                        }
+                    }, 100);
+                } else {
+                    guardarYActualizar(id, nombre, codigo, versionNube);
+                }
+            } catch (error) { 
+                if(mostrarProgreso) alert("Error de descarga"); 
+                if(btn) btn.style.display = "block"; 
+            }
+        }
+
+        function guardarYActualizar(id, nombre, codigo, version) {
+            let locales = getVersionesLocales();
+            locales[id] = { nombre: nombre, codigo: codigo, version: version, fecha: new Date().toLocaleString() };
+            localStorage.setItem('bio_breach_v_data', JSON.stringify(locales));
+            actualizarInterfaz();
         }
 
         function actualizarInterfaz() {
             const lista = document.getElementById('lista-versiones');
             const locales = getVersionesLocales();
             const keys = Object.keys(locales).sort();
-            
-            // Limpiamos la lista
             lista.innerHTML = "";
-
-            // Si hay algo local, lo dibujamos inmediatamente
+            
             if (keys.length > 0) {
                 keys.forEach(id => {
                     const v = locales[id];
                     const card = document.createElement('div');
                     card.className = 'project-card';
                     card.id = `card-local-${id}`;
-                    card.innerHTML = `<div class="v-name">${v.nombre}</div><div class="v-status"><div class="dot active"></div> Listo (v${v.version || '1.0'})</div><button class="btn btn-play" onclick="lanzarMotor('${id}')">INICIAR JUEGO</button>`;
+                    card.innerHTML = `
+                        <div class="v-name">${v.nombre}</div>
+                        <div class="v-status"><div class="dot active"></div> Listo</div>
+                        <button class="btn btn-play" onclick="lanzarMotor('${id}')">INICIAR</button>
+                    `;
                     lista.appendChild(card);
                 });
             } else {
-                // Solo ponemos el mensaje si la lista está totalmente vacía
                 lista.innerHTML = `<div class="empty-msg" style="text-align:center; padding:40px; color:#666;">Buscando contenido...</div>`;
             }
-
             sincroServidor();
         }
 
