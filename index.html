@@ -5,34 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BIO-BREACH HUB</title>
     <style>
-        :root { --gold: #ffd700; --bg: #0a0a0a; --card: #161616; --blue: #0078d4; --green: #00ff41; }
+        :root { --gold: #ffd700; --bg: #0a0a0a; --card: #161616; --blue: #0078d4; --green: #00ff41; --orange: #ff8c00; }
         body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; user-select: none; }
         
-        /* Estilo Superior */
-        .header { background: #000; padding: 20px; text-align: center; border-bottom: 2px solid var(--gold); sticky; top: 0; z-index: 10; }
+        .header { background: #000; padding: 20px; text-align: center; border-bottom: 2px solid var(--gold); position: sticky; top: 0; z-index: 10; }
         .header h1 { margin: 0; font-size: 1.4rem; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; }
 
         .container { padding: 15px; padding-bottom: 100px; }
         
-        /* Tarjetas de Versión */
         .project-card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid #333; display: flex; flex-direction: column; gap: 12px; transition: 0.3s; }
-        .project-card:active { transform: scale(0.98); background: #222; }
         
         .v-name { font-size: 1.2rem; font-weight: bold; color: #fff; }
         .v-status { font-size: 0.8rem; color: #888; display: flex; align-items: center; gap: 6px; }
         .dot { width: 8px; height: 8px; border-radius: 50%; background: #444; }
         .dot.active { background: var(--green); box-shadow: 0 0 8px var(--green); }
+        .dot.sync { background: var(--orange); box-shadow: 0 0 8px var(--orange); }
 
-        /* Botones */
-        .btn { border: none; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; text-align: center; transition: 0.2s; }
-        .btn-play { background: var(--green); color: #000; }
-        .btn-download { background: var(--blue); color: white; }
-        .btn-scan { background: #333; color: var(--gold); border: 1px solid var(--gold); position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; z-index: 50; }
+        .progress-container { width: 100%; background: #333; height: 10px; border-radius: 5px; overflow: hidden; display: none; margin-top: 10px; }
+        .progress-bar { width: 0%; height: 100%; background: var(--blue); transition: width 0.1s; }
 
-        /* Pantalla de Juego Fullscreen */
+        /* Botones con texto blanco según tu solicitud */
+        .btn { border: none; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; text-align: center; transition: 0.2s; margin-top: 5px; color: white; }
+        .btn-play { background: var(--green); }
+        .btn-download { background: var(--blue); }
+        .btn-update { background: var(--orange); }
+
         #game-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; }
         iframe { width: 100%; height: 100%; border: none; }
-        .close-btn { position: absolute; top: 15px; right: 15px; background: rgba(255,0,0,0.8); color: white; border: none; padding: 12px; border-radius: 50%; width: 45px; height: 45px; font-weight: bold; z-index: 1001; }
     </style>
 </head>
 <body>
@@ -41,100 +40,149 @@
         <h1>BIO-BREACH HUB</h1>
     </div>
 
-    <div class="container" id="lista-versiones">
-        </div>
-
-    <input type="file" id="file-input" multiple style="display: none;" onchange="importarVersiones(this)">
-    <button class="btn btn-scan" onclick="document.getElementById('file-input').click()">+ IMPORTAR VERSIÓN (.HTML)</button>
+    <div class="container" id="lista-versiones"></div>
 
     <div id="game-view">
-        <button class="close-btn" onclick="cerrarMotor()">X</button>
         <iframe id="game-frame"></iframe>
     </div>
 
     <script>
-        // --- CONFIGURACIÓN ---
-        // Si tienes un hosting, pon la URL aquí. Si no, déjalo vacío "" para modo local.
-        const URL_SERVIDOR = ""; 
-
-        let versionesInstaladas = JSON.parse(localStorage.getItem('bio_breach_v_data')) || {};
+        const URL_SERVIDOR = "https://elfaraon65.github.io/bio-breach-repositorio/"; 
 
         window.onload = () => {
             actualizarInterfaz();
-            if(URL_SERVIDOR !== "") sincroServidor();
         };
+
+        function getVersionesLocales() {
+            return JSON.parse(localStorage.getItem('bio_breach_v_data')) || {};
+        }
 
         async function sincroServidor() {
             try {
-                const res = await fetch(URL_SERVIDOR + "/versiones.json");
+                const res = await fetch(URL_SERVIDOR + "versiones.json?t=" + new Date().getTime());
+                if (!res.ok) return;
                 const nube = await res.json();
-                // Aquí podrías marcar cuáles faltan por descargar
                 renderNube(nube);
             } catch (e) {
-                console.log("Modo offline: Cargando biblioteca local.");
+                console.log("Error de conexión con el repositorio.");
             }
         }
 
-        function importarVersiones(input) {
-            const files = Array.from(input.files);
-            const promises = files.map(file => {
-                return new Promise((resolve) => {
-                    const match = file.name.toUpperCase().match(/V\d+/);
-                    if (match && file.name.endsWith(".html")) {
-                        const vID = match[0];
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            versionesInstaladas[vID] = {
-                                nombre: file.name.replace(".html", ""),
-                                codigo: e.target.result,
-                                fecha: new Date().toLocaleDateString()
-                            };
-                            resolve();
-                        };
-                        reader.readAsText(file);
-                    } else { resolve(); }
-                });
-            });
+        function renderNube(datosNube) {
+            const lista = document.getElementById('lista-versiones');
+            const locales = getVersionesLocales();
+            
+            datosNube.forEach(item => {
+                const local = locales[item.id];
 
-            Promise.all(promises).then(() => {
-                localStorage.setItem('bio_breach_v_data', JSON.stringify(versionesInstaladas));
-                actualizarInterfaz();
+                if (!local) {
+                    const card = document.createElement('div');
+                    card.className = 'project-card';
+                    card.style.border = "1px dashed var(--blue)";
+                    card.innerHTML = `
+                        <div class="v-name">${item.nombre}</div>
+                        <div class="v-status"><div class="dot"></div> Disponible en la nube</div>
+                        <div class="progress-container" id="prog-cont-${item.id}"><div class="progress-bar" id="prog-bar-${item.id}"></div></div>
+                        <button class="btn btn-download" id="btn-dl-${item.id}" onclick="descargarEInstalar('${item.url}', '${item.id}', '${item.nombre}', '${item.version || '1.0'}')">DESCARGAR</button>
+                    `;
+                    lista.appendChild(card);
+                } 
+                else if (item.version && item.version !== local.version) {
+                    const cardExistente = document.getElementById(`card-local-${item.id}`);
+                    if (cardExistente && !cardExistente.querySelector(`.btn-update`)) {
+                        const status = cardExistente.querySelector('.v-status');
+                        status.innerHTML = `<div class=\"dot sync\"></div> Actualización disponible (${item.version})`;
+                        
+                        const updateBtn = document.createElement('button');
+                        updateBtn.className = 'btn btn-update';
+                        updateBtn.id = `btn-dl-${item.id}`;
+                        updateBtn.innerText = "ACTUALIZAR DATOS";
+                        updateBtn.onclick = () => descargarEInstalar(item.url, item.id, item.nombre, item.version);
+                        
+                        const pb = document.createElement('div');
+                        pb.className = "progress-container";
+                        pb.id = `prog-cont-${item.id}`;
+                        pb.innerHTML = `<div class=\"progress-bar\" id=\"prog-bar-${item.id}\"></div>`;
+                        
+                        cardExistente.appendChild(updateBtn);
+                        cardExistente.appendChild(pb);
+                    }
+                }
             });
+        }
+
+        async function descargarEInstalar(url, id, nombre, versionNube) {
+            const btn = document.getElementById(`btn-dl-${id}`);
+            const pCont = document.getElementById(`prog-cont-${id}`);
+            const pBar = document.getElementById(`prog-bar-${id}`);
+
+            if(btn) btn.style.display = "none";
+            if(pCont) pCont.style.display = "block";
+
+            try {
+                const response = await fetch(url + "?t=" + new Date().getTime());
+                if (!response.ok) throw new Error("Error de descarga");
+                
+                let progreso = 0;
+                const intervalo = setInterval(() => {
+                    progreso += 20;
+                    if(pBar) pBar.style.width = progreso + "%";
+                    if (progreso >= 100) {
+                        clearInterval(intervalo);
+                        
+                        response.text().then(codigo => {
+                            let locales = getVersionesLocales();
+                            locales[id] = {
+                                nombre: nombre,
+                                codigo: codigo,
+                                version: versionNube, 
+                                fecha: new Date().toLocaleString()
+                            };
+                            localStorage.setItem('bio_breach_v_data', JSON.stringify(locales));
+                            actualizarInterfaz();
+                        });
+                    }
+                }, 100);
+            } catch (error) {
+                alert("Error al sincronizar.");
+                if(btn) btn.style.display = "block";
+            }
         }
 
         function actualizarInterfaz() {
             const lista = document.getElementById('lista-versiones');
-            const keys = Object.keys(versionesInstaladas).sort();
+            const locales = getVersionesLocales();
+            const keys = Object.keys(locales).sort();
             lista.innerHTML = "";
 
-            if (keys.length === 0) {
-                lista.innerHTML = `<div style="text-align:center; margin-top:50px; color:#555;">
-                    <p>BIBLIOTECA VACÍA</p>
-                    <small>Usa el botón inferior para añadir versiones</small>
-                </div>`;
-                return;
-            }
-
             keys.forEach(id => {
-                const v = versionesInstaladas[id];
+                const v = locales[id];
                 const card = document.createElement('div');
                 card.className = 'project-card';
+                card.id = `card-local-${id}`;
                 card.innerHTML = `
                     <div class="v-name">${v.nombre}</div>
                     <div class="v-status">
                         <div class="dot active"></div>
-                        Listo para ejecutar (Local)
+                        Listo (Local v${v.version || '1.0'})
                     </div>
-                    <button class="btn btn-play" onclick="lanzarMotor('${id}')">INICIAR VERSIÓN</button>
+                    <button class="btn btn-play" onclick="lanzarMotor('${id}')">INICIAR JUEGO</button>
                 `;
                 lista.appendChild(card);
             });
+
+            if (keys.length === 0) {
+                lista.innerHTML = `<div class=\"empty-msg\" style=\"text-align:center; padding:40px; color:#666;\">Buscando contenido...</div>`;
+            }
+
+            sincroServidor();
         }
 
         function lanzarMotor(id) {
             const view = document.getElementById('game-view');
             const frame = document.getElementById('game-frame');
-            const vData = versionesInstaladas[id];
+            const locales = getVersionesLocales();
+            const vData = locales[id];
             
             view.style.display = "block";
             const blob = new Blob([vData.codigo], { type: 'text/html' });
