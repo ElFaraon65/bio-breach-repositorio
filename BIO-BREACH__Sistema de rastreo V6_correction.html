@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BIO-BREACH: THE LAST TRACE</title>
     <style>
         :root {
@@ -25,6 +25,8 @@
             display: flex; flex-direction: column; align-items: center;
             overflow-x: hidden;
             height: 100vh;
+            /* BLOQUEO DE RECARGA POR DESLIZAMIENTO (PULL-TO-REFRESH) */
+            overscroll-behavior-y: contain;
         }
 
         #wallet-display {
@@ -295,12 +297,9 @@
 
         function exitGame() {
             playSFX('click');
-            // Ya no intentamos cerrar la ventana web. 
-            // Llamamos directamente a la función de cierre del lanzador (index.html)
             if (window.parent && typeof window.parent.cerrarMotor === 'function') {
                 window.parent.cerrarMotor();
             } else {
-                // Si se abre fuera del launcher, simplemente muestra un aviso elegante
                 alert("SISTEMA DESCONECTADO DEL NÚCLEO.");
             }
         }
