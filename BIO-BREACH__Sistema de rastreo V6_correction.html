@@ -295,12 +295,13 @@
 
         function exitGame() {
             playSFX('click');
-            if (confirm("¿DESEA CERRAR EL SISTEMA DE RASTREO?")) {
-                window.close();
-                // Fallback para navegadores que bloquean window.close()
-                setTimeout(() => {
-                    alert("SISTEMA BLOQUEADO. CIERRE LA PESTAÑA MANUALMENTE.");
-                }, 500);
+            // Ya no intentamos cerrar la ventana web. 
+            // Llamamos directamente a la función de cierre del lanzador (index.html)
+            if (window.parent && typeof window.parent.cerrarMotor === 'function') {
+                window.parent.cerrarMotor();
+            } else {
+                // Si se abre fuera del launcher, simplemente muestra un aviso elegante
+                alert("SISTEMA DESCONECTADO DEL NÚCLEO.");
             }
         }
 
