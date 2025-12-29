@@ -1,1 +1,17 @@
+name: Compilador BIO-BREACH
+on: [push] # Se activa cada vez que subes algo
 
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v3
+
+      - name: Crear APK
+        uses: eliasmendes/html-to-apk@v1.0
+        with:
+          app_name: 'BIO-BREACH HUB'
+          app_id: 'com.biobreach.hub'
+          # Tu index.html debe estar en la carpeta principal
+          
