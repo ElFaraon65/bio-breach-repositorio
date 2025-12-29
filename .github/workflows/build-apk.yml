@@ -20,17 +20,16 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Construir APK (Modo Debug)
-        run: |
-          # Creamos una estructura basica de Android para meter tu HTML
-          mkdir -p output
-          zip -r output/BIO-BREACH-HUB.zip ./* -x ".github/*"
-          # Nota: Este paso genera un paquete listo para envolver. 
-          # Para un APK directo sin errores de terceros, usaremos un cargador simple.
-          mv output/BIO-BREACH-HUB.zip ./BIO-BREACH-HUB.zip
+      - name: Construir APK Real
+        # Usamos una herramienta que inyecta tu index.html en un WebView real
+        uses: jayly/html-to-apk-action@v1.1
+        with:
+          app-name: 'BIO-BREACH HUB'
+          app-id: 'com.biobreach.hub'
+          web-dir: '.'
 
-      - name: Subir APK Generado
+      - name: Subir APK Instalable
         uses: actions/upload-artifact@v4
         with:
           name: BIO-BREACH-Instalador
-          path: BIO-BREACH-HUB.zip
+          path: ./*.apk
