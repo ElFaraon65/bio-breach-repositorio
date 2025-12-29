@@ -1,26 +1,40 @@
-name: Generador de APK BIO-BREACH
+name: Generar Instalador BIO-BREACH
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  convert:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Descargar codigo
+      - name: Checkout del código
         uses: actions/checkout@v4
 
-      - name: Crear APK de BIO-BREACH
-        uses: alyossha/html-to-apk@v1.1
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
         with:
-          # Nombre que aparecerá bajo el icono en tu celular
-          app_name: 'BIO-BREACH HUB'
-          # Carpeta donde está tu index.html (el punto indica la raíz)
-          path: '.'
+          node-version: 18
 
-      - name: Guardar el instalador
+      - name: Instalar Capacitor y dependencias
+        run: |
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap init "BIO-BREACH HUB" "com.biobreach.hub" --web-dir .
+          npx cap add android
+
+      - name: Configurar Java y Android SDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Construir Proyecto Android
+        run: |
+          npx cap copy
+          cd android && ./gradlew assembleDebug
+
+      - name: Subir APK Instalable
         uses: actions/upload-artifact@v4
         with:
-          name: BIO-BREACH-Instalador-APK
-          path: ./*.apk
+          name: BIO-BREACH-Instalador
+          path: android/app/build/outputs/apk/debug/app-debug.apk
