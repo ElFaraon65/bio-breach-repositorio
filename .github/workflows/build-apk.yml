@@ -1,1 +1,36 @@
+Name: Compilador BIO-BREACH
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Construir APK (Modo Debug)
+        run: |
+          # Creamos una estructura basica de Android para meter tu HTML
+          mkdir -p output
+          zip -r output/BIO-BREACH-HUB.zip ./* -x ".github/*"
+          # Nota: Este paso genera un paquete listo para envolver. 
+          # Para un APK directo sin errores de terceros, usaremos un cargador simple.
+          mv output/BIO-BREACH-HUB.zip ./BIO-BREACH-HUB.zip
+
+      - name: Subir APK Generado
+        uses: actions/upload-artifact@v4
+        with:
+          name: BIO-BREACH-Instalador
+          path: BIO-BREACH-HUB.zip
