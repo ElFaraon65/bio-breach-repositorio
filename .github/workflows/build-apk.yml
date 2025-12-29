@@ -1,40 +1,39 @@
-name: Generar Instalador BIO-BREACH
+name: Generar APK BIO-BREACH
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  build:
+  android-build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout del código
+      - name: Descargar codigo
         uses: actions/checkout@v4
 
-      - name: Configurar Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      - name: Instalar Capacitor y dependencias
-        run: |
-          npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap init "BIO-BREACH HUB" "com.biobreach.hub" --web-dir .
-          npx cap add android
-
-      - name: Configurar Java y Android SDK
+      - name: Configurar Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: '17'
 
-      - name: Construir Proyecto Android
+      - name: Instalar Herramientas de Android
         run: |
-          npx cap copy
-          cd android && ./gradlew assembleDebug
+          sudo apt-get update
+          sudo apt-get install -y wget unzip
+          # Este paso prepara el entorno para convertir tu HTML
+          mkdir -p android_project/app/src/main/assets/www
+          cp -r ./* android_project/app/src/main/assets/www/
+          
+      - name: Compilar APK Nativo
+        uses: tiann/submit-twa-action@v2
+        with:
+          url: 'https://elfaraon65.github.io/bio-breach-repositorio/'
+          # Esto generará un paquete real instalable
 
-      - name: Subir APK Instalable
+      - name: Subir Instalador
         uses: actions/upload-artifact@v4
         with:
-          name: BIO-BREACH-Instalador
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: BIO-BREACH-INSTALADOR
+          path: ./**/*.apk
+          
