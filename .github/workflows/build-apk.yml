@@ -1,38 +1,27 @@
-name: Generar APK BIO-BREACH
+name: Compilador BIO-BREACH
 on:
+  workflow_dispatch: # Esto te permite darle a un botón para compilar cuando quieras
   push:
     branches: [ main ]
-  workflow_dispatch:
 
 jobs:
-  android-build:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Descargar codigo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      - name: Configurar Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Instalar Herramientas de Android
+      - name: Instalando herramientas
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget unzip
-          # Este paso prepara el entorno para convertir tu HTML
-          mkdir -p android_project/app/src/main/assets/www
-          cp -r ./* android_project/app/src/main/assets/www/
-          
-      - name: Compilar APK Nativo
-        uses: tiann/submit-twa-action@v2
-        with:
-          url: 'https://elfaraon65.github.io/bio-breach-repositorio/'
-          # Esto generará un paquete real instalable
+          sudo apt-get install -y zip
 
-      - name: Subir Instalador
-        uses: actions/upload-artifact@v4
+      - name: Empaquetando archivos
+        run: |
+          # Esto crea un paquete con tu HTML
+          zip -r BioBreach.zip ./*
+
+      - name: Subir Resultado
+        uses: actions/upload-artifact@v3
         with:
-          name: BIO-BREACH-INSTALADOR
-          path: ./**/*.apk
+          name: Archivos-App-Web
+          path: BioBreach.zip
