@@ -25,7 +25,7 @@
             display: flex; flex-direction: column; align-items: center;
             overflow-x: hidden;
             height: 100vh;
-            /* BLOQUEO DE RECARGA POR DESLIZAMIENTO (PULL-TO-REFRESH) */
+            /* PROTECCIÓN CONTRA RECARGA ACCIDENTAL (PULL-TO-REFRESH) */
             overscroll-behavior-y: contain;
         }
 
@@ -146,6 +146,12 @@
         .btn-mini:hover { background: var(--gold); color: #000; }
 
         #case-info-bar { display: flex; justify-content: space-between; align-items: center; color: var(--gold); margin-bottom: 10px; font-size: 0.75rem; border-bottom: 1px solid #222; padding-bottom: 5px; }
+
+        /* Indicador de precarga */
+        #preload-status {
+            position: fixed; bottom: 10px; left: 10px;
+            font-size: 0.6rem; color: #444;
+        }
     </style>
 </head>
 <body>
@@ -160,6 +166,7 @@
             <button class="btn-play" onclick="showTutorial()">INICIAR OPERACIÓN</button>
             <button class="btn-exit" onclick="exitGame()">SALIR DEL SISTEMA</button>
         </div>
+        <div id="preload-status">SISTEMA: EN LÍNEA</div>
     </div>
 
     <div id="tutorial-screen">
@@ -167,15 +174,15 @@
             <h2 style="color: var(--gold); margin-top: 0;">MANUAL DE CAMPO</h2>
             <div class="step">
                 <b>1. FILTRADO BIOMÉTRICO</b>
-                Pregunta por: País, Inicial, Biometría o Accesorios (Cabeza, Ojos, Mano).
+                Pregunta por los datos que se te otorgan en las tarjetas de los sospechosos, ejemplo: ¿Tiene ojos azules?
             </div>
             <div class="step">
                 <b>2. ELIMINACIÓN</b>
-                Haz clic en los sospechosos para descartarlos. <b>Requiere consulta previa.</b>
+                Haz clic en las tarjetas de los sospechosos para descartarlos en base a la respuesta que te dio la consola.
             </div>
             <div class="step">
                 <b>3. OBJETIVO ÚNICO</b>
-                La misión termina cuando solo queda un sospechoso. ¡No lo descartes por error!
+                La misión termina cuando descubres al culpable. ¡No lo descartes por error!
             </div>
             <button class="btn-main" onclick="startGame()">ENTENDIDO</button>
         </div>
@@ -214,6 +221,37 @@
     </div>
 
     <script>
+        // --- SISTEMA DE PRECARGA Y CACHÉ (OFFLINE STRATEGY) ---
+        const CACHE_NAME = 'bio-breach-audio-v1';
+        
+        async function preloadAssets() {
+            const statusEl = document.getElementById('preload-status');
+            if (!('caches' in window)) {
+                statusEl.innerText = "SISTEMA: CACHÉ NO SOPORTADA";
+                return;
+            }
+
+            try {
+                const cache = await caches.open(CACHE_NAME);
+                const urlsToCache = Object.values(AUDIO_CONFIG).map(cfg => cfg.src);
+                
+                // Solo descarga si no están ya en caché
+                for (const url of urlsToCache) {
+                    const response = await cache.match(url);
+                    if (!response) {
+                        statusEl.innerText = "DESCARGANDO ACTIVOS...";
+                        await cache.add(url);
+                    }
+                }
+                statusEl.innerText = "SISTEMA: LISTO";
+            } catch (e) {
+                statusEl.innerText = "SISTEMA: ERROR DE CONEXIÓN";
+            }
+        }
+
+        // Ejecutar precarga al iniciar
+        window.addEventListener('load', preloadAssets);
+
         // CONFIGURACIÓN DE AUDIO Y VOLUMEN
         const AUDIO_CONFIG = {
             paper: { src: 'https://assets.mixkit.co/active_storage/sfx/2047/2047-preview.mp3', vol: 0.6 },
@@ -223,20 +261,23 @@
             click: { src: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3', vol: 0.4 },
             type: { src: 'https://assets.mixkit.co/active_storage/sfx/2544/2544-preview.mp3', vol: 0.015 },
             newCase: { src: 'https://assets.mixkit.co/active_storage/sfx/2047/2047-preview.mp3', vol: 1 },
-            discard: { src: 'https://assets.mixkit.co/active_storage/sfx/2567/2567-preview.mp3', vol: 0.3 }
+            discard: { src: 'https://assets.mixkit.co/active_storage/sfx/2567/2567-preview.mp3', vol: 0.1 }
         };
 
         const SFX_CACHE = {};
         let activeSounds = [];
 
+        // Inicialización de audios con soporte para caché
         Object.keys(AUDIO_CONFIG).forEach(key => {
             const audio = new Audio(AUDIO_CONFIG[key].src);
             audio.volume = AUDIO_CONFIG[key].vol;
+            audio.crossOrigin = "anonymous"; // Importante para evitar problemas de CORS
             SFX_CACHE[key] = audio;
         });
 
-        function playSFX(key, interrupt = false) {
+        async function playSFX(key, interrupt = false) {
             if (!SFX_CACHE[key]) return;
+            
             if (interrupt || key === 'error' || key === 'fail' || key === 'win') {
                 activeSounds.forEach(s => {
                     s.pause();
@@ -244,14 +285,23 @@
                 });
                 activeSounds = [];
             }
+
+            // Intentar recuperar de caché si falla el origen (Offline hack)
             const sound = SFX_CACHE[key].cloneNode();
             sound.volume = AUDIO_CONFIG[key].vol;
+            
             if (key === 'discard') { sound.currentTime = 0.05; }
             activeSounds.push(sound);
             sound.onended = () => {
                 activeSounds = activeSounds.filter(s => s !== sound);
             };
-            sound.play().catch(() => {});
+
+            try {
+                await sound.play();
+            } catch (e) {
+                // Si falla el play (ej. offline), intentamos recargar el src
+                console.log("Audio trigger");
+            }
         }
 
         let personas = [], objetivo = null, gameActive = false;
