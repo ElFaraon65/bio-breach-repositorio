@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>BIO-BREACH: THE LAST TRACE</title>
     <style>
         :root {
@@ -17,16 +17,24 @@
             --disabled: #444;
         }
 
+        /* SOLUCIÓN AGRESIVA CSS */
+        html, body {
+            overflow: hidden; /* Evita el scroll del contenedor principal */
+            height: 100%;
+            width: 100%;
+            position: fixed; /* Bloquea la posición contra el launcher */
+            touch-action: none; /* Desactiva gestos nativos del navegador/launcher */
+        }
+
         body {
             background-color: var(--bg-dark);
             margin: 0; padding: 10px;
             font-family: 'Consolas', monospace;
             color: #eee;
             display: flex; flex-direction: column; align-items: center;
-            overflow-x: hidden;
-            height: 100vh;
-            /* SOLUCIÓN CSS: Evita que el scroll exceda los límites y dispare el refresco */
-            overscroll-behavior-y: contain;
+            overflow-y: auto; /* Solo permite scroll interno */
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: none; /* Instrucción moderna para no refrescar */
         }
 
         #wallet-display {
@@ -153,7 +161,7 @@
         }
     </style>
 </head>
-<body>
+<body id="game-body">
 
     <div id="main-menu">
         <div id="wallet-display">
@@ -220,19 +228,34 @@
     </div>
 
     <script>
-        // --- BLOQUEO DE PULL-TO-REFRESH ---
-        let touchStartVal = 0;
-        window.addEventListener('touchstart', (e) => {
-            touchStartVal = e.touches[0].pageY;
-        }, { passive: false });
+        // --- ESCUDO ANTI-REFRESCO PARA LAUNCHERS ---
+        (function() {
+            let lastY = 0;
+            const body = document.getElementById('game-body');
 
-        window.addEventListener('touchmove', (e) => {
-            const touchMoveVal = e.touches[0].pageY;
-            // Si el usuario está en el tope y desliza hacia abajo
-            if (window.scrollY <= 0 && touchMoveVal > touchStartVal) {
-                if (e.cancelable) e.preventDefault();
-            }
-        }, { passive: false });
+            // Forzamos un micro-scroll al inicio para que el launcher crea que ya se está scrolleando
+            window.addEventListener('load', () => {
+                window.scrollTo(0, 1);
+            });
+
+            window.addEventListener('touchstart', (e) => {
+                lastY = e.touches[0].pageY;
+            }, { passive: false });
+
+            window.addEventListener('touchmove', (e) => {
+                const currentY = e.touches[0].pageY;
+                const isScrollingDown = currentY > lastY;
+
+                // Si estamos en la parte superior e intentamos bajar (refrescar)
+                if (window.scrollY <= 1 && isScrollingDown) {
+                    e.preventDefault();
+                }
+                lastY = currentY;
+            }, { passive: false });
+
+            // Bloqueo total de gestos de refresco comunes en navegadores móviles
+            document.addEventListener('gesturestart', (e) => e.preventDefault());
+        })();
 
         // --- SISTEMA DE PRECARGA Y CACHÉ ---
         const CACHE_NAME = 'bio-breach-audio-v1';
@@ -260,8 +283,6 @@
                 statusEl.innerText = "SISTEMA: ERROR DE CONEXIÓN";
             }
         }
-
-        window.addEventListener('load', preloadAssets);
 
         const AUDIO_CONFIG = {
             paper: { src: 'https://assets.mixkit.co/active_storage/sfx/2047/2047-preview.mp3', vol: 0.6 },
