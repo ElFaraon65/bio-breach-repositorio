@@ -4,6 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BIO-BREACH HUB</title>
+    
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0a0a0a">
+
+    <script>
+        // Evitar que el navegador se rinda si tarda en conectar
+        window.addEventListener('error', function(e) {
+            if (navigator.onLine === false) {
+                console.log("Detectado error offline, forzando carga local...");
+                // Detenemos el error y forzamos el uso de lo que haya en caché
+                e.preventDefault();
+            }
+        }, true);
+    </script>
+    
     <style>
         :root { --gold: #ffd700; --bg: #0a0a0a; --card: #161616; --blue: #0078d4; --green: #00ff41; --orange: #ff8c00; }
         body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; user-select: none; }
@@ -235,15 +251,6 @@
         
         window.addEventListener('online', actualizarInterfaz);
         window.addEventListener('offline', actualizarInterfaz);
-        
-        // --- REGISTRO DEL SERVICE WORKER PARA MODO OFFLINE ---
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log("SW registrado para Bio-Breach"))
-                    .catch(err => console.log("Error al registrar SW", err));
-            });
-        }
     </script>
 </body>
 </html>
