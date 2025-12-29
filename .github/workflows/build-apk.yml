@@ -1,4 +1,4 @@
-Name: Compilador BIO-BREACH
+name: Compilador BIO-BREACH
 on:
   push:
     branches: [ main ]
