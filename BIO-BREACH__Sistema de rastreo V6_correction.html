@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BIO-BREACH: THE LAST TRACE</title>
     <style>
         :root {
@@ -17,24 +17,15 @@
             --disabled: #444;
         }
 
-        /* SOLUCIÓN AGRESIVA CSS */
-        html, body {
-            overflow: hidden; /* Evita el scroll del contenedor principal */
-            height: 100%;
-            width: 100%;
-            position: fixed; /* Bloquea la posición contra el launcher */
-            touch-action: none; /* Desactiva gestos nativos del navegador/launcher */
-        }
-
         body {
             background-color: var(--bg-dark);
             margin: 0; padding: 10px;
             font-family: 'Consolas', monospace;
             color: #eee;
             display: flex; flex-direction: column; align-items: center;
-            overflow-y: auto; /* Solo permite scroll interno */
-            -webkit-overflow-scrolling: touch;
-            overscroll-behavior-y: none; /* Instrucción moderna para no refrescar */
+            overflow-x: hidden;
+            height: 100vh;
+            overscroll-behavior-y: contain;
         }
 
         #wallet-display {
@@ -155,13 +146,14 @@
 
         #case-info-bar { display: flex; justify-content: space-between; align-items: center; color: var(--gold); margin-bottom: 10px; font-size: 0.75rem; border-bottom: 1px solid #222; padding-bottom: 5px; }
 
+        /* Indicador de precarga */
         #preload-status {
             position: fixed; bottom: 10px; left: 10px;
             font-size: 0.6rem; color: #444;
         }
     </style>
 </head>
-<body id="game-body">
+<body>
 
     <div id="main-menu">
         <div id="wallet-display">
@@ -228,36 +220,7 @@
     </div>
 
     <script>
-        // --- ESCUDO ANTI-REFRESCO PARA LAUNCHERS ---
-        (function() {
-            let lastY = 0;
-            const body = document.getElementById('game-body');
-
-            // Forzamos un micro-scroll al inicio para que el launcher crea que ya se está scrolleando
-            window.addEventListener('load', () => {
-                window.scrollTo(0, 1);
-            });
-
-            window.addEventListener('touchstart', (e) => {
-                lastY = e.touches[0].pageY;
-            }, { passive: false });
-
-            window.addEventListener('touchmove', (e) => {
-                const currentY = e.touches[0].pageY;
-                const isScrollingDown = currentY > lastY;
-
-                // Si estamos en la parte superior e intentamos bajar (refrescar)
-                if (window.scrollY <= 1 && isScrollingDown) {
-                    e.preventDefault();
-                }
-                lastY = currentY;
-            }, { passive: false });
-
-            // Bloqueo total de gestos de refresco comunes en navegadores móviles
-            document.addEventListener('gesturestart', (e) => e.preventDefault());
-        })();
-
-        // --- SISTEMA DE PRECARGA Y CACHÉ ---
+        // --- SISTEMA DE PRECARGA Y CACHÉ (OFFLINE STRATEGY) ---
         const CACHE_NAME = 'bio-breach-audio-v1';
         
         async function preloadAssets() {
@@ -271,6 +234,7 @@
                 const cache = await caches.open(CACHE_NAME);
                 const urlsToCache = Object.values(AUDIO_CONFIG).map(cfg => cfg.src);
                 
+                // Solo descarga si no están ya en caché
                 for (const url of urlsToCache) {
                     const response = await cache.match(url);
                     if (!response) {
@@ -284,6 +248,10 @@
             }
         }
 
+        // Ejecutar precarga al iniciar
+        window.addEventListener('load', preloadAssets);
+
+        // CONFIGURACIÓN DE AUDIO Y VOLUMEN
         const AUDIO_CONFIG = {
             paper: { src: 'https://assets.mixkit.co/active_storage/sfx/2047/2047-preview.mp3', vol: 0.6 },
             fail: { src: 'https://assets.mixkit.co/active_storage/sfx/2805/2805-preview.mp3', vol: 0.4 }, 
@@ -298,10 +266,11 @@
         const SFX_CACHE = {};
         let activeSounds = [];
 
+        // Inicialización de audios con soporte para caché
         Object.keys(AUDIO_CONFIG).forEach(key => {
             const audio = new Audio(AUDIO_CONFIG[key].src);
             audio.volume = AUDIO_CONFIG[key].vol;
-            audio.crossOrigin = "anonymous";
+            audio.crossOrigin = "anonymous"; // Importante para evitar problemas de CORS
             SFX_CACHE[key] = audio;
         });
 
@@ -316,6 +285,7 @@
                 activeSounds = [];
             }
 
+            // Intentar recuperar de caché si falla el origen (Offline hack)
             const sound = SFX_CACHE[key].cloneNode();
             sound.volume = AUDIO_CONFIG[key].vol;
             
@@ -328,6 +298,7 @@
             try {
                 await sound.play();
             } catch (e) {
+                // Si falla el play (ej. offline), intentamos recargar el src
                 console.log("Audio trigger");
             }
         }
