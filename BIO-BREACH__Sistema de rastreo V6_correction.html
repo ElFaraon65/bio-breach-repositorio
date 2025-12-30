@@ -220,7 +220,7 @@
     </div>
 
     <script>
-        // --- SISTEMA DE PRECARGA Y CACHÉ (OFFLINE STRATEGY) ---
+        // --- SISTEMA DE PRECARGA Y CACHÉ ---
         const CACHE_NAME = 'bio-breach-audio-v1';
         
         async function preloadAssets() {
@@ -234,7 +234,6 @@
                 const cache = await caches.open(CACHE_NAME);
                 const urlsToCache = Object.values(AUDIO_CONFIG).map(cfg => cfg.src);
                 
-                // Solo descarga si no están ya en caché
                 for (const url of urlsToCache) {
                     const response = await cache.match(url);
                     if (!response) {
@@ -248,10 +247,8 @@
             }
         }
 
-        // Ejecutar precarga al iniciar
         window.addEventListener('load', preloadAssets);
 
-        // CONFIGURACIÓN DE AUDIO Y VOLUMEN
         const AUDIO_CONFIG = {
             paper: { src: 'https://assets.mixkit.co/active_storage/sfx/2047/2047-preview.mp3', vol: 0.6 },
             fail: { src: 'https://assets.mixkit.co/active_storage/sfx/2805/2805-preview.mp3', vol: 0.4 }, 
@@ -266,11 +263,10 @@
         const SFX_CACHE = {};
         let activeSounds = [];
 
-        // Inicialización de audios con soporte para caché
         Object.keys(AUDIO_CONFIG).forEach(key => {
             const audio = new Audio(AUDIO_CONFIG[key].src);
             audio.volume = AUDIO_CONFIG[key].vol;
-            audio.crossOrigin = "anonymous"; // Importante para evitar problemas de CORS
+            audio.crossOrigin = "anonymous";
             SFX_CACHE[key] = audio;
         });
 
@@ -285,7 +281,6 @@
                 activeSounds = [];
             }
 
-            // Intentar recuperar de caché si falla el origen (Offline hack)
             const sound = SFX_CACHE[key].cloneNode();
             sound.volume = AUDIO_CONFIG[key].vol;
             
@@ -298,7 +293,6 @@
             try {
                 await sound.play();
             } catch (e) {
-                // Si falla el play (ej. offline), intentamos recargar el src
                 console.log("Audio trigger");
             }
         }
@@ -404,13 +398,20 @@
         function generateNewSquad() {
             personas = [];
             const DP = {
-                M: ["LEON", "MARC", "OTTO", "IVAN", "ERIC", "HUAN", "KURT", "NOAH", "AXEL", "SAUL", "IGOR", "LIAM", "ENZO", "HUGO", "OMAR", "LUC", "YURI", "RYAN", "FINN", "EZRA", "MILO", "IAN", "ALAN", "KAI", "BORIS"],
-                F: ["MIA", "LARA", "YUNA", "OLGA", "ADRI", "ZOE", "INÉS", "KIRA", "EMMA", "RUTH", "SARA", "LUNA", "VERA", "NORA", "MAYA", "LEA", "IRIS", "ALBA", "GALA", "JUNE", "CLEO", "ANA", "EVA", "LISA"],
+                M: [
+                    "LEON", "MARC", "OTTO", "IVAN", "ERIC", "HUAN", "KURT", "NOAH", "AXEL", "SAUL", "IGOR", "LIAM", "ENZO", "HUGO", "OMAR", "LUC", "YURI", "RYAN", "FINN", "EZRA", "MILO", "IAN", "ALAN", "KAI", "BORIS",
+                    "OSCAR", "VICTOR", "FELIX", "DANTE", "BRUNO", "KALEB", "SILAS", "ARLO", "THEO", "REMY", "ZAYN", "LUCA", "NICO", "JUDE", "ELIAS", "SETH", "KANE", "AARON", "SIMON", "RAUL", "LEVI", "TOBIAS", "GAGE", "XANDER", "JACE"
+                ],
+                F: [
+                    "MIA", "LARA", "YUNA", "OLGA", "ADRI", "ZOE", "INÉS", "KIRA", "EMMA", "RUTH", "SARA", "LUNA", "VERA", "NORA", "MAYA", "LEA", "IRIS", "ALBA", "GALA", "JUNE", "CLEO", "ANA", "EVA", "LISA",
+                    "NINA", "JADE", "ROSE", "MILA", "RUBY", "EDEN", "ISLA", "LYRA", "MAIA", "OPAL", "FAYE", "SKYE", "TESS", "WILLA", "ZARA", "ALEXA", "BELLA", "CHLOE", "DIANA", "ELSA", "FREYA", "HOPE", "IVY", "KYRA", "LANA", "MYRA"
+                ],
                 P: [
                     {n: "ALEMANIA", c: "EUROPA"}, {n: "ESPAÑA", c: "EUROPA"}, {n: "ITALIA", c: "EUROPA"},
                     {n: "JAPÓN", c: "ASIA"}, {n: "CHINA", c: "ASIA"}, {n: "COREA", c: "ASIA"},
                     {n: "MÉXICO", c: "AMÉRICA"}, {n: "BRASIL", c: "AMÉRICA"}, {n: "USA", c: "AMÉRICA"},
-                    {n: "AUSTRALIA", c: "OCEANÍA"}
+                    {n: "AUSTRALIA", c: "OCEANÍA"}, {n: "BOLIVIA", c: "AMÉRICA"}, {n: "COLOMBIA", c: "AMÉRICA"},
+                    {n: "ECUADOR", c: "AMÉRICA"}
                 ],
                 T: ["PÁLIDA", "OLIVA", "BRONCE", "OSCURA", "ÉBANO"],
                 O: ["AZULES", "VERDES", "NEGROS", "CAFÉS", "GRISES", "MIEL"],
@@ -420,12 +421,25 @@
                     {n: "MALETÍN", u: "MANO"}, {n: "TABLETA", u: "MANO"}, {n: "RELOJ", u: "MANO"}
                 ]
             };
+
+            const shuffle = (array) => array.sort(() => Math.random() - 0.5);
+            const poolM = shuffle([...DP.M]);
+            const poolF = shuffle([...DP.F]);
+
             for (let i = 0; i < 25; i++) {
                 const genero = Math.random() > 0.5 ? "MASCULINO" : "FEMENINO";
                 const pais = DP.P[Math.floor(Math.random() * DP.P.length)];
                 const acc = DP.A[Math.floor(Math.random() * DP.A.length)];
+                
+                let nombre = "";
+                if (genero === "MASCULINO") {
+                    nombre = poolM.pop() || "S-M" + i;
+                } else {
+                    nombre = poolF.pop() || "S-F" + i;
+                }
+
                 personas.push({
-                    n: (genero === "MASCULINO" ? DP.M : DP.F)[i % 24], g: genero, p: pais.n, cont: pais.c,
+                    n: nombre, g: genero, p: pais.n, cont: pais.c,
                     t: DP.T[Math.floor(Math.random() * DP.T.length)], o: DP.O[Math.floor(Math.random() * DP.O.length)],
                     edad: Math.floor(Math.random() * 50) + 18, altura: (Math.random() * 0.5 + 1.5).toFixed(2),
                     accName: acc.n, accUbi: acc.u
@@ -486,12 +500,15 @@
             updateWalletUI();
         }
 
+        // --- LÓGICA DE INTERROGACIÓN REFORZADA ---
         document.getElementById('queryInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter' && !isTyping) {
                 const q = this.value.toUpperCase();
                 this.value = '';
                 let resp = "DATOS NO RECONOCIDOS.";
                 let consultaValida = false;
+
+                // Accesorios
                 if (q.includes("ACCESORIO") || q.includes("OBJETO")) {
                     consultaValida = true;
                     if (q.includes("CABEZA") || q.includes("PELO")) resp = (objetivo.accUbi === "CABEZA") ? "SÍ." : "NO.";
@@ -502,20 +519,37 @@
                         resp = (objetivo.accName === accBuscado) ? "SÍ." : "NO.";
                     } else { consultaValida = false; }
                 }
-                else if (q.includes("EUROPA") || q.includes("EUROPEO")) { resp = (objetivo.cont === "EUROPA") ? "SÍ." : "NO."; consultaValida = true; }
-                else if (q.includes("ASIA") || q.includes("ASIÁTIC")) { resp = (objetivo.cont === "ASIA") ? "SÍ." : "NO."; consultaValida = true; }
-                else if (q.includes("AMÉRICA") || q.includes("AMERICANO")) { resp = (objetivo.cont === "AMÉRICA") ? "SÍ." : "NO."; consultaValida = true; }
-                else if (q.includes("OCEANÍA") || q.includes("OCEANIC") || q.includes("AUSTRAL")) { resp = (objetivo.cont === "OCEANÍA") ? "SÍ." : "NO."; consultaValida = true; }
-                else if (["ALEMANIA", "ESPAÑA", "ITALIA", "JAPÓN", "CHINA", "COREA", "MÉXICO", "BRASIL", "USA", "AUSTRALIA"].some(p => q.includes(p))) {
-                    const paisBuscado = ["ALEMANIA", "ESPAÑA", "ITALIA", "JAPÓN", "CHINA", "COREA", "MÉXICO", "BRASIL", "USA", "AUSTRALIA"].find(p => q.includes(p));
-                    resp = (objetivo.p === paisBuscado) ? "SÍ." : "NO.";
+                // Continentes
+                else if (q.match(/\b(EUROPA|EUROPEO|EUROPEA)\b/)) { resp = (objetivo.cont === "EUROPA") ? "SÍ." : "NO."; consultaValida = true; }
+                else if (q.match(/\b(ASIA|ASIÁTICO|ASIÁTICA)\b/)) { resp = (objetivo.cont === "ASIA") ? "SÍ." : "NO."; consultaValida = true; }
+                else if (q.match(/\b(AMÉRICA|AMERICANO|AMERICANA)\b/)) { resp = (objetivo.cont === "AMÉRICA") ? "SÍ." : "NO."; consultaValida = true; }
+                else if (q.match(/\b(OCEANÍA|OCEÁNICO|OCEÁNICA|AUSTRALIANO|AUSTRALIANA)\b/)) { resp = (objetivo.cont === "OCEANÍA") ? "SÍ." : "NO."; consultaValida = true; }
+                
+                // --- PAÍSES Y NACIONALIDADES (REQUERIMIENTO EXACTO) ---
+                else if (
+                    (q.match(/\b(ALEMANIA|ALEMÁN|ALEMANA)\b/) && (resp = (objetivo.p === "ALEMANIA") ? "SÍ." : "NO.")) ||
+                    (q.match(/\b(ESPAÑA|ESPAÑOL|ESPAÑOLA)\b/) && (resp = (objetivo.p === "ESPAÑA") ? "SÍ." : "NO.")) ||
+                    (q.match(/\b(ITALIA|ITALIANO|ITALIANA)\b/) && (resp = (objetivo.p === "ITALIA") ? "SÍ." : "NO.")) ||
+                    (q.match(/\b(JAPÓN|JAPONÉS|JAPONESA)\b/) && (resp = (objetivo.p === "JAPÓN") ? "SÍ." : "NO.")) ||
+                    (q.match(/\b(CHINA|CHINO|CHINA)\b/) && (resp = (objetivo.p === "CHINA") ? "SÍ." : "NO.")) ||
+                    (q.match(/\b(COREA|COREANO|COREANA)\b/) && (resp = (objetivo.p === "COREA") ? "SÍ." : "NO.")) ||
+                    (q.match(/\b(MÉXICO|MEXICANO|MEXICANA)\b/) && (resp = (objetivo.p === "MÉXICO") ? "SÍ." : "NO.")) ||
+                    (q.match(/\b(BRASIL|BRASILEÑO|BRASILEÑA)\b/) && (resp = (objetivo.p === "BRASIL") ? "SÍ." : "NO.")) ||
+                    (q.match(/\b(BOLIVIA|BOLIVIANO|BOLIVIANA)\b/) && (resp = (objetivo.p === "BOLIVIA") ? "SÍ." : "NO.")) ||
+                    (q.match(/\b(COLOMBIA|COLOMBIANO|COLOMBIANA)\b/) && (resp = (objetivo.p === "COLOMBIA") ? "SÍ." : "NO.")) ||
+                    (q.match(/\b(ECUADOR|ECUATORIANO|ECUATORIANA)\b/) && (resp = (objetivo.p === "ECUADOR") ? "SÍ." : "NO.")) ||
+                    (q.match(/\b(USA|ESTADOUNIDENSE|AMERICANO)\b/) && (resp = (objetivo.p === "USA") ? "SÍ." : "NO.")) ||
+                    (q.match(/\b(AUSTRALIA|AUSTRALIANO|AUSTRALIANA)\b/) && (resp = (objetivo.p === "AUSTRALIA") ? "SÍ." : "NO."))
+                ) {
                     consultaValida = true;
                 }
+                // Inicial
                 else if (q.includes("INICIAL") || q.includes("EMPIEZA POR")) {
                     const letraMatch = q.match(/\b[A-Z]\b/);
                     if (letraMatch) { resp = (objetivo.n.startsWith(letraMatch[0])) ? "SÍ." : "NO."; consultaValida = true; }
                     else resp = "ESPECIFIQUE UNA LETRA.";
                 }
+                // Números (Edad/Altura)
                 else if (q.includes("EDAD") || q.includes("MIDE") || q.includes("ALTO") || q.includes("ESTATURA")) {
                     const numMatch = q.match(/\d+(\.\d+)?/);
                     if (numMatch) {
@@ -527,8 +561,9 @@
                         else resp = (Math.abs(targetVal - valNum) < 0.05) ? "SÍ." : "NO.";
                     }
                 }
-                else if (q.includes("HOMBRE") || q.includes("MASCULINO")) { resp = (objetivo.g === "MASCULINO") ? "SÍ." : "NO."; consultaValida = true; }
-                else if (q.includes("MUJER") || q.includes("FEMENINO")) { resp = (objetivo.g === "FEMENINO") ? "SÍ." : "NO."; consultaValida = true; }
+                // Otros
+                else if (q.match(/\b(HOMBRE|MASCULINO)\b/)) { resp = (objetivo.g === "MASCULINO") ? "SÍ." : "NO."; consultaValida = true; }
+                else if (q.match(/\b(MUJER|FEMENINO)\b/)) { resp = (objetivo.g === "FEMENINO") ? "SÍ." : "NO."; consultaValida = true; }
                 else if (["AZULES", "VERDES", "NEGROS", "CAFÉS", "GRISES", "MIEL"].some(c => q.includes(c))) {
                     const color = ["AZULES", "VERDES", "NEGROS", "CAFÉS", "GRISES", "MIEL"].find(c => q.includes(c));
                     resp = (objetivo.o === color) ? "SÍ." : "NO.";
@@ -539,6 +574,7 @@
                     resp = (objetivo.t === tez) ? "SÍ." : "NO.";
                     consultaValida = true;
                 }
+
                 let finalMsg = `CONSULTA: ${q}<br>RESPUESTA: ${resp}`;
                 if(consultaValida) {
                     playSFX('click');
