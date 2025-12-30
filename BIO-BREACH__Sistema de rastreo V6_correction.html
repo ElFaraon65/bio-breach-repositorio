@@ -146,7 +146,6 @@
 
         #case-info-bar { display: flex; justify-content: space-between; align-items: center; color: var(--gold); margin-bottom: 10px; font-size: 0.75rem; border-bottom: 1px solid #222; padding-bottom: 5px; }
 
-        /* Indicador de precarga */
         #preload-status {
             position: fixed; bottom: 10px; left: 10px;
             font-size: 0.6rem; color: #444;
@@ -220,7 +219,6 @@
     </div>
 
     <script>
-        // --- SISTEMA DE PRECARGA Y CACHÉ ---
         const CACHE_NAME = 'bio-breach-audio-v1';
         
         async function preloadAssets() {
@@ -400,31 +398,44 @@
             const DP = {
                 M: [
                     "LEON", "MARC", "OTTO", "IVAN", "ERIC", "HUAN", "KURT", "NOAH", "AXEL", "SAUL", "IGOR", "LIAM", "ENZO", "HUGO", "OMAR", "LUC", "YURI", "RYAN", "FINN", "EZRA", "MILO", "IAN", "ALAN", "KAI", "BORIS",
-                    "OSCAR", "VICTOR", "FELIX", "DANTE", "BRUNO", "KALEB", "SILAS", "ARLO", "THEO", "REMY", "ZAYN", "LUCA", "NICO", "JUDE", "ELIAS", "SETH", "KANE", "AARON", "SIMON", "RAUL", "LEVI", "TOBIAS", "GAGE", "XANDER", "JACE"
+                    "OSCAR", "VICTOR", "FELIX", "DANTE", "BRUNO", "KALEB", "SILAS", "ARLO", "THEO", "REMY", "ZAYN", "LUCA", "NICO", "JUDE", "ELIAS", "SETH", "KANE", "AARON", "SIMON", "RAUL", "LEVI", "TOBIAS", "GAGE", "XANDER", "JACE",
+                    "KAREM", "NASH", "ZION", "COLE", "BEAU", "REID", "KNOX", "RHYS", "FINN", "OTIS", "MILO", "ARLO", "EZRA", "HUGO", "FELIX", "JUDE", "LUCA", "THEO", "SILAS", "KAI", "ENZO", "AXEL", "NOAH", "OTTO", "IVAN",
+                    "YOSEF", "MALIK", "SAID", "OMAR", "AMIR", "ZAYD", "HAMZA", "TARIQ", "KHALIL", "IDRIS", "HASSAN", "RAYAN", "SAMI", "KARIM", "ADAM", "NOAH", "LIAM", "ERIC", "MARC", "LEON", "HUAN", "KURT", "IGOR", "LUC", "YURI",
+                    "RYAN", "ALAN", "BORIS", "OSCAR", "VICTOR", "DANTE", "BRUNO", "KALEB", "REMY", "ZAYN", "NICO", "ELIAS", "SETH", "KANE", "AARON", "SIMON", "RAUL", "LEVI", "TOBIAS", "GAGE", "XANDER", "JACE", "KAREM", "NASH", "ZION",
+                    "COLE", "BEAU", "REID", "KNOX", "RHYS", "OTIS", "ALEX", "BLAKE", "CALEB", "DYLAN", "ETHAN", "FLYNN", "GRANT", "HENRY", "ISAAC", "JACK", "KYLE", "LUKE", "MAX", "NATE", "OWEN", "PIKE", "QUINN", "RILEY", "SEAN",
+                    "TATE", "URIE", "VANCE", "WADE", "XAVI", "YORK", "ZANE", "ALDO", "BART", "CARL", "DIRK", "EMIL", "FRANZ", "GUST", "HANS", "IVAR", "JENS", "KARL", "LARS", "MADS", "NILS", "OLAF", "PIET", "ROLF", "STIG",
+                    "THOR", "ULF", "VERN", "WOLF", "YENS", "ZOLT", "ANTON", "BORIS", "CYRIL", "DMITRI", "EVAN", "FEDOR", "GREG", "IVAN", "IGOR", "JAN", "KONST", "LEV", "MIKHAIL", "NIKOLAI", "OLEG", "PAVEL", "SERGEI", "VIKTOR", "YURI",
+                    "ZINO", "ANDRE", "BLAISE", "CLAUDE", "DIDIER", "ETIENNE", "FABIEN", "GUY", "HENRI", "ISAAC", "JEAN", "LUC", "MARC", "NOEL", "OLIVIER", "PIERRE", "REMY", "SERGE", "THIERRY", "URBAIN", "VICTOR", "YVES", "ZEPHYR"
                 ],
                 F: [
                     "MIA", "LARA", "YUNA", "OLGA", "ADRI", "ZOE", "INÉS", "KIRA", "EMMA", "RUTH", "SARA", "LUNA", "VERA", "NORA", "MAYA", "LEA", "IRIS", "ALBA", "GALA", "JUNE", "CLEO", "ANA", "EVA", "LISA",
-                    "NINA", "JADE", "ROSE", "MILA", "RUBY", "EDEN", "ISLA", "LYRA", "MAIA", "OPAL", "FAYE", "SKYE", "TESS", "WILLA", "ZARA", "ALEXA", "BELLA", "CHLOE", "DIANA", "ELSA", "FREYA", "HOPE", "IVY", "KYRA", "LANA", "MYRA"
+                    "NINA", "JADE", "ROSE", "MILA", "RUBY", "EDEN", "ISLA", "LYRA", "MAIA", "OPAL", "FAYE", "SKYE", "TESS", "WILLA", "ZARA", "ALEXA", "BELLA", "CHLOE", "DIANA", "ELSA", "FREYA", "HOPE", "IVY", "KYRA", "LANA", "MYRA",
+                    "AMARA", "BELLE", "CORA", "DAISY", "ELIZA", "FLORA", "GRETA", "HAZEL", "INDIE", "JUNE", "KEIRA", "LOLA", "MABEL", "NELL", "OLIVE", "PEARL", "QUINN", "RENA", "SADIE", "THEA", "UNA", "VADA", "WREN", "XENA", "YARA",
+                    "ZELDA", "ALMA", "BONNIE", "CARA", "DORA", "EDNA", "FAITH", "GIA", "HOLLY", "IDA", "JOY", "KAY", "LILY", "MINA", "NELL", "ORA", "PIPA", "ROSA", "SHEA", "TARA", "UTAH", "VIDA", "WILD", "XIA", "YOLI",
+                    "ZOEY", "ANNA", "BETH", "CLARA", "DINA", "ELLA", "FAYE", "GWEN", "HEIDI", "IRIS", "JANE", "KATE", "LUCY", "MARY", "NELL", "OLGA", "POLY", "RUTH", "SARA", "TESS", "UMA", "VIV", "WYN", "XIA", "YARA", "ZITA",
+                    "ADELE", "BINA", "COCO", "DANA", "ENID", "FIFI", "GIGI", "HOPE", "INES", "JANA", "KIKI", "LULU", "MIMI", "NANA", "ORLY", "PEPE", "QUEE", "RIRI", "SISI", "TITI", "UVEE", "VIVI", "WIFI", "XIXI", "YAYA", "ZIZI",
+                    "ALICE", "BIANCA", "CELIA", "DORIS", "ELENA", "FIONA", "GRACE", "HELEN", "IRENE", "JULIA", "KAREN", "LINDA", "MARIA", "NAOMI", "PAULA", "ROSE", "SONIA", "TANIA", "URSULA", "VAL", "WANDA", "XENIA", "YVON", "ZARA",
+                    "AUREA", "BRISA", "CIELO", "DALIA", "ESTER", "FLOR", "GEMMA", "HILDA", "IRMA", "JUANA", "KATIA", "LIDIA", "MARTA", "NURIA", "OLIVIA", "PILAR", "RAQUEL", "SILVIA", "TERE", "VICKY", "XEMA", "YIZA", "ZENIA", "AGATHA"
                 ],
                 P: [
-                    {n: "ALEMANIA", c: "EUROPA"}, {n: "ESPAÑA", c: "EUROPA"}, {n: "ITALIA", c: "EUROPA"},
-                    {n: "JAPÓN", c: "ASIA"}, {n: "CHINA", c: "ASIA"}, {n: "COREA", c: "ASIA"},
-                    {n: "MÉXICO", c: "AMÉRICA"}, {n: "BRASIL", c: "AMÉRICA"}, {n: "USA", c: "AMÉRICA"},
-                    {n: "AUSTRALIA", c: "OCEANÍA"}, {n: "BOLIVIA", c: "AMÉRICA"}, {n: "COLOMBIA", c: "AMÉRICA"},
-                    {n: "ECUADOR", c: "AMÉRICA"}
+                    {n: "ALEMANIA", c: "EUROPA"}, {n: "ESPAÑA", c: "EUROPA"}, {n: "ITALIA", c: "EUROPA"}, {n: "FRANCIA", c: "EUROPA"}, {n: "SUIZA", c: "EUROPA"}, {n: "RUSIA", c: "EUROPA"},
+                    {n: "JAPÓN", c: "ASIA"}, {n: "CHINA", c: "ASIA"}, {n: "COREA", c: "ASIA"}, {n: "INDIA", c: "ASIA"}, {n: "TAILANDIA", c: "ASIA"}, {n: "VIETNAM", c: "ASIA"},
+                    {n: "MÉXICO", c: "AMÉRICA"}, {n: "BRASIL", c: "AMÉRICA"}, {n: "USA", c: "AMÉRICA"}, {n: "BOLIVIA", c: "AMÉRICA"}, {n: "COLOMBIA", c: "AMÉRICA"}, {n: "ECUADOR", c: "AMÉRICA"}, {n: "PERÚ", c: "AMÉRICA"}, {n: "ARGENTINA", c: "AMÉRICA"}, {n: "CANADÁ", c: "AMÉRICA"},
+                    {n: "AUSTRALIA", c: "OCEANÍA"}, {n: "NUEVA ZELANDA", c: "OCEANÍA"},
+                    {n: "EGIPTO", c: "ÁFRICA"}, {n: "SUDAFRICA", c: "ÁFRICA"}, {n: "NIGERIA", c: "ÁFRICA"}, {n: "MARRUECOS", c: "ÁFRICA"}
                 ],
                 T: ["PÁLIDA", "OLIVA", "BRONCE", "OSCURA", "ÉBANO"],
                 O: ["AZULES", "VERDES", "NEGROS", "CAFÉS", "GRISES", "MIEL"],
                 A: [
-                    {n: "GORRA", u: "CABEZA"}, {n: "CASCO", u: "CABEZA"}, {n: "SOMBRERO", u: "CABEZA"},
-                    {n: "GAFAS", u: "OJOS"}, {n: "MONÓCULO", u: "OJOS"}, {n: "VISOR", u: "OJOS"},
-                    {n: "MALETÍN", u: "MANO"}, {n: "TABLETA", u: "MANO"}, {n: "RELOJ", u: "MANO"}
+                    {n: "GORRA", u: "CABEZA"}, {n: "CASCO", u: "CABEZA"}, {n: "SOMBRERO", u: "CABEZA"}, {n: "DIADEMA", u: "CABEZA"}, {n: "BOINA", u: "CABEZA"}, {n: "PASAMONTAÑAS", u: "CABEZA"},
+                    {n: "GAFAS", u: "OJOS"}, {n: "MONÓCULO", u: "OJOS"}, {n: "VISOR", u: "OJOS"}, {n: "PARCHE", u: "OJOS"}, {n: "LENTES SOL", u: "OJOS"},
+                    {n: "MALETÍN", u: "MANO"}, {n: "TABLETA", u: "MANO"}, {n: "RELOJ", u: "MANO"}, {n: "ANILLO", u: "MANO"}, {n: "GUANTE", u: "MANO"}, {n: "CELULAR", u: "MANO"}, {n: "BASTÓN", u: "MANO"}
                 ]
             };
 
             const shuffle = (array) => array.sort(() => Math.random() - 0.5);
-            const poolM = shuffle([...DP.M]);
-            const poolF = shuffle([...DP.F]);
+            const poolM = shuffle([...new Set(DP.M)]);
+            const poolF = shuffle([...new Set(DP.F)]);
 
             for (let i = 0; i < 25; i++) {
                 const genero = Math.random() > 0.5 ? "MASCULINO" : "FEMENINO";
@@ -433,9 +444,9 @@
                 
                 let nombre = "";
                 if (genero === "MASCULINO") {
-                    nombre = poolM.pop() || "S-M" + i;
+                    nombre = poolM.pop() || "UNIT-M" + i;
                 } else {
-                    nombre = poolF.pop() || "S-F" + i;
+                    nombre = poolF.pop() || "UNIT-F" + i;
                 }
 
                 personas.push({
@@ -500,7 +511,6 @@
             updateWalletUI();
         }
 
-        // --- LÓGICA DE INTERROGACIÓN REFORZADA ---
         document.getElementById('queryInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter' && !isTyping) {
                 const q = this.value.toUpperCase();
@@ -508,24 +518,22 @@
                 let resp = "DATOS NO RECONOCIDOS.";
                 let consultaValida = false;
 
-                // Accesorios
                 if (q.includes("ACCESORIO") || q.includes("OBJETO")) {
                     consultaValida = true;
-                    if (q.includes("CABEZA") || q.includes("PELO")) resp = (objetivo.accUbi === "CABEZA") ? "SÍ." : "NO.";
-                    else if (q.includes("OJOS") || q.includes("CARA")) resp = (objetivo.accUbi === "OJOS") ? "SÍ." : "NO.";
-                    else if (q.includes("MANO") || q.includes("BRAZO")) resp = (objetivo.accUbi === "MANO") ? "SÍ." : "NO.";
-                    else if (["GORRA", "CASCO", "SOMBRERO", "GAFAS", "MONÓCULO", "VISOR", "MALETÍN", "TABLETA", "RELOJ"].some(a => q.includes(a))) {
-                        const accBuscado = ["GORRA", "CASCO", "SOMBRERO", "GAFAS", "MONÓCULO", "VISOR", "MALETÍN", "TABLETA", "RELOJ"].find(a => q.includes(a));
+                    if (q.includes("CABEZA") || q.includes("PELO") || q.includes("GORRO")) resp = (objetivo.accUbi === "CABEZA") ? "SÍ." : "NO.";
+                    else if (q.includes("OJOS") || q.includes("CARA") || q.includes("LENTES")) resp = (objetivo.accUbi === "OJOS") ? "SÍ." : "NO.";
+                    else if (q.includes("MANO") || q.includes("BRAZO") || q.includes("DEDO")) resp = (objetivo.accUbi === "MANO") ? "SÍ." : "NO.";
+                    else if (["GORRA", "CASCO", "SOMBRERO", "GAFAS", "MONÓCULO", "VISOR", "MALETÍN", "TABLETA", "RELOJ", "DIADEMA", "BOINA", "PASAMONTAÑAS", "PARCHE", "ANILLO", "GUANTE", "CELULAR", "BASTÓN"].some(a => q.includes(a))) {
+                        const accBuscado = ["GORRA", "CASCO", "SOMBRERO", "GAFAS", "MONÓCULO", "VISOR", "MALETÍN", "TABLETA", "RELOJ", "DIADEMA", "BOINA", "PASAMONTAÑAS", "PARCHE", "ANILLO", "GUANTE", "CELULAR", "BASTÓN"].find(a => q.includes(a));
                         resp = (objetivo.accName === accBuscado) ? "SÍ." : "NO.";
                     } else { consultaValida = false; }
                 }
-                // Continentes
                 else if (q.match(/\b(EUROPA|EUROPEO|EUROPEA)\b/)) { resp = (objetivo.cont === "EUROPA") ? "SÍ." : "NO."; consultaValida = true; }
                 else if (q.match(/\b(ASIA|ASIÁTICO|ASIÁTICA)\b/)) { resp = (objetivo.cont === "ASIA") ? "SÍ." : "NO."; consultaValida = true; }
                 else if (q.match(/\b(AMÉRICA|AMERICANO|AMERICANA)\b/)) { resp = (objetivo.cont === "AMÉRICA") ? "SÍ." : "NO."; consultaValida = true; }
                 else if (q.match(/\b(OCEANÍA|OCEÁNICO|OCEÁNICA|AUSTRALIANO|AUSTRALIANA)\b/)) { resp = (objetivo.cont === "OCEANÍA") ? "SÍ." : "NO."; consultaValida = true; }
+                else if (q.match(/\b(ÁFRICA|AFRICANO|AFRICANA)\b/)) { resp = (objetivo.cont === "ÁFRICA") ? "SÍ." : "NO."; consultaValida = true; }
                 
-                // --- PAÍSES Y NACIONALIDADES (REQUERIMIENTO EXACTO) ---
                 else if (
                     (q.match(/\b(ALEMANIA|ALEMÁN|ALEMANA)\b/) && (resp = (objetivo.p === "ALEMANIA") ? "SÍ." : "NO.")) ||
                     (q.match(/\b(ESPAÑA|ESPAÑOL|ESPAÑOLA)\b/) && (resp = (objetivo.p === "ESPAÑA") ? "SÍ." : "NO.")) ||
@@ -538,18 +546,21 @@
                     (q.match(/\b(BOLIVIA|BOLIVIANO|BOLIVIANA)\b/) && (resp = (objetivo.p === "BOLIVIA") ? "SÍ." : "NO.")) ||
                     (q.match(/\b(COLOMBIA|COLOMBIANO|COLOMBIANA)\b/) && (resp = (objetivo.p === "COLOMBIA") ? "SÍ." : "NO.")) ||
                     (q.match(/\b(ECUADOR|ECUATORIANO|ECUATORIANA)\b/) && (resp = (objetivo.p === "ECUADOR") ? "SÍ." : "NO.")) ||
+                    (q.match(/\b(PERÚ|PERUANO|PERUANA)\b/) && (resp = (objetivo.p === "PERÚ") ? "SÍ." : "NO.")) ||
+                    (q.match(/\b(ARGENTINA|ARGENTINO|ARGENTINA)\b/) && (resp = (objetivo.p === "ARGENTINA") ? "SÍ." : "NO.")) ||
+                    (q.match(/\b(FRANCIA|FRANCÉS|FRANCESA)\b/) && (resp = (objetivo.p === "FRANCIA") ? "SÍ." : "NO.")) ||
+                    (q.match(/\b(INDIA|INDIO|INDIA)\b/) && (resp = (objetivo.p === "INDIA") ? "SÍ." : "NO.")) ||
+                    (q.match(/\b(EGIPTO|EGIPCIO|EGIPCIA)\b/) && (resp = (objetivo.p === "EGIPTO") ? "SÍ." : "NO.")) ||
                     (q.match(/\b(USA|ESTADOUNIDENSE|AMERICANO)\b/) && (resp = (objetivo.p === "USA") ? "SÍ." : "NO.")) ||
                     (q.match(/\b(AUSTRALIA|AUSTRALIANO|AUSTRALIANA)\b/) && (resp = (objetivo.p === "AUSTRALIA") ? "SÍ." : "NO."))
                 ) {
                     consultaValida = true;
                 }
-                // Inicial
                 else if (q.includes("INICIAL") || q.includes("EMPIEZA POR")) {
                     const letraMatch = q.match(/\b[A-Z]\b/);
                     if (letraMatch) { resp = (objetivo.n.startsWith(letraMatch[0])) ? "SÍ." : "NO."; consultaValida = true; }
                     else resp = "ESPECIFIQUE UNA LETRA.";
                 }
-                // Números (Edad/Altura)
                 else if (q.includes("EDAD") || q.includes("MIDE") || q.includes("ALTO") || q.includes("ESTATURA")) {
                     const numMatch = q.match(/\d+(\.\d+)?/);
                     if (numMatch) {
@@ -561,7 +572,6 @@
                         else resp = (Math.abs(targetVal - valNum) < 0.05) ? "SÍ." : "NO.";
                     }
                 }
-                // Otros
                 else if (q.match(/\b(HOMBRE|MASCULINO)\b/)) { resp = (objetivo.g === "MASCULINO") ? "SÍ." : "NO."; consultaValida = true; }
                 else if (q.match(/\b(MUJER|FEMENINO)\b/)) { resp = (objetivo.g === "FEMENINO") ? "SÍ." : "NO."; consultaValida = true; }
                 else if (["AZULES", "VERDES", "NEGROS", "CAFÉS", "GRISES", "MIEL"].some(c => q.includes(c))) {
