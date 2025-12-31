@@ -147,6 +147,42 @@
         }
         #overlay.active, #abort-confirm.active { display: flex; opacity: 1; }
 
+        /* --- DOSSIER DE MISIÓN (NUEVO) --- */
+        .dossier-container {
+            border: 2px solid var(--victory);
+            background: rgba(0, 50, 20, 0.3);
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+            width: 100%;
+            max-width: 400px;
+            font-family: 'Courier New', monospace;
+        }
+        .dossier-header {
+            border-bottom: 1px dashed var(--victory);
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            color: var(--victory);
+            font-weight: bold;
+            display: flex; justify-content: space-between;
+        }
+        .dossier-info p {
+            margin: 5px 0;
+            font-size: 0.85rem;
+            color: #ddd;
+        }
+        .dossier-info b { color: var(--gold); }
+        .stamp-captured {
+            color: var(--victory);
+            border: 2px solid var(--victory);
+            padding: 5px 10px;
+            font-weight: bold;
+            transform: rotate(-5deg);
+            display: inline-block;
+            margin-top: 10px;
+            font-size: 1.2rem;
+        }
+
         .machine-body {
             background: linear-gradient(145deg, #1a1a1a, #000);
             width: 100%; max-width: 900px; padding: 20px;
@@ -363,7 +399,7 @@
 
     <div id="overlay">
         <h1 id="overlay-title"></h1>
-        <p id="overlay-desc"></p>
+        <div id="overlay-desc" style="width: 100%; display: flex; justify-content: center;"></div>
         <p id="overlay-reward-msg"></p>
         <button class="btn-main" style="width: 250px;" onclick="initGame()">SIGUIENTE CASO</button>
     </div>
@@ -387,6 +423,9 @@
         const CACHE_NAME = 'bio-breach-audio-v1';
         let currentMosaicMode = 5; 
         let tempMosaicMode = 5; 
+        
+        // Objeto global de datos para acceso en cualquier parte
+        let DP = {}; 
 
         // --- SISTEMA DE CONFIGURACIÓN ---
         function openSettings() {
@@ -529,9 +568,8 @@
         let totalMoney = parseInt(localStorage.getItem('bioBreachMoney')) || 0;
         let isTyping = false;
         
-        // Variables para la nueva lógica de descarte obligatorio
-        let pendingDiscards = []; // Lista de nombres (IDs) que DEBEN ser descartados
-        let lastQueryText = "";   // Para repetir el mensaje
+        let pendingDiscards = []; 
+        let lastQueryText = "";   
 
         async function typeWriter(text, elementId, speed = 20) {
             if (isTyping) return;
@@ -614,7 +652,7 @@
             document.getElementById('case-id-display').innerText = `CASO #${Math.floor(Math.random() * 9000) + 1000}`;
             document.getElementById('case-reward-display').innerText = currentReward;
             
-            pendingDiscards = []; // Resetear lógica
+            pendingDiscards = []; 
             lastQueryText = "";
             document.getElementById('queryInput').disabled = false;
             document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA...";
@@ -630,7 +668,7 @@
 
         function generateNewSquad() {
             personas = [];
-            const DP = {
+            DP = {
                 M: [
                     "LEON", "MARC", "OTTO", "IVAN", "ERIC", "HUAN", "KURT", "NOAH", "AXEL", "SAUL", "IGOR", "LIAM", "ENZO", "HUGO", "OMAR", "LUC", "YURI", "RYAN", "FINN", "EZRA", "MILO", "IAN", "ALAN", "KAI", "BORIS",
                     "OSCAR", "VICTOR", "FELIX", "DANTE", "BRUNO", "KALEB", "SILAS", "ARLO", "THEO", "REMY", "ZAYN", "LUCA", "NICO", "JUDE", "ELIAS", "SETH", "KANE", "AARON", "SIMON", "RAUL", "LEVI", "TOBIAS", "GAGE", "XANDER", "JACE",
@@ -707,26 +745,19 @@
                 card.onclick = () => { 
                     if(gameActive) { 
                         const cardEl = document.getElementById(`card-${p.n}`);
-                        // Si ya está descartada visualmente, no hacer nada
                         if(cardEl.classList.contains('discarded')) return;
 
-                        // --- NUEVA LÓGICA DE CLIC ---
-                        // Si hay descartes pendientes (fase bloqueada)
                         if (pendingDiscards.length > 0) {
-                            // Verificamos si este ID está en la lista de los que DEBEN irse
                             if (pendingDiscards.includes(p.n)) {
                                 playSFX('discard');
                                 discardVisual(cardEl);
                                 
-                                // Eliminar de la lista de pendientes
                                 pendingDiscards = pendingDiscards.filter(id => id !== p.n);
                                 
-                                // Actualizar terminal con cuenta regresiva
                                 if (pendingDiscards.length > 0) {
                                     document.getElementById('out').innerHTML = `> ${lastQueryText}<br><span style="color:var(--hazard)">OBJETIVOS RESTANTES: ${pendingDiscards.length}</span>`;
                                 } else {
-                                    // Se acabaron los descartes obligatorios, desbloquear
-                                    playSFX('click'); // Sonido de éxito al liberar
+                                    playSFX('click'); 
                                     document.getElementById('out').innerHTML = `> ${lastQueryText}<br><span style="color:var(--terminal-green)">DESCARTE COMPLETADO. SISTEMA HABILITADO.</span>`;
                                     document.getElementById('queryInput').disabled = false;
                                     document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA...";
@@ -734,19 +765,14 @@
                                 }
                                 checkStatus();
                             } else {
-                                // El usuario intentó descartar a alguien que NO cumple el criterio de eliminación
                                 playSFX('error');
                                 document.getElementById('out').style.color = "var(--hazard)";
                                 document.getElementById('out').innerHTML = `> ERROR DE PROTOCOLO.<br>EL SUJETO '${p.n}' COINCIDE CON LA RESPUESTA OBTENIDA.<br>NO LO DESCARTES.`;
                             }
                         } else {
-                            // Fase normal (antes de la primera pregunta o si el juego permitiera libre albedrío, 
-                            // pero con este sistema, el clic libre está básicamente restringido a menos que modifiquemos eso).
-                            // Para mantener la rigurosidad: Si no hay pendingDiscards, significa que o no ha preguntado
-                            // o ya limpió todo. Si ya limpió todo, ¿puede descartar libremente? 
-                            // La solicitud dice: "hasta no descartarlos todos no te dejaría volver a preguntar".
-                            // Asumo que el clic libre sin pregunta es error.
+                            // --- ERROR EN ROJO SOLICITADO ---
                             playSFX('error');
+                            document.getElementById('out').style.color = "var(--hazard)";
                             typeWriter("ERROR: REALICE UNA CONSULTA PARA IDENTIFICAR OBJETIVOS DESCARTABLES.", "out", 10);
                         }
                     } 
@@ -767,13 +793,10 @@
         }
 
         function checkStatus() {
-            // Contamos los que NO tienen la clase discarded
             const activeCards = Array.from(document.querySelectorAll('.suspect-card')).filter(c => !c.classList.contains('discarded'));
             
-            // Si el objetivo fue descartado (tiene la clase) -> Perder
             if (document.getElementById(`card-${objetivo.n}`).classList.contains('discarded')) return endGame(false);
             
-            // Si solo queda 1 y es el objetivo -> Ganar
             if (activeCards.length === 1 && activeCards[0].id === `card-${objetivo.n}`) endGame(true);
         }
 
@@ -782,19 +805,42 @@
             document.getElementById('main-ui').classList.add('blur-effect');
             document.getElementById('overlay').classList.add('active');
             const rewardMsg = document.getElementById('overlay-reward-msg');
+            const desc = document.getElementById('overlay-desc');
+            
             if (win) { 
                 playSFX('win', true); 
                 totalMoney += currentReward;
                 document.getElementById('overlay-title').innerText = "OBJETIVO LOCALIZADO"; 
                 document.getElementById('overlay-title').style.color = "var(--victory)";
                 rewardMsg.innerText = `+${currentReward} S/ TRANSFERIDOS`;
+                
+                // --- INFORME DE MISIÓN DETALLADO ---
+                desc.innerHTML = `
+                    <div class="dossier-container">
+                        <div class="dossier-header">
+                            <span>REGISTRO CRIMINAL</span>
+                            <span>[C-505]</span>
+                        </div>
+                        <div class="dossier-info">
+                            <p><b>SUJETO:</b> ${objetivo.n}</p>
+                            <p><b>ORIGEN:</b> ${objetivo.p} (${objetivo.cont})</p>
+                            <p><b>PERFIL:</b> ${objetivo.g} / ${objetivo.edad} AÑOS</p>
+                            <p><b>RASGOS:</b> ${objetivo.t} / OJOS ${objetivo.o}</p>
+                            <p><b>ESTATURA:</b> ${objetivo.altura} METROS</p>
+                            <p><b>ACCESORIO DETECTADO:</b> ${objetivo.accName}</p>
+                            <div class="stamp-captured">CAPTURED</div>
+                        </div>
+                    </div>
+                `;
+
             } else { 
                 playSFX('fail', true);
                 document.getElementById('overlay-title').innerText = "OBJETIVO PERDIDO"; 
                 document.getElementById('overlay-title').style.color = "var(--hazard)";
                 rewardMsg.innerText = "CONTRATO CANCELADO";
+                // Informe simple para derrota
+                desc.innerHTML = `<p style="color:#aaa; font-size:1.2rem;">IDENTIDAD: <span style="color:var(--gold);">${objetivo.n}</span></p>`;
             }
-            document.getElementById('overlay-desc').innerText = `IDENTIDAD: ${objetivo.n}`;
             updateWalletUI();
         }
 
@@ -802,7 +848,7 @@
             if (e.key === 'Enter' && !isTyping) {
                 const q = this.value.toUpperCase();
                 this.value = '';
-                let checkFunc = null; // Función que devuelve True si la persona cumple la condición de la pregunta
+                let checkFunc = null; 
                 let validQuery = false;
 
                 // --- 1. DEFINICIÓN DE CRITERIOS (checkFunc) ---
@@ -824,44 +870,55 @@
                 else if (q.match(/\b(OCEANÍA|OCEÁNICO|OCEÁNICA)\b/)) { checkFunc = p => p.cont === "OCEANÍA"; validQuery = true; }
                 else if (q.match(/\b(ÁFRICA|AFRICANO|AFRICANA)\b/)) { checkFunc = p => p.cont === "ÁFRICA"; validQuery = true; }
                 
-                // Paises específicos
-                else if (q.match(/\b(ALEMANIA|ALEMÁN)\b/)) { checkFunc = p => p.p === "ALEMANIA"; validQuery = true; }
-                else if (q.match(/\b(ESPAÑA|ESPAÑOL)\b/)) { checkFunc = p => p.p === "ESPAÑA"; validQuery = true; }
-                else if (q.match(/\b(FRANCIA|FRANCÉS)\b/)) { checkFunc = p => p.p === "FRANCIA"; validQuery = true; }
-                else if (q.match(/\b(ITALIA|ITALIANO)\b/)) { checkFunc = p => p.p === "ITALIA"; validQuery = true; }
-                else if (q.match(/\b(RUSIA|RUSO)\b/)) { checkFunc = p => p.p === "RUSIA"; validQuery = true; }
-                else if (q.match(/\b(CHINA|CHINO)\b/)) { checkFunc = p => p.p === "CHINA"; validQuery = true; }
-                else if (q.match(/\b(JAPÓN|JAPONÉS)\b/)) { checkFunc = p => p.p === "JAPÓN"; validQuery = true; }
-                // (Se pueden añadir más países aquí siguiendo el patrón)
-                
-                else if (q.includes("INICIAL") || q.includes("EMPIEZA")) {
-                    const letra = q.match(/\b[A-Z]\b/);
-                    if (letra) { checkFunc = p => p.n.startsWith(letra[0]); validQuery = true; }
-                    else { typeWriter("ESPECIFIQUE UNA LETRA.", "out", 10); return; }
-                }
-                
-                else if (q.includes("EDAD") || q.includes("MIDE") || q.includes("ALTO")) {
-                    const numMatch = q.match(/\d+(\.\d+)?/);
-                    if (numMatch) {
-                        validQuery = true;
-                        const val = parseFloat(numMatch[0]);
-                        const isAge = q.includes("EDAD");
-                        if (q.includes("MAYOR") || q.includes("MÁS")) checkFunc = p => (isAge ? p.edad : parseFloat(p.altura)) > val;
-                        else if (q.includes("MENOR") || q.includes("MENOS")) checkFunc = p => (isAge ? p.edad : parseFloat(p.altura)) < val;
-                        else checkFunc = p => Math.abs((isAge ? p.edad : parseFloat(p.altura)) - val) < 0.05;
-                    }
-                }
-                else if (q.match(/\b(HOMBRE|MASCULINO)\b/)) { checkFunc = p => p.g === "MASCULINO"; validQuery = true; }
-                else if (q.match(/\b(MUJER|FEMENINO)\b/)) { checkFunc = p => p.g === "FEMENINO"; validQuery = true; }
-                
                 else {
-                    // Colores y Tez
-                    const colors = ["AZULES", "VERDES", "NEGROS", "CAFÉS", "GRISES", "MIEL"];
-                    const skins = ["PÁLIDA", "OLIVA", "BRONCE", "OSCURA", "ÉBANO"];
-                    const cMatch = colors.find(c => q.includes(c));
-                    const sMatch = skins.find(s => q.includes(s));
-                    if(cMatch) { checkFunc = p => p.o === cMatch; validQuery = true; }
-                    else if(sMatch) { checkFunc = p => p.t === sMatch; validQuery = true; }
+                    // --- RECONOCIMIENTO DINÁMICO DE PAÍSES Y NACIONALIDADES ---
+                    // Mapeo manual de gentilicios para los países existentes en DP.P
+                    const demonyms = {
+                        "ALEMANIA": "ALEMÁN", "ESPAÑA": "ESPAÑOL", "FRANCIA": "FRANCÉS", "ITALIA": "ITALIANO", "SUIZA": "SUIZO", "RUSIA": "RUSO",
+                        "CHINA": "CHINO", "JAPÓN": "JAPONÉS", "COREA": "COREANO", "INDIA": "INDIO", "TAILANDIA": "TAILANDÉS", "VIETNAM": "VIETNAMITA", 
+                        "MÉXICO": "MEXICANO", "BRASIL": "BRASILEÑO", "USA": "AMERICANO", "BOLIVIA": "BOLIVIANO", "COLOMBIA": "COLOMBIANO", "ECUADOR": "ECUATORIANO",
+                        "PERÚ": "PERUANO", "ARGENTINA": "ARGENTINO", "CANADÁ": "CANADIENSE",
+                        "AUSTRALIA": "AUSTRALIANO", "NUEVA ZELANDA": "NEOZELANDÉS",
+                        "EGIPTO": "EGIPCIO", "SUDAFRICA": "SUDAFRICANO", "NIGERIA": "NIGERIANO", "MARRUECOS": "MARROQUÍ"
+                    };
+
+                    const foundCountry = DP.P.find(c => {
+                        // Verifica nombre exacto (ej: MARRUECOS) O si el input contiene el gentilicio (ej: MARROQUÍ)
+                        const demo = demonyms[c.n];
+                        return q.includes(c.n) || (demo && q.includes(demo));
+                    });
+
+                    if (foundCountry) {
+                        checkFunc = p => p.p === foundCountry.n;
+                        validQuery = true;
+                    } 
+                    // Si no es país, seguimos comprobando otros atributos...
+                    else if (q.includes("INICIAL") || q.includes("EMPIEZA")) {
+                        const letra = q.match(/\b[A-Z]\b/);
+                        if (letra) { checkFunc = p => p.n.startsWith(letra[0]); validQuery = true; }
+                        else { typeWriter("ESPECIFIQUE UNA LETRA.", "out", 10); return; }
+                    }
+                    else if (q.includes("EDAD") || q.includes("MIDE") || q.includes("ALTO")) {
+                        const numMatch = q.match(/\d+(\.\d+)?/);
+                        if (numMatch) {
+                            validQuery = true;
+                            const val = parseFloat(numMatch[0]);
+                            const isAge = q.includes("EDAD");
+                            if (q.includes("MAYOR") || q.includes("MÁS")) checkFunc = p => (isAge ? p.edad : parseFloat(p.altura)) > val;
+                            else if (q.includes("MENOR") || q.includes("MENOS")) checkFunc = p => (isAge ? p.edad : parseFloat(p.altura)) < val;
+                            else checkFunc = p => Math.abs((isAge ? p.edad : parseFloat(p.altura)) - val) < 0.05;
+                        }
+                    }
+                    else if (q.match(/\b(HOMBRE|MASCULINO)\b/)) { checkFunc = p => p.g === "MASCULINO"; validQuery = true; }
+                    else if (q.match(/\b(MUJER|FEMENINO)\b/)) { checkFunc = p => p.g === "FEMENINO"; validQuery = true; }
+                    else {
+                        const colors = ["AZULES", "VERDES", "NEGROS", "CAFÉS", "GRISES", "MIEL"];
+                        const skins = ["PÁLIDA", "OLIVA", "BRONCE", "OSCURA", "ÉBANO"];
+                        const cMatch = colors.find(c => q.includes(c));
+                        const sMatch = skins.find(s => q.includes(s));
+                        if(cMatch) { checkFunc = p => p.o === cMatch; validQuery = true; }
+                        else if(sMatch) { checkFunc = p => p.t === sMatch; validQuery = true; }
+                    }
                 }
 
                 // --- 2. PROCESAMIENTO ---
@@ -869,21 +926,16 @@
                     playSFX('click');
                     document.getElementById('out').style.color = "var(--terminal-green)";
                     
-                    // Verificamos si el OBJETIVO cumple la condición
                     const targetHasTrait = checkFunc(objetivo);
                     const respText = targetHasTrait ? "SÍ." : "NO.";
                     
-                    // Calculamos QUIÉNES deben ser eliminados
-                    // Si el objetivo TIENE el rasgo, eliminamos a los que NO lo tienen.
-                    // Si el objetivo NO tiene el rasgo, eliminamos a los que SÍ lo tienen.
-                    // Solo consideramos a los que aún están en juego (no tienen la clase 'discarded')
                     const cards = document.querySelectorAll('.suspect-card');
                     pendingDiscards = personas.filter(p => {
                         const card = document.getElementById('card-' + p.n);
-                        if (card.classList.contains('discarded')) return false; // Ya está fuera
+                        if (card.classList.contains('discarded')) return false; 
                         
                         const suspectHasTrait = checkFunc(p);
-                        return suspectHasTrait !== targetHasTrait; // Devuelve true si es diferente al objetivo (debe ser eliminado)
+                        return suspectHasTrait !== targetHasTrait; 
                     }).map(p => p.n);
 
                     lastQueryText = `CONSULTA: ${q}<br>RESPUESTA: ${respText}`;
@@ -894,7 +946,6 @@
                         document.getElementById('queryInput').disabled = true;
                         document.getElementById('queryInput').placeholder = "!! DESCARTE REQUERIDO !!";
                     } else {
-                        // Caso raro: La pregunta no ayuda a descartar a nadie (todos coinciden o nadie coincide)
                         typeWriter(`${lastQueryText}<br>NINGÚN DESCARTE DISPONIBLE CON ESTA INFORMACIÓN.`, "out", 15);
                     }
 
