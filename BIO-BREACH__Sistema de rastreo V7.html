@@ -157,13 +157,13 @@
         .board-grid.mode-5 {
             grid-template-columns: repeat(5, 1fr);
             min-height: 500px;
-            overflow: visible; /* Scroll de página */
+            overflow: visible; 
         }
         .board-grid.mode-5 .suspect-card {
             height: 135px;
         }
         .board-grid.mode-5 .card-body {
-            font-size: 0.4rem; /* Ajuste fino para evitar desborde */
+            font-size: 0.4rem; 
             line-height: 1.3;
         }
         .board-grid.mode-5 .suspect-card.discarded {
@@ -174,8 +174,8 @@
         /* CONFIGURACIÓN 3x3 (ZOOM MEDIO - RELLENO) */
         .board-grid.mode-3 {
             grid-template-columns: repeat(3, 1fr);
-            height: 600px; /* Altura fija para el contenedor */
-            overflow-y: auto; /* Scroll interno */
+            height: 600px; 
+            overflow-y: auto; 
             gap: 15px;
             padding-right: 5px;
         }
@@ -188,15 +188,13 @@
         }
         .board-grid.mode-3 .card-header { font-size: 1rem; margin-bottom: 8px; padding-top: 5px; }
         .board-grid.mode-3 .card-body { font-size: 0.7rem; line-height: 1.6; }
-        
-        /* En 2x2 y 3x3, 'discarded' significa display:none para que el grid se rellene */
         .board-grid.mode-3 .suspect-card.discarded { display: none; }
 
         /* CONFIGURACIÓN 2x2 (ZOOM MÁXIMO - RELLENO) */
         .board-grid.mode-2 {
             grid-template-columns: repeat(2, 1fr);
-            height: 600px; /* Altura fija */
-            overflow-y: auto; /* Scroll interno */
+            height: 600px; 
+            overflow-y: auto; 
             gap: 20px;
             padding-right: 5px;
         }
@@ -216,7 +214,7 @@
             padding: 8px 4px 4px 4px; cursor: pointer;
             transition: all 0.3s ease; position: relative;
             box-sizing: border-box;
-            overflow: hidden; /* Evita que contenido salga */
+            overflow: hidden; 
         }
         .gender-ribbon { position: absolute; top: 0; left: 0; width: 100%; height: 3px; }
         .ribbon-male { background: var(--ribbon-male); }
@@ -294,11 +292,11 @@
             <h2 style="color: var(--gold); margin-top: 0;">MANUAL DE CAMPO</h2>
             <div class="step">
                 <b>1. FILTRADO BIOMÉTRICO</b>
-                Pregunta por los datos que se te otorgan en las tarjetas de los sospechosos, ejemplo: ¿Tiene ojos azules?
+                Pregunta por los datos que se te otorgan. Cada pregunta te permite descartar hasta un MÁXIMO de 3 sospechosos relacionados.
             </div>
             <div class="step">
-                <b>2. ELIMINACIÓN</b>
-                Haz clic en las tarjetas de los sospechosos para descartarlos en base a la respuesta que te dio la consola.
+                <b>2. REGLA DE COHERENCIA</b>
+                Solo puedes descartar sospechosos que no cumplan con la respuesta de la última consulta.
             </div>
             <div class="step">
                 <b>3. OBJETIVO ÚNICO</b>
@@ -335,6 +333,7 @@
         <div class="board-grid mode-5" id="board"></div>
         
         <div class="terminal-zone">
+            <div id="limit-indicator" style="font-size: 0.6rem; color: var(--gold); margin-bottom: 5px; opacity: 0.7;">DESCARTES DISPONIBLES: 0/3</div>
             <input type="text" id="queryInput" autocomplete="off" placeholder="INTERROGAR SISTEMA (Accesorio mano/cabeza/ojos, País, Inicial)...">
             <div class="output" id="out">> AGUARDANDO COMANDOS...</div>
         </div>
@@ -343,20 +342,19 @@
 
     <script>
         const CACHE_NAME = 'bio-breach-audio-v1';
-        let currentMosaicMode = 5; // Default 5x5
-        let tempMosaicMode = 5; // Para la selección en menú
+        let currentMosaicMode = 5; 
+        let tempMosaicMode = 5; 
 
         // --- SISTEMA DE CONFIGURACIÓN ---
         function openSettings() {
             playSFX('click');
             document.getElementById('settings-modal').style.display = 'flex';
-            selectMosaic(currentMosaicMode); // Resaltar el actual
+            selectMosaic(currentMosaicMode); 
         }
 
         function selectMosaic(mode) {
             playSFX('click');
             tempMosaicMode = mode;
-            // Visual feedback
             document.querySelectorAll('.mosaic-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`btn-mode-${mode}`).classList.add('active');
             
@@ -392,7 +390,6 @@
                         currentMosaicMode = newMode;
                         updateBoardClass();
                         loading.style.display = 'none';
-                        // Si estamos en juego, redibujamos
                         if(gameActive) renderBoard(); 
                     }, 500);
                 }
@@ -401,11 +398,9 @@
 
         function updateBoardClass() {
             const board = document.getElementById('board');
-            board.className = 'board-grid'; // Reset
+            board.className = 'board-grid'; 
             board.classList.add(`mode-${currentMosaicMode}`);
         }
-
-        // --- FIN SISTEMA CONFIGURACIÓN ---
         
         async function preloadAssets() {
             const statusEl = document.getElementById('preload-status');
@@ -433,7 +428,7 @@
 
         window.addEventListener('load', () => {
             preloadAssets();
-            updateBoardClass(); // Asegura clase inicial
+            updateBoardClass(); 
         });
 
         const AUDIO_CONFIG = {
@@ -459,29 +454,16 @@
 
         async function playSFX(key, interrupt = false) {
             if (!SFX_CACHE[key]) return;
-            
             if (interrupt || key === 'error' || key === 'fail' || key === 'win') {
-                activeSounds.forEach(s => {
-                    s.pause();
-                    s.currentTime = 0;
-                });
+                activeSounds.forEach(s => { s.pause(); s.currentTime = 0; });
                 activeSounds = [];
             }
-
             const sound = SFX_CACHE[key].cloneNode();
             sound.volume = AUDIO_CONFIG[key].vol;
-            
             if (key === 'discard') { sound.currentTime = 0.05; }
             activeSounds.push(sound);
-            sound.onended = () => {
-                activeSounds = activeSounds.filter(s => s !== sound);
-            };
-
-            try {
-                await sound.play();
-            } catch (e) {
-                console.log("Audio trigger");
-            }
+            sound.onended = () => { activeSounds = activeSounds.filter(s => s !== sound); };
+            try { await sound.play(); } catch (e) {}
         }
 
         let personas = [], objetivo = null, gameActive = false;
@@ -490,6 +472,10 @@
         let consultaRealizada = false;
         let mensajeDesbloqueoMostrado = false;
         let isTyping = false;
+
+        // NUEVAS VARIABLES DE CONTROL
+        let descartesUsados = 0;
+        let lastQueryType = null; // { category: 'eyes', value: 'AZULES', response: 'SÍ' }
 
         async function typeWriter(text, elementId, speed = 20) {
             if (isTyping) return;
@@ -576,50 +562,30 @@
             gameActive = true;
             consultaRealizada = false;
             mensajeDesbloqueoMostrado = false;
+            descartesUsados = 0;
+            lastQueryType = null;
+            updateLimitUI();
             document.getElementById('queryInput').disabled = false;
             typeWriter("ESCANEO FINALIZADO. REALICE UNA CONSULTA PARA HABILITAR DESCARTES.", "out", 15);
             renderBoard();
             updateWalletUI();
         }
 
+        function updateLimitUI() {
+            const indicator = document.getElementById('limit-indicator');
+            indicator.innerText = `DESCARTES DISPONIBLES: ${descartesUsados}/3`;
+            indicator.style.color = descartesUsados >= 3 ? "var(--hazard)" : "var(--gold)";
+        }
+
         function generateNewSquad() {
             personas = [];
             const DP = {
-                M: [
-                    "LEON", "MARC", "OTTO", "IVAN", "ERIC", "HUAN", "KURT", "NOAH", "AXEL", "SAUL", "IGOR", "LIAM", "ENZO", "HUGO", "OMAR", "LUC", "YURI", "RYAN", "FINN", "EZRA", "MILO", "IAN", "ALAN", "KAI", "BORIS",
-                    "OSCAR", "VICTOR", "FELIX", "DANTE", "BRUNO", "KALEB", "SILAS", "ARLO", "THEO", "REMY", "ZAYN", "LUCA", "NICO", "JUDE", "ELIAS", "SETH", "KANE", "AARON", "SIMON", "RAUL", "LEVI", "TOBIAS", "GAGE", "XANDER", "JACE",
-                    "KAREM", "NASH", "ZION", "COLE", "BEAU", "REID", "KNOX", "RHYS", "OTIS", "MILO", "ARLO", "EZRA", "HUGO", "FELIX", "JUDE", "LUCA", "THEO", "SILAS", "KAI", "ENZO", "AXEL", "NOAH", "OTTO", "IVAN",
-                    "YOSEF", "MALIK", "SAID", "OMAR", "AMIR", "ZAYD", "HAMZA", "TARIQ", "KHALIL", "IDRIS", "HASSAN", "RAYAN", "SAMI", "KARIM", "ADAM", "NOAH", "LIAM", "ERIC", "MARC", "LEON", "HUAN", "KURT", "IGOR", "LUC", "YURI",
-                    "RYAN", "ALAN", "BORIS", "OSCAR", "VICTOR", "DANTE", "BRUNO", "KALEB", "REMY", "ZAYN", "NICO", "ELIAS", "SETH", "KANE", "AARON", "SIMON", "RAUL", "LEVI", "TOBIAS", "GAGE", "XANDER", "JACE", "KAREN", "NASH", "ZION",
-                    "COLE", "BEAU", "REID", "KNOX", "RHYS", "OTIS", "ALEX", "BLAKE", "CALEB", "DYLAN", "ETHAN", "FLYNN", "GRANT", "HENRY", "ISAAC", "JACK", "KYLE", "LUKE", "MAX", "NATE", "OWEN", "PIKE", "QUINN", "RILEY", "SEAN",
-                    "TATE", "URIE", "VANCE", "WADE", "XAVI", "YORK", "ZANE", "ALDO", "BART", "CARL", "DIRK", "EMIL", "FRANZ", "GUST", "HANS", "IVAR", "JENS", "KARL", "LARS", "MADS", "NILS", "OLAF", "PIET", "ROLF", "STIG",
-                    "THOR", "ULF", "VERN", "WOLF", "YENS", "ZOLT", "ANTON", "BORIS", "CYRIL", "DIMITRI", "EVAN", "FEDOR", "GREG", "IVAN", "IGOR", "JAN", "KONRAD", "LEV", "MIKHAIL", "NIKOLAI", "OLEG", "PAVEL", "SERGEI", "VIKTOR", "YURI",
-                    "ZINO", "ANDRE", "BLAISE", "CLAUDE", "DIDIER", "ETIENNE", "FABIEN", "OSVALDO", "HENRI", "ISAAC", "JEAN", "LUC", "MARC", "NOEL", "OLIVER", "PIERRE", "REMY", "SERGE", "THIERRY", "URBAIN", "VICTOR", "YVES", "ZEPHYR"
-                ],
-                F: [
-                    "MIA", "LARA", "YUNA", "OLGA", "ADRI", "ZOE", "INÉS", "KIRA", "EMMA", "RUTH", "SARA", "LUNA", "VERA", "NORA", "MAYA", "LEA", "IRIS", "ALBA", "GALA", "JUNE", "CLEO", "ANA", "EVA", "LISA",
-                    "NINA", "JADE", "ROSE", "MILA", "RUBY", "EDEN", "ISLA", "LYRA", "MAIA", "OPAL", "FAYE", "SKYE", "TESS", "WILLA", "ZARA", "ALEXA", "BELLA", "CHLOE", "DIANA", "ELSA", "FREYA", "HOPE", "IVY", "KYRA", "LANA", "MYRA",
-                    "AMARA", "BELLE", "CORA", "DAISY", "ELIZA", "FLORA", "GRETA", "HAZEL", "INDIE", "JUNE", "KEIRA", "LOLA", "MABEL", "NELL", "OLIVE", "PEARL", "QUINN", "RENA", "SADIE", "THEA", "UNA", "VADA", "WREN", "XENA", "YARA",
-                    "ZELDA", "ALMA", "BONNIE", "SOLANGE", "DORA", "EDNA", "FAITH", "GIA", "HOLLY", "IDA", "JOY", "KAY", "LILY", "MINA", "NELL", "ORA", "PIPA", "ROSA", "SHEA", "TARA", "UTAH", "VIDA", "WILD", "XIA", "YOLI",
-                    "ZOEY", "ANNA", "BETH", "CLARA", "DINA", "ELLA", "FAYE", "GWEN", "HEIDI", "IRIS", "JANE", "KATE", "LUCY", "MARY", "NELL", "OLGA", "POLY", "RUTH", "SARA", "TESS", "UMA", "VIV", "WYN", "XIA", "YARA", "ZITA",
-                    "ADELE", "BINA", "COCO", "DANA", "ENID", "FIFI", "GIGI", "HOPE", "INES", "JANA", "KIKI", "LULU", "MIMI", "NANA", "ORLY", "PEPE", "QUEE", "RIRI", "SISI", "TITI", "UVEE", "VIVI", "ISABEL", "XIXI", "YAYA", "ZIZI",
-                    "ALICE", "BIANCA", "CELIA", "DORIS", "ELENA", "FIONA", "GRACE", "HELEN", "IRENE", "JULIA", "KAREN", "LINDA", "MARIA", "NAOMI", "PAULA", "ROSE", "SONIA", "TANIA", "URSULA", "VAL", "WANDA", "XENIA", "YVON", "ZARA",
-                    "AUREA", "BRISA", "CIELO", "DALIA", "ESTER", "FLOR", "GEMMA", "HILDA", "IRMA", "JUANA", "KATIA", "LIDIA", "MARTA", "NURIA", "OLIVIA", "PILAR", "RAQUEL", "SILVIA", "TERE", "VICKY", "XEMA", "YIZA", "ZENIA", "AGATHA"
-                ],
-                P: [
-                    {n: "ALEMANIA", c: "EUROPA"}, {n: "ESPAÑA", c: "EUROPA"}, {n: "ITALIA", c: "EUROPA"}, {n: "FRANCIA", c: "EUROPA"}, {n: "SUIZA", c: "EUROPA"}, {n: "RUSIA", c: "EUROPA"},
-                    {n: "JAPÓN", c: "ASIA"}, {n: "CHINA", c: "ASIA"}, {n: "COREA", c: "ASIA"}, {n: "INDIA", c: "ASIA"}, {n: "TAILANDIA", c: "ASIA"}, {n: "VIETNAM", c: "ASIA"},
-                    {n: "MÉXICO", c: "AMÉRICA"}, {n: "BRASIL", c: "AMÉRICA"}, {n: "USA", c: "AMÉRICA"}, {n: "BOLIVIA", c: "AMÉRICA"}, {n: "COLOMBIA", c: "AMÉRICA"}, {n: "ECUADOR", c: "AMÉRICA"}, {n: "PERÚ", c: "AMÉRICA"}, {n: "ARGENTINA", c: "AMÉRICA"}, {n: "CANADÁ", c: "AMÉRICA"},
-                    {n: "AUSTRALIA", c: "OCEANÍA"}, {n: "NUEVA ZELANDA", c: "OCEANÍA"},
-                    {n: "EGIPTO", c: "ÁFRICA"}, {n: "SUDAFRICA", c: "ÁFRICA"}, {n: "NIGERIA", c: "ÁFRICA"}, {n: "MARRUECOS", c: "ÁFRICA"}
-                ],
+                M: ["LEON", "MARC", "OTTO", "IVAN", "ERIC", "HUAN", "KURT", "NOAH", "AXEL", "SAUL", "IGOR", "LIAM", "ENZO", "HUGO", "OMAR", "LUC", "YURI", "RYAN", "FINN", "EZRA", "MILO", "IAN", "ALAN", "KAI", "BORIS", "OSCAR", "VICTOR", "FELIX", "DANTE", "BRUNO", "KALEB", "SILAS", "ARLO", "THEO", "REMY", "ZAYN", "LUCA", "NICO", "JUDE", "ELIAS", "SETH", "KANE", "AARON", "SIMON", "RAUL", "LEVI", "TOBIAS", "GAGE", "XANDER", "JACE", "KAREM", "NASH", "ZION", "COLE", "BEAU", "REID", "KNOX", "RHYS", "OTIS", "MILO", "ARLO", "EZRA", "HUGO", "FELIX", "JUDE", "LUCA", "THEO", "SILAS", "KAI", "ENZO", "AXEL", "NOAH", "OTTO", "IVAN", "YOSEF", "MALIK", "SAID", "OMAR", "AMIR", "ZAYD", "HAMZA", "TARIQ", "KHALIL", "IDRIS", "HASSAN", "RAYAN", "SAMI", "KARIM", "ADAM", "NOAH", "LIAM", "ERIC", "MARC", "LEON", "HUAN", "KURT", "IGOR", "LUC", "YURI", "RYAN", "ALAN", "BORIS", "OSCAR", "VICTOR", "DANTE", "BRUNO", "KALEB", "REMY", "ZAYN", "NICO", "ELIAS", "SETH", "KANE", "AARON", "SIMON", "RAUL", "LEVI", "TOBIAS", "GAGE", "XANDER", "JACE", "KAREN", "NASH", "ZION", "COLE", "BEAU", "REID", "KNOX", "RHYS", "OTIS", "ALEX", "BLAKE", "CALEB", "DYLAN", "ETHAN", "FLYNN", "GRANT", "HENRY", "ISAAC", "JACK", "KYLE", "LUKE", "MAX", "NATE", "OWEN", "PIKE", "QUINN", "RILEY", "SEAN", "TATE", "URIE", "VANCE", "WADE", "XAVI", "YORK", "ZANE", "ALDO", "BART", "CARL", "DIRK", "EMIL", "FRANZ", "GUST", "HANS", "IVAR", "JENS", "KARL", "LARS", "MADS", "NILS", "OLAF", "PIET", "ROLF", "STIG", "THOR", "ULF", "VERN", "WOLF", "YENS", "ZOLT", "ANTON", "BORIS", "CYRIL", "DIMITRI", "EVAN", "FEDOR", "GREG", "IVAN", "IGOR", "JAN", "KONRAD", "LEV", "MIKHAIL", "NIKOLAI", "OLEG", "PAVEL", "SERGEI", "VIKTOR", "YURI", "ZINO", "ANDRE", "BLAISE", "CLAUDE", "DIDIER", "ETIENNE", "FABIEN", "OSVALDO", "HENRI", "ISAAC", "JEAN", "LUC", "MARC", "NOEL", "OLIVER", "PIERRE", "REMY", "SERGE", "THIERRY", "URBAIN", "VICTOR", "YVES", "ZEPHYR"],
+                F: ["MIA", "LARA", "YUNA", "OLGA", "ADRI", "ZOE", "INÉS", "KIRA", "EMMA", "RUTH", "SARA", "LUNA", "VERA", "NORA", "MAYA", "LEA", "IRIS", "ALBA", "GALA", "JUNE", "CLEO", "ANA", "EVA", "LISA", "NINA", "JADE", "ROSE", "MILA", "RUBY", "EDEN", "ISLA", "LYRA", "MAIA", "OPAL", "FAYE", "SKYE", "TESS", "WILLA", "ZARA", "ALEXA", "BELLA", "CHLOE", "DIANA", "ELSA", "FREYA", "HOPE", "IVY", "KYRA", "LANA", "MYRA", "AMARA", "BELLE", "CORA", "DAISY", "ELIZA", "FLORA", "GRETA", "HAZEL", "INDIE", "JUNE", "KEIRA", "LOLA", "MABEL", "NELL", "OLIVE", "PEARL", "QUINN", "RENA", "SADIE", "THEA", "UNA", "VADA", "WREN", "XENA", "YARA", "ZELDA", "ALMA", "BONNIE", "SOLANGE", "DORA", "EDNA", "FAITH", "GIA", "HOLLY", "IDA", "JOY", "KAY", "LILY", "MINA", "NELL", "ORA", "PIPA", "ROSA", "SHEA", "TARA", "UTAH", "VIDA", "WILD", "XIA", "YOLI", "ZOEY", "ANNA", "BETH", "CLARA", "DINA", "ELLA", "FAYE", "GWEN", "HEIDI", "IRIS", "JANE", "KATE", "LUCY", "MARY", "NELL", "OLGA", "POLY", "RUTH", "SARA", "TESS", "UMA", "VIV", "WYN", "XIA", "YARA", "ZITA", "ADELE", "BINA", "COCO", "DANA", "ENID", "FIFI", "GIGI", "HOPE", "INES", "JANA", "KIKI", "LULU", "MIMI", "NANA", "ORLY", "PEPE", "QUEE", "RIRI", "SISI", "TITI", "UVEE", "VIVI", "ISABEL", "XIXI", "YAYA", "ZIZI", "ALICE", "BIANCA", "CELIA", "DORIS", "ELENA", "FIONA", "GRACE", "HELEN", "IRENE", "JULIA", "KAREN", "LINDA", "MARIA", "NAOMI", "PAULA", "ROSE", "SONIA", "TANIA", "URSULA", "VAL", "WANDA", "XENIA", "YVON", "ZARA", "AUREA", "BRISA", "CIELO", "DALIA", "ESTER", "FLOR", "GEMMA", "HILDA", "IRMA", "JUANA", "KATIA", "LIDIA", "MARTA", "NURIA", "OLIVIA", "PILAR", "RAQUEL", "SILVIA", "TERE", "VICKY", "XEMA", "YIZA", "ZENIA", "AGATHA"],
+                P: [{n: "ALEMANIA", c: "EUROPA"}, {n: "ESPAÑA", c: "EUROPA"}, {n: "ITALIA", c: "EUROPA"}, {n: "FRANCIA", c: "EUROPA"}, {n: "SUIZA", c: "EUROPA"}, {n: "RUSIA", c: "EUROPA"}, {n: "JAPÓN", c: "ASIA"}, {n: "CHINA", c: "ASIA"}, {n: "COREA", c: "ASIA"}, {n: "INDIA", c: "ASIA"}, {n: "TAILANDIA", c: "ASIA"}, {n: "VIETNAM", c: "ASIA"}, {n: "MÉXICO", c: "AMÉRICA"}, {n: "BRASIL", c: "AMÉRICA"}, {n: "USA", c: "AMÉRICA"}, {n: "BOLIVIA", c: "AMÉRICA"}, {n: "COLOMBIA", c: "AMÉRICA"}, {n: "ECUADOR", c: "AMÉRICA"}, {n: "PERÚ", c: "AMÉRICA"}, {n: "ARGENTINA", c: "AMÉRICA"}, {n: "CANADÁ", c: "AMÉRICA"}, {n: "AUSTRALIA", c: "OCEANÍA"}, {n: "NUEVA ZELANDA", c: "OCEANÍA"}, {n: "EGIPTO", c: "ÁFRICA"}, {n: "SUDAFRICA", c: "ÁFRICA"}, {n: "NIGERIA", c: "ÁFRICA"}, {n: "MARRUECOS", c: "ÁFRICA"}],
                 T: ["PÁLIDA", "OLIVA", "BRONCE", "OSCURA", "ÉBANO"],
                 O: ["AZULES", "VERDES", "NEGROS", "CAFÉS", "GRISES", "MIEL"],
-                A: [
-                    {n: "GORRA", u: "CABEZA"}, {n: "CASCO", u: "CABEZA"}, {n: "SOMBRERO", u: "CABEZA"}, {n: "DIADEMA", u: "CABEZA"}, {n: "BOINA", u: "CABEZA"}, {n: "PASAMONTAÑAS", u: "CABEZA"},
-                    {n: "GAFAS", u: "OJOS"}, {n: "MONÓCULO", u: "OJOS"}, {n: "VISOR", u: "OJOS"}, {n: "PARCHE", u: "OJOS"}, {n: "LENTES SOL", u: "OJOS"},
-                    {n: "MALETÍN", u: "MANO"}, {n: "TABLETA", u: "MANO"}, {n: "RELOJ", u: "MANO"}, {n: "ANILLO", u: "MANO"}, {n: "GUANTE", u: "MANO"}, {n: "CELULAR", u: "MANO"}, {n: "BASTÓN", u: "MANO"}
-                ]
+                A: [{n: "GORRA", u: "CABEZA"}, {n: "CASCO", u: "CABEZA"}, {n: "SOMBRERO", u: "CABEZA"}, {n: "DIADEMA", u: "CABEZA"}, {n: "BOINA", u: "CABEZA"}, {n: "PASAMONTAÑAS", u: "CABEZA"}, {n: "GAFAS", u: "OJOS"}, {n: "MONÓCULO", u: "OJOS"}, {n: "VISOR", u: "OJOS"}, {n: "PARCHE", u: "OJOS"}, {n: "LENTES SOL", u: "OJOS"}, {n: "MALETÍN", u: "MANO"}, {n: "TABLETA", u: "MANO"}, {n: "RELOJ", u: "MANO"}, {n: "ANILLO", u: "MANO"}, {n: "GUANTE", u: "MANO"}, {n: "CELULAR", u: "MANO"}, {n: "BASTÓN", u: "MANO"}]
             };
 
             const shuffle = (array) => array.sort(() => Math.random() - 0.5);
@@ -630,13 +596,7 @@
                 const genero = Math.random() > 0.5 ? "MASCULINO" : "FEMENINO";
                 const pais = DP.P[Math.floor(Math.random() * DP.P.length)];
                 const acc = DP.A[Math.floor(Math.random() * DP.A.length)];
-                
-                let nombre = "";
-                if (genero === "MASCULINO") {
-                    nombre = poolM.pop() || "UNIT-M" + i;
-                } else {
-                    nombre = poolF.pop() || "UNIT-F" + i;
-                }
+                let nombre = genero === "MASCULINO" ? (poolM.pop() || "UNIT-M" + i) : (poolF.pop() || "UNIT-F" + i);
 
                 personas.push({
                     n: nombre, g: genero, p: pais.n, cont: pais.c,
@@ -650,8 +610,6 @@
         function renderBoard() {
             const board = document.getElementById('board');
             board.innerHTML = '';
-            
-            // Reaplicar clase del modo actual
             board.className = 'board-grid'; 
             board.classList.add(`mode-${currentMosaicMode}`);
 
@@ -659,37 +617,74 @@
                 const card = document.createElement('div');
                 card.className = 'suspect-card';
                 card.id = `card-${p.n}`;
-                card.onclick = () => { 
-                    if(gameActive) { 
-                        if(!consultaRealizada) {
-                            playSFX('error');
-                            document.getElementById('out').style.color = "var(--hazard)";
-                            typeWriter("ERROR: DEBE REALIZAR UNA CONSULTA VÁLIDA ANTES DE DESCARTAR.", "out", 10);
-                            return;
-                        }
-                        playSFX('discard');
-                        
-                        // LOGICA DE DESCARTE SEGUN MODO
-                        if (currentMosaicMode === 5) {
-                            // Modo 5x5: Solo opacar (toggle class)
-                            card.classList.toggle('discarded'); 
-                        } else {
-                            // Modo 2x2 y 3x3: Desaparecer y deslizar
-                            // Al usar classList.add con display:none en CSS, el grid se reacomoda solo
-                            if (!card.classList.contains('discarded')) {
-                                card.classList.add('discarded');
-                            } else {
-                                // Opción de revertir si fue error (reaparece y empuja de vuelta)
-                                card.classList.remove('discarded');
-                            }
-                        }
-                        checkStatus(); 
-                    } 
-                };
+                card.onclick = () => { handleCardClick(p, card); };
                 const rib = p.g === "MASCULINO" ? "ribbon-male" : "ribbon-female";
                 card.innerHTML = `<div class="gender-ribbon ${rib}"></div><div class="card-header">${p.n}</div><div class="card-body"><b>ORG:</b> ${p.p}<br><b>TEZ:</b> ${p.t}<br><b>OJO:</b> ${p.o}<br><b>EDA:</b> ${p.edad}<br><b>ALT:</b> ${p.altura}M<br><b>ACC:</b> ${p.accName}</div>`;
                 board.appendChild(card);
             });
+        }
+
+        function handleCardClick(p, card) {
+            if(!gameActive) return;
+            
+            // 1. Validar si hay consulta
+            if(!consultaRealizada) {
+                playSFX('error');
+                document.getElementById('out').style.color = "var(--hazard)";
+                typeWriter("ERROR: SISTEMA BLOQUEADO. REALICE UNA CONSULTA.", "out", 10);
+                return;
+            }
+
+            // 2. Validar límite de descartes
+            if(descartesUsados >= 3) {
+                playSFX('error');
+                document.getElementById('out').style.color = "var(--hazard)";
+                typeWriter("LÍMITE DE DESCARTES ALCANZADO (3/3). REALICE NUEVA CONSULTA.", "out", 10);
+                return;
+            }
+
+            // 3. Validar Coherencia de Descarte
+            let esCoherente = false;
+            const res = lastQueryType.response; // "SÍ" o "NO"
+            
+            switch(lastQueryType.category) {
+                case 'acc_ubi': esCoherente = (res === "SÍ") ? (p.accUbi !== lastQueryType.value) : (p.accUbi === lastQueryType.value); break;
+                case 'acc_name': esCoherente = (res === "SÍ") ? (p.accName !== lastQueryType.value) : (p.accName === lastQueryType.value); break;
+                case 'continent': esCoherente = (res === "SÍ") ? (p.cont !== lastQueryType.value) : (p.cont === lastQueryType.value); break;
+                case 'country': esCoherente = (res === "SÍ") ? (p.p !== lastQueryType.value) : (p.p === lastQueryType.value); break;
+                case 'initial': esCoherente = (res === "SÍ") ? (!p.n.startsWith(lastQueryType.value)) : (p.n.startsWith(lastQueryType.value)); break;
+                case 'gender': esCoherente = (res === "SÍ") ? (p.g !== lastQueryType.value) : (p.g === lastQueryType.value); break;
+                case 'eyes': esCoherente = (res === "SÍ") ? (p.o !== lastQueryType.value) : (p.o === lastQueryType.value); break;
+                case 'skin': esCoherente = (res === "SÍ") ? (p.t !== lastQueryType.value) : (p.t === lastQueryType.value); break;
+                case 'age':
+                case 'height':
+                    const pVal = (lastQueryType.category === 'age') ? p.edad : parseFloat(p.altura);
+                    const qVal = lastQueryType.value;
+                    const op = lastQueryType.op;
+                    let cumpleQuery = false;
+                    if(op === '>') cumpleQuery = pVal > qVal;
+                    else if(op === '<') cumpleQuery = pVal < qVal;
+                    else cumpleQuery = Math.abs(pVal - qVal) < 0.05;
+                    esCoherente = (res === "SÍ") ? !cumpleQuery : cumpleQuery;
+                    break;
+            }
+
+            if(!esCoherente) {
+                playSFX('error');
+                document.getElementById('out').style.color = "var(--hazard)";
+                typeWriter(`ERROR: DESCARTE INCOHERENTE. EL SUJETO NO CONTRADICE LA ÚLTIMA RESPUESTA (${res}).`, "out", 10);
+                return;
+            }
+
+            // Proceder con descarte
+            playSFX('discard');
+            descartesUsados++;
+            updateLimitUI();
+            
+            if (currentMosaicMode === 5) card.classList.toggle('discarded'); 
+            else card.classList.add('discarded');
+            
+            checkStatus();
         }
 
         function checkStatus() {
@@ -725,99 +720,106 @@
                 this.value = '';
                 let resp = "DATOS NO RECONOCIDOS.";
                 let consultaValida = false;
+                let newQueryData = null;
 
-                // --- BLOQUE DE LOGICA DE PREGUNTAS ---
+                // --- LÓGICA DE PREGUNTAS CON REGISTRO DE TIPO ---
                 if (q.includes("ACCESORIO") || q.includes("OBJETO")) {
-                    consultaValida = true;
-                    if (q.includes("CABEZA") || q.includes("PELO") || q.includes("GORRO")) resp = (objetivo.accUbi === "CABEZA") ? "SÍ." : "NO.";
-                    else if (q.includes("OJOS") || q.includes("CARA") || q.includes("LENTES")) resp = (objetivo.accUbi === "OJOS") ? "SÍ." : "NO.";
-                    else if (q.includes("MANO") || q.includes("BRAZO") || q.includes("DEDO")) resp = (objetivo.accUbi === "MANO") ? "SÍ." : "NO.";
-                    else if (["GORRA", "CASCO", "SOMBRERO", "GAFAS", "MONÓCULO", "VISOR", "MALETÍN", "TABLETA", "RELOJ", "DIADEMA", "BOINA", "PASAMONTAÑAS", "PARCHE", "ANILLO", "GUANTE", "CELULAR", "BASTÓN"].some(a => q.includes(a))) {
-                        const accBuscado = ["GORRA", "CASCO", "SOMBRERO", "GAFAS", "MONÓCULO", "VISOR", "MALETÍN", "TABLETA", "RELOJ", "DIADEMA", "BOINA", "PASAMONTAÑAS", "PARCHE", "ANILLO", "GUANTE", "CELULAR", "BASTÓN"].find(a => q.includes(a));
-                        resp = (objetivo.accName === accBuscado) ? "SÍ." : "NO.";
-                    } else { consultaValida = false; }
+                    if (q.includes("CABEZA") || q.includes("PELO") || q.includes("GORRO")) {
+                        resp = (objetivo.accUbi === "CABEZA") ? "SÍ." : "NO.";
+                        newQueryData = { category: 'acc_ubi', value: 'CABEZA' };
+                        consultaValida = true;
+                    } else if (q.includes("OJOS") || q.includes("CARA") || q.includes("LENTES")) {
+                        resp = (objetivo.accUbi === "OJOS") ? "SÍ." : "NO.";
+                        newQueryData = { category: 'acc_ubi', value: 'OJOS' };
+                        consultaValida = true;
+                    } else if (q.includes("MANO") || q.includes("BRAZO") || q.includes("DEDO")) {
+                        resp = (objetivo.accUbi === "MANO") ? "SÍ." : "NO.";
+                        newQueryData = { category: 'acc_ubi', value: 'MANO' };
+                        consultaValida = true;
+                    } else {
+                        const accList = ["GORRA", "CASCO", "SOMBRERO", "GAFAS", "MONÓCULO", "VISOR", "MALETÍN", "TABLETA", "RELOJ", "DIADEMA", "BOINA", "PASAMONTAÑAS", "PARCHE", "ANILLO", "GUANTE", "CELULAR", "BASTÓN"];
+                        const accBuscado = accList.find(a => q.includes(a));
+                        if(accBuscado) {
+                            resp = (objetivo.accName === accBuscado) ? "SÍ." : "NO.";
+                            newQueryData = { category: 'acc_name', value: accBuscado };
+                            consultaValida = true;
+                        }
+                    }
                 }
-                else if (q.match(/\b(EUROPA|EUROPEO|EUROPEA)\b/)) { resp = (objetivo.cont === "EUROPA") ? "SÍ." : "NO."; consultaValida = true; }
-                else if (q.match(/\b(ASIA|ASIÁTICO|ASIÁTICA)\b/)) { resp = (objetivo.cont === "ASIA") ? "SÍ." : "NO."; consultaValida = true; }
-                else if (q.match(/\b(AMÉRICA|AMERICANO|AMERICANA)\b/)) { resp = (objetivo.cont === "AMÉRICA") ? "SÍ." : "NO."; consultaValida = true; }
-                else if (q.match(/\b(OCEANÍA|OCEÁNICO|OCEÁNICA|AUSTRALIANO|AUSTRALIANA)\b/)) { resp = (objetivo.cont === "OCEANÍA") ? "SÍ." : "NO."; consultaValida = true; }
-                else if (q.match(/\b(ÁFRICA|AFRICANO|AFRICANA)\b/)) { resp = (objetivo.cont === "ÁFRICA") ? "SÍ." : "NO."; consultaValida = true; }
-                
-                else if (
-                    (q.match(/\b(ALEMANIA|ALEMÁN|ALEMANA)\b/) && (resp = (objetivo.p === "ALEMANIA") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(ESPAÑA|ESPAÑOL|ESPAÑOLA)\b/) && (resp = (objetivo.p === "ESPAÑA") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(ITALIA|ITALIANO|ITALIANA)\b/) && (resp = (objetivo.p === "ITALIA") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(JAPÓN|JAPONÉS|JAPONESA)\b/) && (resp = (objetivo.p === "JAPÓN") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(CHINA|CHINO|CHINA)\b/) && (resp = (objetivo.p === "CHINA") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(COREA|COREANO|COREANA)\b/) && (resp = (objetivo.p === "COREA") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(MÉXICO|MEXICANO|MEXICANA)\b/) && (resp = (objetivo.p === "MÉXICO") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(BRASIL|BRASILEÑO|BRASILEÑA)\b/) && (resp = (objetivo.p === "BRASIL") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(BOLIVIA|BOLIVIANO|BOLIVIANA)\b/) && (resp = (objetivo.p === "BOLIVIA") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(COLOMBIA|COLOMBIANO|COLOMBIANA)\b/) && (resp = (objetivo.p === "COLOMBIA") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(ECUADOR|ECUATORIANO|ECUATORIANA)\b/) && (resp = (objetivo.p === "ECUADOR") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(PERÚ|PERUANO|PERUANA)\b/) && (resp = (objetivo.p === "PERÚ") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(ARGENTINA|ARGENTINO|ARGENTINA)\b/) && (resp = (objetivo.p === "ARGENTINA") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(FRANCIA|FRANCÉS|FRANCESA)\b/) && (resp = (objetivo.p === "FRANCIA") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(INDIA|INDIO|INDIA)\b/) && (resp = (objetivo.p === "INDIA") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(EGIPTO|EGIPCIO|EGIPCIA)\b/) && (resp = (objetivo.p === "EGIPTO") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(USA|ESTADOUNIDENSE|AMERICANO)\b/) && (resp = (objetivo.p === "USA") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(AUSTRALIA|AUSTRALIANO|AUSTRALIANA)\b/) && (resp = (objetivo.p === "AUSTRALIA") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(MARRUECOS|MARROQUÍ)\b/) && (resp = (objetivo.p === "MARRUECOS") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(SUIZA|SUIZO|SUIZA)\b/) && (resp = (objetivo.p === "SUIZA") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(RUSIA|RUSO|RUSA)\b/) && (resp = (objetivo.p === "RUSIA") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(TAILANDIA|TAILANDÉS|TAILANDESA)\b/) && (resp = (objetivo.p === "TAILANDIA") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(VIETNAM|VIETNAMITA)\b/) && (resp = (objetivo.p === "VIETNAM") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(CANADÁ|CANADIENSE)\b/) && (resp = (objetivo.p === "CANADÁ") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(NUEVA ZELANDA|NEOZELANDÉS)\b/) && (resp = (objetivo.p === "NUEVA ZELANDA") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(SUDAFRICA|SUDAFRICANO|SUDAFRICANA)\b/) && (resp = (objetivo.p === "SUDAFRICA") ? "SÍ." : "NO.")) ||
-                    (q.match(/\b(NIGERIA|NIGERIANO|NIGERIANA)\b/) && (resp = (objetivo.p === "NIGERIA") ? "SÍ." : "NO."))
-                ) {
-                    consultaValida = true;
-                }
+                else if (q.match(/\b(EUROPA|EUROPEO|EUROPEA)\b/)) { resp = (objetivo.cont === "EUROPA") ? "SÍ." : "NO."; newQueryData = { category: 'continent', value: 'EUROPA' }; consultaValida = true; }
+                else if (q.match(/\b(ASIA|ASIÁTICO|ASIÁTICA)\b/)) { resp = (objetivo.cont === "ASIA") ? "SÍ." : "NO."; newQueryData = { category: 'continent', value: 'ASIA' }; consultaValida = true; }
+                else if (q.match(/\b(AMÉRICA|AMERICANO|AMERICANA)\b/)) { resp = (objetivo.cont === "AMÉRICA") ? "SÍ." : "NO."; newQueryData = { category: 'continent', value: 'AMÉRICA' }; consultaValida = true; }
+                else if (q.match(/\b(OCEANÍA|OCEÁNICO|OCEÁNICA|AUSTRALIANO|AUSTRALIANA)\b/)) { resp = (objetivo.cont === "OCEANÍA") ? "SÍ." : "NO."; newQueryData = { category: 'continent', value: 'OCEANÍA' }; consultaValida = true; }
+                else if (q.match(/\b(ÁFRICA|AFRICANO|AFRICANA)\b/)) { resp = (objetivo.cont === "ÁFRICA") ? "SÍ." : "NO."; newQueryData = { category: 'continent', value: 'ÁFRICA' }; consultaValida = true; }
                 else if (q.includes("INICIAL") || q.includes("EMPIEZA POR")) {
                     const letraMatch = q.match(/\b[A-Z]\b/);
-                    if (letraMatch) { resp = (objetivo.n.startsWith(letraMatch[0])) ? "SÍ." : "NO."; consultaValida = true; }
-                    else resp = "ESPECIFIQUE UNA LETRA.";
+                    if (letraMatch) { 
+                        resp = (objetivo.n.startsWith(letraMatch[0])) ? "SÍ." : "NO."; 
+                        newQueryData = { category: 'initial', value: letraMatch[0] };
+                        consultaValida = true; 
+                    }
                 }
                 else if (q.includes("EDAD") || q.includes("MIDE") || q.includes("ALTO") || q.includes("ESTATURA")) {
                     const numMatch = q.match(/\d+(\.\d+)?/);
                     if (numMatch) {
-                        consultaValida = true;
                         const valNum = parseFloat(numMatch[0]);
-                        const targetVal = (q.includes("EDAD")) ? objetivo.edad : parseFloat(objetivo.altura);
-                        if (q.includes("MAYOR") || q.includes("MÁS")) resp = (targetVal > valNum) ? "SÍ." : "NO.";
-                        else if (q.includes("MENOR") || q.includes("MENOS")) resp = (targetVal < valNum) ? "SÍ." : "NO.";
+                        const isAge = q.includes("EDAD");
+                        const targetVal = isAge ? objetivo.edad : parseFloat(objetivo.altura);
+                        let op = '=';
+                        if (q.includes("MAYOR") || q.includes("MÁS")) op = '>';
+                        else if (q.includes("MENOR") || q.includes("MENOS")) op = '<';
+                        
+                        if(op === '>') resp = (targetVal > valNum) ? "SÍ." : "NO.";
+                        else if(op === '<') resp = (targetVal < valNum) ? "SÍ." : "NO.";
                         else resp = (Math.abs(targetVal - valNum) < 0.05) ? "SÍ." : "NO.";
+                        
+                        newQueryData = { category: isAge ? 'age' : 'height', value: valNum, op: op };
+                        consultaValida = true;
                     }
                 }
-                else if (q.match(/\b(HOMBRE|MASCULINO)\b/)) { resp = (objetivo.g === "MASCULINO") ? "SÍ." : "NO."; consultaValida = true; }
-                else if (q.match(/\b(MUJER|FEMENINO)\b/)) { resp = (objetivo.g === "FEMENINO") ? "SÍ." : "NO."; consultaValida = true; }
+                else if (q.match(/\b(HOMBRE|MASCULINO)\b/)) { resp = (objetivo.g === "MASCULINO") ? "SÍ." : "NO."; newQueryData = { category: 'gender', value: 'MASCULINO' }; consultaValida = true; }
+                else if (q.match(/\b(MUJER|FEMENINO)\b/)) { resp = (objetivo.g === "FEMENINO") ? "SÍ." : "NO."; newQueryData = { category: 'gender', value: 'FEMENINO' }; consultaValida = true; }
                 else if (["AZULES", "VERDES", "NEGROS", "CAFÉS", "GRISES", "MIEL"].some(c => q.includes(c))) {
                     const color = ["AZULES", "VERDES", "NEGROS", "CAFÉS", "GRISES", "MIEL"].find(c => q.includes(c));
                     resp = (objetivo.o === color) ? "SÍ." : "NO.";
+                    newQueryData = { category: 'eyes', value: color };
                     consultaValida = true;
                 }
                 else if (["PÁLIDA", "OLIVA", "BRONCE", "OSCURA", "ÉBANO"].some(t => q.includes(t))) {
                     const tez = ["PÁLIDA", "OLIVA", "BRONCE", "OSCURA", "ÉBANO"].find(t => q.includes(t));
                     resp = (objetivo.t === tez) ? "SÍ." : "NO.";
+                    newQueryData = { category: 'skin', value: tez };
                     consultaValida = true;
                 }
-                // --- FIN BLOQUE PREGUNTAS ---
+                else {
+                    const countries = ["ALEMANIA", "ESPAÑA", "ITALIA", "JAPÓN", "CHINA", "COREA", "MÉXICO", "BRASIL", "BOLIVIA", "COLOMBIA", "ECUADOR", "PERÚ", "ARGENTINA", "FRANCIA", "INDIA", "EGIPTO", "USA", "AUSTRALIA", "MARRUECOS", "SUIZA", "RUSIA", "TAILANDIA", "VIETNAM", "CANADÁ", "NUEVA ZELANDA", "SUDAFRICA", "NIGERIA"];
+                    const foundP = countries.find(p => q.includes(p));
+                    if(foundP) {
+                        resp = (objetivo.p === foundP) ? "SÍ." : "NO.";
+                        newQueryData = { category: 'country', value: foundP };
+                        consultaValida = true;
+                    }
+                }
 
-                let finalMsg = `CONSULTA: ${q}<br>RESPUESTA: ${resp}`;
                 if(consultaValida) {
                     playSFX('click');
                     document.getElementById('out').style.color = "var(--terminal-green)";
                     consultaRealizada = true;
+                    descartesUsados = 0; 
+                    lastQueryType = { ...newQueryData, response: resp.includes("SÍ") ? "SÍ" : "NO" };
+                    updateLimitUI();
+                    
+                    let finalMsg = `CONSULTA: ${q}<br>RESPUESTA: ${resp}`;
                     if (!mensajeDesbloqueoMostrado) {
-                        finalMsg += "<br><span style='color:var(--victory)'>SISTEMA DESBLOQUEADO PARA DESCARTES.</span>";
+                        finalMsg += "<br><span style='color:var(--victory)'>SISTEMA HABILITADO: 3 DESCARTES DISPONIBLES.</span>";
                         mensajeDesbloqueoMostrado = true;
                     }
+                    typeWriter(finalMsg, "out", 20);
                 } else {
                     playSFX('error');
                     document.getElementById('out').style.color = "var(--hazard)";
+                    typeWriter(`CONSULTA: ${q}<br>RESPUESTA: DATOS NO RECONOCIDOS O CATEGORÍA INVÁLIDA.`, "out", 20);
                 }
-                typeWriter(finalMsg, "out", 20);
             }
         });
 
