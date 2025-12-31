@@ -147,7 +147,7 @@
         }
         #overlay.active, #abort-confirm.active { display: flex; opacity: 1; }
 
-        /* --- DOSSIER DE MISIÓN (NUEVO) --- */
+        /* --- DOSSIER DE MISIÓN --- */
         .dossier-container {
             border: 2px solid var(--victory);
             background: rgba(0, 50, 20, 0.3);
@@ -376,11 +376,11 @@
             </div>
             <div class="step">
                 <b>2. DESCARTE OBLIGATORIO</b>
-                El sistema bloqueará nuevos comandos hasta que elimines a TODOS los sospechosos que no coincidan con la respuesta.
+                El sistema bloqueará nuevos comandos hasta que elimines a TODOS los sospechosos que creas incorrectos. <b>¡CUIDADO!</b> Si eliminas al sospechoso equivocado, no habrá aviso.
             </div>
             <div class="step">
                 <b>3. OBJETIVO ÚNICO</b>
-                La misión termina cuando descubres al culpable. Si lo descartas por error, pierdes el contrato.
+                La misión termina cuando descubres al culpable. Si lo descartas por error, pierdes el contrato inmediatamente.
             </div>
             <button class="btn-main" onclick="startGame()">ENTENDIDO</button>
         </div>
@@ -643,6 +643,38 @@
             document.getElementById('main-menu').style.display = 'flex';
         }
 
+        // --- SISTEMA DE GENERACIÓN DE CÓDIGOS CRIMINALES ÚNICOS ---
+        function generateCriminalRecordID() {
+            // Recuperar lista de IDs ya usados del sistema (localStorage)
+            let usedIDs = JSON.parse(localStorage.getItem('bioBreachUsedIDs')) || [];
+            let newId;
+            let unique = false;
+            let attempts = 0;
+
+            // Intentar generar un ID único hasta encontrar uno libre
+            while (!unique && attempts < 500) {
+                newId = "C-" + Math.floor(Math.random() * 8999 + 1000); // Rango C-1000 a C-9999
+                if (!usedIDs.includes(newId)) {
+                    unique = true;
+                }
+                attempts++;
+            }
+
+            // Si falla tras muchos intentos (muy improbable), reseteamos la lista
+            if (!unique) {
+                usedIDs = [];
+                newId = "C-" + Math.floor(Math.random() * 8999 + 1000);
+            }
+
+            // Guardar el nuevo ID para que no se repita en futuros criminales
+            usedIDs.push(newId);
+            // Mantenemos la lista limpia si crece demasiado (opcional, pero buena práctica)
+            if (usedIDs.length > 5000) usedIDs.shift(); 
+            
+            localStorage.setItem('bioBreachUsedIDs', JSON.stringify(usedIDs));
+            return newId;
+        }
+
         function initGame() {
             document.getElementById('overlay').classList.remove('active');
             document.getElementById('main-ui').classList.remove('blur-effect');
@@ -659,6 +691,10 @@
 
             generateNewSquad();
             objetivo = personas[Math.floor(Math.random() * personas.length)];
+            
+            // ASIGNAR CÓDIGO CRIMINAL ÚNICO AL OBJETIVO
+            objetivo.recordId = generateCriminalRecordID();
+
             gameActive = true;
             
             typeWriter("ESCANEO FINALIZADO. ESPERANDO CONSULTA...", "out", 15);
@@ -747,33 +783,45 @@
                         const cardEl = document.getElementById(`card-${p.n}`);
                         if(cardEl.classList.contains('discarded')) return;
 
+                        // PRIORIDAD 1: Descarte Obligatorio (Si hay lista pendiente)
                         if (pendingDiscards.length > 0) {
+                            playSFX('discard');
+                            discardVisual(cardEl);
+                            
                             if (pendingDiscards.includes(p.n)) {
-                                playSFX('discard');
-                                discardVisual(cardEl);
-                                
                                 pendingDiscards = pendingDiscards.filter(id => id !== p.n);
-                                
-                                if (pendingDiscards.length > 0) {
-                                    document.getElementById('out').innerHTML = `> ${lastQueryText}<br><span style="color:var(--hazard)">OBJETIVOS RESTANTES: ${pendingDiscards.length}</span>`;
-                                } else {
-                                    playSFX('click'); 
-                                    document.getElementById('out').innerHTML = `> ${lastQueryText}<br><span style="color:var(--terminal-green)">DESCARTE COMPLETADO. SISTEMA HABILITADO.</span>`;
-                                    document.getElementById('queryInput').disabled = false;
-                                    document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA...";
-                                    document.getElementById('queryInput').focus();
-                                }
-                                checkStatus();
-                            } else {
-                                playSFX('error');
-                                document.getElementById('out').style.color = "var(--hazard)";
-                                document.getElementById('out').innerHTML = `> ERROR DE PROTOCOLO.<br>EL SUJETO '${p.n}' COINCIDE CON LA RESPUESTA OBTENIDA.<br>NO LO DESCARTES.`;
                             }
-                        } else {
-                            // --- ERROR EN ROJO SOLICITADO ---
+
+                            if (p.n === objetivo.n) {
+                                checkStatus(); 
+                                return;
+                            }
+
+                            if (pendingDiscards.length > 0) {
+                                document.getElementById('out').innerHTML = `> ${lastQueryText}<br><span style="color:var(--hazard)">OBJETIVOS RESTANTES: ${pendingDiscards.length}</span>`;
+                            } else {
+                                playSFX('click'); 
+                                document.getElementById('out').innerHTML = `> ${lastQueryText}<br><span style="color:var(--terminal-green)">DESCARTE COMPLETADO. SISTEMA HABILITADO.</span>`;
+                                document.getElementById('queryInput').disabled = false;
+                                document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA...";
+                                document.getElementById('queryInput').focus();
+                            }
+                            
+                            checkStatus();
+
+                        } 
+                        // PRIORIDAD 2: Descarte Manual (Si ya se consultó pero no hay obligatorios)
+                        else if (lastQueryText !== "") {
+                            playSFX('discard');
+                            discardVisual(cardEl);
+                            if (p.n === objetivo.n) { checkStatus(); return; }
+                            checkStatus();
+                        }
+                        // PRIORIDAD 3: Error (Intento de click sin consulta previa)
+                        else {
                             playSFX('error');
                             document.getElementById('out').style.color = "var(--hazard)";
-                            typeWriter("ERROR: REALICE UNA CONSULTA PARA IDENTIFICAR OBJETIVOS DESCARTABLES.", "out", 10);
+                            typeWriter("ERROR: REALICE UNA CONSULTA PARA IDENTIFICAR OBJETIVOS.", "out", 10);
                         }
                     } 
                 };
@@ -795,9 +843,15 @@
         function checkStatus() {
             const activeCards = Array.from(document.querySelectorAll('.suspect-card')).filter(c => !c.classList.contains('discarded'));
             
-            if (document.getElementById(`card-${objetivo.n}`).classList.contains('discarded')) return endGame(false);
+            // Si el objetivo ha sido descartado (tiene la clase 'discarded'), PERDISTE
+            if (document.getElementById(`card-${objetivo.n}`).classList.contains('discarded')) {
+                return endGame(false);
+            }
             
-            if (activeCards.length === 1 && activeCards[0].id === `card-${objetivo.n}`) endGame(true);
+            // Si solo queda 1 carta activa y es el objetivo, GANASTE
+            if (activeCards.length === 1 && activeCards[0].id === `card-${objetivo.n}`) {
+                return endGame(true);
+            }
         }
 
         function endGame(win) {
@@ -814,12 +868,12 @@
                 document.getElementById('overlay-title').style.color = "var(--victory)";
                 rewardMsg.innerText = `+${currentReward} S/ TRANSFERIDOS`;
                 
-                // --- INFORME DE MISIÓN DETALLADO ---
+                // --- INFORME DE MISIÓN DETALLADO (VICTORIA) ---
                 desc.innerHTML = `
                     <div class="dossier-container">
                         <div class="dossier-header">
                             <span>REGISTRO CRIMINAL</span>
-                            <span>[C-505]</span>
+                            <span>[${objetivo.recordId}]</span>
                         </div>
                         <div class="dossier-info">
                             <p><b>SUJETO:</b> ${objetivo.n}</p>
@@ -838,8 +892,25 @@
                 document.getElementById('overlay-title').innerText = "OBJETIVO PERDIDO"; 
                 document.getElementById('overlay-title').style.color = "var(--hazard)";
                 rewardMsg.innerText = "CONTRATO CANCELADO";
-                // Informe simple para derrota
-                desc.innerHTML = `<p style="color:#aaa; font-size:1.2rem;">IDENTIDAD: <span style="color:var(--gold);">${objetivo.n}</span></p>`;
+                
+                // --- INFORME DE MISIÓN DETALLADO (DERROTA) ---
+                desc.innerHTML = `
+                    <div class="dossier-container" style="border-color: var(--hazard); background: rgba(50, 0, 0, 0.3);">
+                        <div class="dossier-header" style="border-color: var(--hazard); color: var(--hazard);">
+                            <span>REGISTRO CRIMINAL</span>
+                            <span>[${objetivo.recordId}]</span>
+                        </div>
+                        <div class="dossier-info">
+                            <p><b>SUJETO:</b> ${objetivo.n}</p>
+                            <p><b>ORIGEN:</b> ${objetivo.p} (${objetivo.cont})</p>
+                            <p><b>PERFIL:</b> ${objetivo.g} / ${objetivo.edad} AÑOS</p>
+                            <p><b>RASGOS:</b> ${objetivo.t} / OJOS ${objetivo.o}</p>
+                            <p><b>ESTATURA:</b> ${objetivo.altura} METROS</p>
+                            <p><b>ACCESORIO DETECTADO:</b> ${objetivo.accName}</p>
+                            <div class="stamp-captured" style="color: var(--hazard); border-color: var(--hazard);">ESCAPED</div>
+                        </div>
+                    </div>
+                `;
             }
             updateWalletUI();
         }
@@ -872,7 +943,6 @@
                 
                 else {
                     // --- RECONOCIMIENTO DINÁMICO DE PAÍSES Y NACIONALIDADES ---
-                    // Mapeo manual de gentilicios para los países existentes en DP.P
                     const demonyms = {
                         "ALEMANIA": "ALEMÁN", "ESPAÑA": "ESPAÑOL", "FRANCIA": "FRANCÉS", "ITALIA": "ITALIANO", "SUIZA": "SUIZO", "RUSIA": "RUSO",
                         "CHINA": "CHINO", "JAPÓN": "JAPONÉS", "COREA": "COREANO", "INDIA": "INDIO", "TAILANDIA": "TAILANDÉS", "VIETNAM": "VIETNAMITA", 
@@ -883,7 +953,6 @@
                     };
 
                     const foundCountry = DP.P.find(c => {
-                        // Verifica nombre exacto (ej: MARRUECOS) O si el input contiene el gentilicio (ej: MARROQUÍ)
                         const demo = demonyms[c.n];
                         return q.includes(c.n) || (demo && q.includes(demo));
                     });
@@ -892,7 +961,6 @@
                         checkFunc = p => p.p === foundCountry.n;
                         validQuery = true;
                     } 
-                    // Si no es país, seguimos comprobando otros atributos...
                     else if (q.includes("INICIAL") || q.includes("EMPIEZA")) {
                         const letra = q.match(/\b[A-Z]\b/);
                         if (letra) { checkFunc = p => p.n.startsWith(letra[0]); validQuery = true; }
