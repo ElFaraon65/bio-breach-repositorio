@@ -372,7 +372,7 @@
             <h2 style="color: var(--gold); margin-top: 0;">MANUAL DE CAMPO</h2>
             <div class="step">
                 <b>1. INTERROGATORIO PRECISO</b>
-                Pregunta por los datos que se te otorgan en las tarjetas de los sospechosos, ejemplo: ¿Tiene ojos azules? El sistema confirmará si el objetivo la tiene.
+                Formule las preguntas correctamente usando signos (¿...?). Ejemplo: "¿Es de España?". No escriba palabras sueltas al final.
             </div>
             <div class="step">
                 <b>2. DESCARTE OBLIGATORIO</b>
@@ -413,7 +413,7 @@
         <div class="board-grid mode-5" id="board"></div>
         
         <div class="terminal-zone">
-            <input type="text" id="queryInput" autocomplete="off" placeholder="INTERROGAR SISTEMA (Accesorio mano/cabeza/ojos, País, Inicial)...">
+            <input type="text" id="queryInput" autocomplete="off" placeholder="INTERROGAR SISTEMA (¿...?)...">
             <div class="output" id="out">> AGUARDANDO COMANDOS...</div>
         </div>
         <button class="btn-main btn-abort" onclick="openAbortModal()">ABORTAR CASO</button>
@@ -687,7 +687,7 @@
             pendingDiscards = []; 
             lastQueryText = "";
             document.getElementById('queryInput').disabled = false;
-            document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA...";
+            document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA (¿...?)...";
 
             generateNewSquad();
             objetivo = personas[Math.floor(Math.random() * personas.length)];
@@ -803,7 +803,7 @@
                                 playSFX('click'); 
                                 document.getElementById('out').innerHTML = `> ${lastQueryText}<br><span style="color:var(--terminal-green)">DESCARTE COMPLETADO. SISTEMA HABILITADO.</span>`;
                                 document.getElementById('queryInput').disabled = false;
-                                document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA...";
+                                document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA (¿...?)...";
                                 document.getElementById('queryInput').focus();
                             }
                             
@@ -917,20 +917,56 @@
 
         document.getElementById('queryInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter' && !isTyping) {
-                const q = this.value.toUpperCase();
+                // CAPTURA Y LIMPIEZA INICIAL
+                let rawValue = this.value.trim();
+                
+                // VALIDACIÓN ESTRICTA DE PREGUNTA (¿...?)
+                if (!rawValue.startsWith('¿') || !rawValue.endsWith('?')) {
+                    playSFX('error');
+                    document.getElementById('out').style.color = "var(--hazard)";
+                    typeWriter("ERROR: SINTAXIS INVÁLIDA. FORMULE UNA PREGUNTA (¿...?)", "out", 10);
+                    return;
+                }
+
+                // PROCESAR QUERY
+                const q = rawValue.toUpperCase();
                 this.value = '';
                 let checkFunc = null; 
                 let validQuery = false;
 
+                // FUNCIÓN AUXILIAR PARA MATCH EXACTO DE PALABRA (COHERENCIA)
+                // Esto evita que "ESPAÑALOL" active "ESPAÑA".
+                const hasWord = (word) => new RegExp(`\\b${word}\\b`).test(q);
+
+                // --- NUEVA LÓGICA DE COHERENCIA SINTÁCTICA (ELIMINAR "LOL") ---
+                // Verifica que la palabra clave esté al final (antes de ?) O seguida de una palabra permitida (es, tiene, etc)
+                const validateSyntax = (keyword, fullQuery) => {
+                    // 1. Caso Ideal: Palabra clave al final de la frase (Ej: "¿Es de España?")
+                    // Regex: Palabra + espacios opcionales + signo ? + fin de linea
+                    if (new RegExp(`\\b${keyword}\\s*\\?+$`).test(fullQuery)) return true;
+
+                    // 2. Caso Contextual: Palabra clave al inicio o medio, pero seguida de un conector válido (Ej: "¿España es su país?")
+                    // Si el usuario pone "España LOL", esto fallará.
+                    const validNextWords = ["ES", "TIENE", "USA", "LLEVA", "MIDE", "PESA", "ESTÁ", "ERA", "FUE"];
+                    const escapedKw = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); 
+                    
+                    // Busca KEYWORD + ESPACIO + (VERBO VALIDO)
+                    const contextRegex = new RegExp(`\\b${escapedKw}\\s+(${validNextWords.join('|')})\\b`);
+                    if (contextRegex.test(fullQuery)) return true;
+
+                    return false;
+                };
+
                 // --- 1. DEFINICIÓN DE CRITERIOS (checkFunc) ---
-                if (q.includes("ACCESORIO") || q.includes("OBJETO")) {
+                if (hasWord("ACCESORIO") || hasWord("OBJETO")) {
                     validQuery = true;
-                    if (q.includes("CABEZA") || q.includes("PELO")) checkFunc = p => p.accUbi === "CABEZA";
-                    else if (q.includes("OJOS") || q.includes("CARA")) checkFunc = p => p.accUbi === "OJOS";
-                    else if (q.includes("MANO") || q.includes("BRAZO")) checkFunc = p => p.accUbi === "MANO";
+                    if (hasWord("CABEZA") || hasWord("PELO")) checkFunc = p => p.accUbi === "CABEZA";
+                    else if (hasWord("OJOS") || hasWord("CARA")) checkFunc = p => p.accUbi === "OJOS";
+                    else if (hasWord("MANO") || hasWord("BRAZO")) checkFunc = p => p.accUbi === "MANO";
                     else {
                         const accList = ["GORRA", "CASCO", "SOMBRERO", "GAFAS", "MONÓCULO", "VISOR", "MALETÍN", "TABLETA", "RELOJ", "DIADEMA", "BOINA", "PASAMONTAÑAS", "PARCHE", "ANILLO", "GUANTE", "CELULAR", "BASTÓN"];
-                        const found = accList.find(a => q.includes(a));
+                        // Verificamos que la palabra exista Y que tenga sintaxis válida
+                        const found = accList.find(a => hasWord(a) && validateSyntax(a, q));
                         if(found) checkFunc = p => p.accName === found;
                         else validQuery = false;
                     }
@@ -954,26 +990,38 @@
 
                     const foundCountry = DP.P.find(c => {
                         const demo = demonyms[c.n];
-                        return q.includes(c.n) || (demo && q.includes(demo));
+                        // AQUI SE APLICA LA REGLA "NO LOL"
+                        // Debe tener la palabra Y la sintaxis correcta
+                        const matchName = hasWord(c.n) && validateSyntax(c.n, q);
+                        const matchDemo = demo && hasWord(demo) && validateSyntax(demo, q);
+                        return matchName || matchDemo;
                     });
 
                     if (foundCountry) {
                         checkFunc = p => p.p === foundCountry.n;
                         validQuery = true;
                     } 
-                    else if (q.includes("INICIAL") || q.includes("EMPIEZA")) {
-                        const letra = q.match(/\b[A-Z]\b/);
-                        if (letra) { checkFunc = p => p.n.startsWith(letra[0]); validQuery = true; }
+                    else if (hasWord("INICIAL") || hasWord("EMPIEZA")) {
+                        // Para inicial, verificamos si la letra esta al final (Ej: "¿Inicial R?")
+                        const letra = q.match(/\b[A-Z]\b/); 
+                        if (letra) { 
+                            if (validateSyntax(letra[0], q)) {
+                                checkFunc = p => p.n.startsWith(letra[0]); 
+                                validQuery = true; 
+                            } else {
+                                validQuery = false; // Letra encontrada pero sintaxis incorrecta ("¿Inicial R LOL?")
+                            }
+                        }
                         else { typeWriter("ESPECIFIQUE UNA LETRA.", "out", 10); return; }
                     }
-                    else if (q.includes("EDAD") || q.includes("MIDE") || q.includes("ALTO")) {
+                    else if (hasWord("EDAD") || hasWord("MIDE") || hasWord("ALTO")) {
                         const numMatch = q.match(/\d+(\.\d+)?/);
                         if (numMatch) {
                             validQuery = true;
                             const val = parseFloat(numMatch[0]);
-                            const isAge = q.includes("EDAD");
-                            if (q.includes("MAYOR") || q.includes("MÁS")) checkFunc = p => (isAge ? p.edad : parseFloat(p.altura)) > val;
-                            else if (q.includes("MENOR") || q.includes("MENOS")) checkFunc = p => (isAge ? p.edad : parseFloat(p.altura)) < val;
+                            const isAge = hasWord("EDAD");
+                            if (hasWord("MAYOR") || hasWord("MÁS")) checkFunc = p => (isAge ? p.edad : parseFloat(p.altura)) > val;
+                            else if (hasWord("MENOR") || hasWord("MENOS")) checkFunc = p => (isAge ? p.edad : parseFloat(p.altura)) < val;
                             else checkFunc = p => Math.abs((isAge ? p.edad : parseFloat(p.altura)) - val) < 0.05;
                         }
                     }
@@ -982,8 +1030,11 @@
                     else {
                         const colors = ["AZULES", "VERDES", "NEGROS", "CAFÉS", "GRISES", "MIEL"];
                         const skins = ["PÁLIDA", "OLIVA", "BRONCE", "OSCURA", "ÉBANO"];
-                        const cMatch = colors.find(c => q.includes(c));
-                        const sMatch = skins.find(s => q.includes(s));
+                        
+                        // Verificación estricta de palabras + sintaxis
+                        const cMatch = colors.find(c => hasWord(c) && validateSyntax(c, q));
+                        const sMatch = skins.find(s => hasWord(s) && validateSyntax(s, q));
+                        
                         if(cMatch) { checkFunc = p => p.o === cMatch; validQuery = true; }
                         else if(sMatch) { checkFunc = p => p.t === sMatch; validQuery = true; }
                     }
