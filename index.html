@@ -3,21 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#0a0a0a">
-    <link rel="manifest" href="manifest.json">
     <title>BIO-BREACH HUB</title>
     <style>
-        :root { --gold: #ffd700; --bg: #0a0a0a; --card: #161616; --blue: #0078d4; --green: #00ff41; --orange: #ff8c00; --red: #ff3333; }
+        :root { --gold: #ffd700; --bg: #0a0a0a; --card: #161616; --blue: #0078d4; --green: #00ff41; --orange: #ff8c00; }
         body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; user-select: none; }
         
-        .header { background: #000; padding: 20px; text-align: center; border-bottom: 2px solid var(--gold); position: sticky; top: 0; z-index: 10; display: flex; flex-direction: column; align-items: center;}
+        .header { background: #000; padding: 20px; text-align: center; border-bottom: 2px solid var(--gold); position: sticky; top: 0; z-index: 10; }
         .header h1 { margin: 0; font-size: 1.4rem; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; }
         
         #status-bar { font-size: 0.65rem; color: var(--orange); text-transform: uppercase; margin-top: 5px; letter-spacing: 1px; }
-
-        /* Botón de Notificación */
-        .notif-btn { background: transparent; border: 1px solid #333; color: #666; padding: 5px 10px; border-radius: 20px; font-size: 0.7rem; margin-top: 8px; cursor: pointer; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px;}
-        .notif-btn.active { border-color: var(--green); color: var(--green); box-shadow: 0 0 5px rgba(0,255,65,0.3); }
 
         .container { padding: 15px; padding-bottom: 100px; }
         
@@ -45,7 +39,6 @@
     <div class="header">
         <h1>BIO-BREACH HUB</h1>
         <div id="status-bar">MODO LOCAL</div>
-        <button id="btn-notif" class="notif-btn" onclick="gestionarNotificaciones()">🔔 Activar Alertas</button>
     </div>
 
     <div class="container" id="lista-versiones"></div>
@@ -56,84 +49,10 @@
 
     <script>
         const URL_SERVIDOR = "https://elfaraon65.github.io/bio-breach-repositorio/"; 
-        // CLAVE PUBLICA VAPID: DEBES GENERAR UNA EN https://web-push-codelab.glitch.me/ Y PEGARLA AQUI
-        const PUBLIC_VAPID_KEY = 'BFwt5FfJ3a7gC9V_5dE8Z7Pq2k9T1r4S6m8N0v3L5o_J2k9T1r4S6m8N0v3L5o_J2k9T1r4S6m8N0v3L5o_J'; 
 
         window.onload = () => {
             actualizarInterfaz();
-            registrarServiceWorker();
-            verificarEstadoNotificaciones();
         };
-
-        // --- LÓGICA DE SERVICE WORKER Y PUSH ---
-        
-        async function registrarServiceWorker() {
-            if ('serviceWorker' in navigator) {
-                try {
-                    const register = await navigator.serviceWorker.register('sw.js');
-                    console.log('Service Worker registrado:', register);
-                } catch (e) {
-                    console.error('Fallo al registrar SW:', e);
-                }
-            }
-        }
-
-        async function gestionarNotificaciones() {
-            const btn = document.getElementById('btn-notif');
-            if (Notification.permission === 'granted') {
-                alert("Las notificaciones ya están activas.");
-                return;
-            }
-            
-            const permission = await Notification.requestPermission();
-            if (permission === 'granted') {
-                await suscribirsePush();
-                btn.classList.add('active');
-                btn.innerText = "🔔 ALERTAS ACTIVAS";
-            } else {
-                alert("Se requieren permisos para recibir actualizaciones de versiones.");
-            }
-        }
-
-        async function suscribirsePush() {
-            const register = await navigator.serviceWorker.ready;
-            try {
-                const subscription = await register.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY)
-                });
-                
-                // AQUÍ ES DONDE ENVIARIAS 'subscription' A TU BASE DE DATOS O SERVIDOR
-                console.log("SUSCRIPCION GENERADA (Enviar esto al servidor):", JSON.stringify(subscription));
-                
-                // Simulación visual de éxito
-                const statusBar = document.getElementById('status-bar');
-                statusBar.innerText = "CONEXIÓN PUSH ESTABLECIDA";
-            } catch (e) {
-                console.error("Error al suscribirse:", e);
-            }
-        }
-
-        function verificarEstadoNotificaciones() {
-            const btn = document.getElementById('btn-notif');
-            if (Notification.permission === 'granted') {
-                btn.classList.add('active');
-                btn.innerText = "🔔 ALERTAS ACTIVAS";
-            }
-        }
-
-        function urlBase64ToUint8Array(base64String) {
-            const padding = '='.repeat((4 - base64String.length % 4) % 4);
-            const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-            const rawData = window.atob(base64);
-            const outputArray = new Uint8Array(rawData.length);
-            for (let i = 0; i < rawData.length; ++i) {
-                outputArray[i] = rawData.charCodeAt(i);
-            }
-            return outputArray;
-        }
-
-        // --- FIN LÓGICA PUSH ---
 
         function getVersionesLocales() {
             return JSON.parse(localStorage.getItem('bio_breach_v_data')) || {};
@@ -166,6 +85,7 @@
             const lista = document.getElementById('lista-versiones');
             const locales = getVersionesLocales();
             
+            // Ordenar datos de la nube descendente por ID (V6, V5...)
             datosNube.sort((a, b) => {
                 const numA = parseInt(a.id.replace(/\D/g, '')) || 0;
                 const numB = parseInt(b.id.replace(/\D/g, '')) || 0;
@@ -178,6 +98,7 @@
                 if(emptyMsg) emptyMsg.remove();
 
                 if (!local) {
+                    // Evitar duplicados visuales si ya existe en la lista
                     if (!document.getElementById(`btn-dl-${item.id}`)) {
                         const card = document.createElement('div');
                         card.className = 'project-card';
@@ -190,22 +111,8 @@
                             </div>
                             <button class="btn btn-download" id="btn-dl-${item.id}" onclick="descargarEInstalar('${item.url}', '${item.id}', '${item.nombre}', '${item.version || '1.0'}', true)">DESCARGAR</button>
                         `;
-                        
-                        const cardsExistentes = lista.querySelectorAll('.project-card');
-                        let insertado = false;
-                        for (let cardEx of cardsExistentes) {
-                            const idEx = cardEx.id.replace('card-local-', '').replace('card-nube-', '');
-                            const numEx = parseInt(idEx.replace(/\D/g, '')) || 0;
-                            const numItem = parseInt(item.id.replace(/\D/g, '')) || 0;
-                            
-                            if (numItem > numEx) {
-                                lista.insertBefore(card, cardEx);
-                                insertado = true;
-                                break;
-                            }
-                        }
-                        if (!insertado) lista.appendChild(card);
-                        card.id = `card-nube-${item.id}`;
+                        // Insertar al final para mantener el orden de la nube
+                        lista.appendChild(card);
                     }
                 } else {
                     verificarActualizacionSilenciosa(item, local);
@@ -228,13 +135,8 @@
                         fecha: new Date().toLocaleString() 
                     };
                     localStorage.setItem('bio_breach_v_data', JSON.stringify(locales));
-                    // Notificar al usuario si está dentro de la app
-                    if(Notification.permission === 'granted') {
-                        new Notification("Actualización Detectada", {
-                            body: `Se ha actualizado ${itemNube.nombre} silenciosamente.`,
-                            icon: 'https://via.placeholder.com/128' // Reemplaza con tu icono
-                        });
-                    }
+                    // No refrescamos la interfaz completa aquí para evitar parpadeos, 
+                    // el cambio se verá en la próxima carga o tras una acción.
                 }
             } catch (e) {
                 console.log("Error en verificación silenciosa");
@@ -285,12 +187,14 @@
             const lista = document.getElementById('lista-versiones');
             const locales = getVersionesLocales();
             
+            // Orden descendente basado en el número de versión (V6 > V5)
             const keys = Object.keys(locales).sort((a, b) => {
                 const numA = parseInt(a.replace(/\D/g, '')) || 0;
                 const numB = parseInt(b.replace(/\D/g, '')) || 0;
                 return numB - numA;
             });
 
+            // Para evitar el "salto", solo vaciamos si hay cambios reales o es la carga inicial
             lista.innerHTML = "";
             
             if (keys.length > 0) {
