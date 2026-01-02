@@ -504,8 +504,9 @@
 
     <script>
         const CACHE_NAME = 'bio-breach-audio-v1';
-        let currentMosaicMode = 5; 
-        let tempMosaicMode = 5; 
+        // MODIFICACIÓN: Recuperar la configuración guardada o usar 5 por defecto
+        let currentMosaicMode = parseInt(localStorage.getItem('bioBreachMosaic')) || 5; 
+        let tempMosaicMode = currentMosaicMode; // Inicializar temp con el actual
         
         let DP = {}; 
 
@@ -598,6 +599,8 @@
                     clearInterval(interval);
                     setTimeout(() => {
                         currentMosaicMode = newMode;
+                        // MODIFICACIÓN: Guardar la nueva configuración en localStorage
+                        localStorage.setItem('bioBreachMosaic', newMode);
                         updateBoardClass();
                         loading.style.display = 'none';
                         if(gameActive) renderBoard(); 
