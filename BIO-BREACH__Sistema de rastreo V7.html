@@ -31,6 +31,28 @@
             overscroll-behavior-y: contain;
         }
 
+        /* --- PANTALLA DE INTERACCIÓN INICIAL (NUEVO) --- */
+        #interaction-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px); /* Efecto borroso del fondo */
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 9999;
+            display: flex; justify-content: center; align-items: center;
+            transition: opacity 0.8s ease, backdrop-filter 0.8s ease;
+            cursor: pointer;
+        }
+        .interaction-text {
+            color: var(--gold);
+            font-size: 1.5rem;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            animation: pulseText 2s infinite;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+            pointer-events: none;
+        }
+        @keyframes pulseText { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+
         /* --- PANTALLA DE CARGA --- */
         #loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -112,7 +134,6 @@
         #overlay, #abort-confirm { background: rgba(0, 0, 0, 0.95); z-index: 2000; text-align: center; }
         #overlay.active, #abort-confirm.active { display: flex; opacity: 1; }
 
-        /* CORRECCIÓN: SCROLL INTERNO PARA EVITAR CORTES EN PANTALLAS PEQUEÑAS */
         .tutorial-box {
             width: 100%;
             max-width: 500px; 
@@ -120,11 +141,10 @@
             padding: 25px; 
             background: #0a0a0a; 
             text-align: center;
-            max-height: 85vh; /* Altura máxima relativa a la pantalla */
-            overflow-y: auto; /* Habilita scroll si el contenido es muy largo */
+            max-height: 85vh; 
+            overflow-y: auto; 
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
-        /* Personalización de scrollbar para modales */
         .tutorial-box::-webkit-scrollbar { width: 6px; }
         .tutorial-box::-webkit-scrollbar-thumb { background: var(--dark-red); }
 
@@ -138,7 +158,7 @@
         .step { margin-bottom: 20px; text-align: left; border-left: 2px solid var(--dark-red); padding-left: 15px; }
         .step b { color: var(--gold); display: block; margin-bottom: 5px; }
 
-        /* --- MURO DE CRIMINALES (CORREGIDO) --- */
+        /* --- MURO DE CRIMINALES --- */
         #archives-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--cork-bg);
@@ -147,7 +167,7 @@
             display: none; flex-direction: column;
             align-items: center;
             z-index: 3500;
-            padding-top: 90px; /* Aumentado para que el header no tape contenido */
+            padding-top: 90px;
             overflow-y: auto;
         }
 
@@ -169,7 +189,6 @@
             padding: 20px; padding-bottom: 100px;
         }
 
-        /* Tarjeta estilo Polaroid/Ficha Policial */
         .wall-card {
             width: 150px; min-height: 210px;
             background: #e0e0e0; color: #111;
@@ -215,7 +234,6 @@
             font-weight: bold; text-transform: uppercase;
         }
         .btn-back-wall:hover { background: var(--gold); color: #000; }
-        /* --- FIN MURO --- */
 
         /* --- DOSSIER DE MISIÓN --- */
         .dossier-container {
@@ -239,39 +257,36 @@
             margin-top: 10px; font-size: 1.2rem;
         }
 
-        /* --- INTERFAZ PRINCIPAL (RESPONSIVA) --- */
+        /* --- INTERFAZ PRINCIPAL --- */
         .machine-body {
             background: linear-gradient(145deg, #1a1a1a, #000);
             width: 100%; max-width: 900px; padding: 20px;
             border: 2px solid #333; border-radius: 12px; display: none;
             margin-bottom: 0px; 
-            flex-grow: 1; /* Ocupa el espacio disponible */
+            flex-grow: 1; 
             display: flex; flex-direction: column;
-            /* Evita overflow del body principal */
             max-height: calc(100vh - 20px); 
         }
         .machine-body[style*="display: none"] { display: none !important; } 
         .machine-body[style*="display: block"] { display: flex !important; }
 
-
         .blur-effect { filter: blur(15px) grayscale(1); transition: filter 0.4s; }
 
-        /* --- BOARD GRID SYSTEM (CORREGIDO EL ESCALADO) --- */
+        /* --- BOARD GRID SYSTEM --- */
         .board-grid {
             display: grid; gap: 8px; margin-bottom: 10px; 
             transition: all 0.3s; width: 100%;
-            overflow-y: auto; /* Scroll interno en el tablero */
-            flex-grow: 1; /* Empuja el input hacia abajo pero sin salirse */
+            overflow-y: auto; 
+            flex-grow: 1; 
         }
         
-        /* Personalización de scrollbar para el tablero */
         .board-grid::-webkit-scrollbar { width: 8px; background: #111; }
         .board-grid::-webkit-scrollbar-thumb { background: var(--dark-red); border-radius: 4px; }
 
         /* CONFIGURACIÓN 5x5 */
         .board-grid.mode-5 {
             grid-template-columns: repeat(5, 1fr);
-            min-height: 200px; /* Altura mínima segura */
+            min-height: 200px; 
         }
         .board-grid.mode-5 .suspect-card { height: auto; aspect-ratio: 3/4; }
         .board-grid.mode-5 .card-body { font-size: 0.4rem; line-height: 1.2; }
@@ -280,10 +295,9 @@
             pointer-events: none; filter: grayscale(1);
         }
 
-        /* CONFIGURACIÓN 3x3 - Altura Flexible */
+        /* CONFIGURACIÓN 3x3 */
         .board-grid.mode-3 {
             grid-template-columns: repeat(3, 1fr);
-            /* ELIMINADO height: 600px FIJO */
             gap: 10px; padding-right: 5px;
         }
         .board-grid.mode-3 .suspect-card { height: auto; min-height: 140px; }
@@ -291,10 +305,9 @@
         .board-grid.mode-3 .card-body { font-size: 0.65rem; line-height: 1.4; }
         .board-grid.mode-3 .suspect-card.discarded { display: none; }
 
-        /* CONFIGURACIÓN 2x2 - Altura Flexible */
+        /* CONFIGURACIÓN 2x2 */
         .board-grid.mode-2 {
             grid-template-columns: repeat(2, 1fr);
-            /* ELIMINADO height: 600px FIJO */
             gap: 15px; padding-right: 5px;
         }
         .board-grid.mode-2 .suspect-card { height: auto; min-height: 180px; }
@@ -327,7 +340,7 @@
         #queryInput { 
             width: 100%; background: transparent; border: none; 
             border-bottom: 1px solid var(--terminal-green); 
-            color: #fff; padding: 5px; font-family: 'Consolas', monospace; outline: none; font-size: 16px; /* Evita zoom en iOS */
+            color: #fff; padding: 5px; font-family: 'Consolas', monospace; outline: none; font-size: 16px; 
         }
         #queryInput:disabled {
             border-bottom: 1px dashed #444; color: #444; cursor: not-allowed;
@@ -355,9 +368,8 @@
 
         @keyframes blink { 0% { opacity: 0.2; } 50% { opacity: 1; } 100% { opacity: 0.2; } }
 
-        /* RESPONSIVIDAD MEJORADA */
+        /* RESPONSIVIDAD */
         @media (max-height: 600px) {
-             /* Ajustes para pantallas apaisadas o muy cortas */
              .menu-title { font-size: 2rem; margin-bottom: 20px; }
              .machine-body { padding: 10px; border: none; }
              #wallet-display { top: 5px; right: 5px; }
@@ -380,7 +392,6 @@
             .currency { font-size: 1rem; }
             
             .board-grid.mode-5 { gap: 3px; }
-            /* Ajuste para que quepan bien */
             .board-grid.mode-5 .card-header { font-size: 0.5rem; margin-bottom: 2px; padding-top: 2px; }
             .board-grid.mode-5 .card-body { font-size: 0.3rem; line-height: 1.1; letter-spacing: -0.2px; }
             
@@ -396,11 +407,14 @@
             #queryInput { font-size: 0.9rem; }
             .btn-main { padding: 10px; font-size: 0.9rem; }
             #case-info-bar { flex-direction: row; gap: 5px; font-size: 0.65rem; }
-            /* Se ha corregido la superposición de botones mini */
         }
     </style>
 </head>
 <body>
+
+    <div id="interaction-overlay" onclick="initAudioSystem()">
+        <div class="interaction-text">TOCAR PARA INICIAR SISTEMA</div>
+    </div>
 
     <div id="loading-screen">
         <div class="loading-text">RECALIBRANDO SISTEMA...</div>
@@ -503,10 +517,344 @@
     </div>
 
     <script>
+        // ==========================================
+        // === MOTOR DE AUDIO: JAZZ NOIR INTEGRADO ===
+        // ==========================================
+        let actx, musicMaster, limiter, reverbNode, warmDistortion;
+        let isMusicRunning = false;
+        let musicTimerID;
+        let nextNoteTime = 0;
+        let musicBeat = 0;
+        let musicMode = 1; // Por defecto Modo 1 (DOOM JAZZ) para el menú
+        let currentTempo = 80;
+        
+        const CHORDS = {
+            cm11_L: [130.81, 196.00, 293.66], cm11_R: [311.13, 466.16, 698.46], 
+            ab_L: [103.83, 155.56, 233.08], ab_R: [311.13, 415.30, 622.25], 
+            g7_L: [98.00, 146.83, 233.08], g7_R: [311.13, 415.30, 587.33],
+            f_maj_L: [87.31, 130.81, 174.61], f_maj_R: [349.23, 440.00, 523.25],
+            dm_L: [73.42, 110.00, 146.83], dm_R: [293.66, 349.23, 440.00],
+            doom_cluster_L: [65.41, 77.78, 92.50], doom_cluster_R: [155.56, 185.00, 220.00],
+            taxi_stab_L: [146.83, 185.00, 233.08], taxi_stab_R: [369.99, 440.00, 523.25],
+            f_min_L: [87.31, 103.83, 130.81], f_min_R: [174.61, 207.65, 261.63]
+        };
+
+        const SCALES = {
+            dorian_sharp4: [196.00, 220.00, 233.08, 277.18, 293.66, 329.63, 369.99],
+            blues_min: [196.00, 233.08, 261.63, 277.18, 293.66, 349.23], 
+            lydian: [261.63, 329.63, 369.99, 392.00, 440.00], 
+            mystery_dim: [65.41, 77.78, 92.50, 110.00, 130.81], 
+            urban_penta: [196.00, 233.08, 261.63, 293.66, 349.23], 
+            noir_theme: [196.00, 207.65, 233.08, 261.63, 293.66]
+        };
+
+        // Función para inicializar el sistema de audio completo
+        async function initAudioSystem() {
+            // Ocultar overlay
+            const overlay = document.getElementById('interaction-overlay');
+            overlay.style.opacity = '0';
+            overlay.style.backdropFilter = 'blur(0px)';
+            overlay.style.webkitBackdropFilter = 'blur(0px)';
+            setTimeout(() => { overlay.style.display = 'none'; }, 800);
+
+            // Iniciar Contexto
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            actx = new AudioContext({ latencyHint: 'playback' });
+            await actx.resume();
+
+            limiter = actx.createDynamicsCompressor();
+            limiter.threshold.value = -8;
+            limiter.knee.value = 30;
+            limiter.ratio.value = 12;
+            
+            musicMaster = actx.createGain();
+            // Volumen de música equilibrado para no tapar SFX
+            musicMaster.gain.value = 0.6; 
+
+            warmDistortion = actx.createWaveShaper();
+            warmDistortion.curve = makeDistortionCurve(10); 
+            warmDistortion.oversample = '4x';
+
+            limiter.connect(musicMaster);
+            musicMaster.connect(actx.destination);
+
+            createReverb();
+            startAtmosphere(); 
+            
+            // Iniciar Secuenciador
+            isMusicRunning = true;
+            nextNoteTime = actx.currentTime + 0.1;
+            scheduler();
+            
+            // Iniciar modo menú (Doom Jazz)
+            fadeToMode(1); 
+        }
+
+        function makeDistortionCurve(amount) {
+            const k = typeof amount === 'number' ? amount : 50, n_samples = 44100, curve = new Float32Array(n_samples), deg = Math.PI / 180;
+            for (let i = 0; i < n_samples; ++i) {
+                let x = i * 2 / n_samples - 1;
+                curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+            }
+            return curve;
+        }
+
+        function createReverb() {
+            const len = 3 * actx.sampleRate;
+            const buffer = actx.createBuffer(2, len, actx.sampleRate);
+            for (let i = 0; i < len; i++) {
+                const decay = Math.pow(1 - i / len, 3);
+                buffer.getChannelData(0)[i] = (Math.random() * 2 - 1) * decay * 0.5;
+                buffer.getChannelData(1)[i] = (Math.random() * 2 - 1) * decay * 0.5;
+            }
+            reverbNode = actx.createConvolver();
+            reverbNode.buffer = buffer;
+            const revGain = actx.createGain();
+            revGain.gain.value = 0.35; 
+            reverbNode.connect(revGain);
+            revGain.connect(limiter);
+        }
+
+        // --- TRANSICIONES SUAVES ---
+        function fadeToMode(newMode) {
+            if (!isMusicRunning) return;
+            // Crossfade rápido
+            const t = actx.currentTime;
+            musicMaster.gain.cancelScheduledValues(t);
+            musicMaster.gain.setTargetAtTime(0, t, 0.1); // Bajar volumen rápido
+
+            setTimeout(() => {
+                setMusicModeData(newMode);
+                // Subir volumen
+                musicMaster.gain.setTargetAtTime(0.55, actx.currentTime, 0.2); 
+            }, 300);
+        }
+        
+        function silenceMusic() {
+            if (!actx) return;
+            const t = actx.currentTime;
+            musicMaster.gain.cancelScheduledValues(t);
+            musicMaster.gain.setTargetAtTime(0, t, 0.05); // Corte casi inmediato
+        }
+
+        function restoreMusic() {
+            if (!actx) return;
+             // Asegurar que estamos en el modo correcto del juego (Modo 3)
+            setMusicModeData(3);
+            const t = actx.currentTime;
+            musicMaster.gain.cancelScheduledValues(t);
+            musicMaster.gain.setTargetAtTime(0.55, t, 0.5);
+        }
+
+        function setMusicModeData(m) {
+            musicMode = m;
+            // 0: Classic, 1: Doom, 2: Twin Peaks, 3: Taxi Driver
+            const tempos = [95, 80, 60, 105]; 
+            currentTempo = tempos[m];
+        }
+
+        // --- INSTRUMENTOS ---
+        function playSax(note, duration, technique = 'normal') {
+            if(!isMusicRunning) return;
+            const t = actx.currentTime;
+            const carrier = actx.createOscillator(); carrier.type = 'sawtooth'; carrier.frequency.value = note;
+            const modulator = actx.createOscillator(); modulator.type = 'sine'; modulator.frequency.value = note; 
+            const modGain = actx.createGain(); modGain.gain.value = note * 0.8; 
+            modulator.connect(modGain); modGain.connect(carrier.frequency); 
+
+            const dynFilter = actx.createBiquadFilter(); dynFilter.type = 'lowpass'; dynFilter.Q.value = 1.5; 
+            const bodyFilter = actx.createBiquadFilter(); bodyFilter.type = 'peaking'; bodyFilter.frequency.value = 900; 
+            bodyFilter.gain.value = 8; bodyFilter.Q.value = 1.0;
+
+            const noiseBufferSize = actx.sampleRate * 0.5; const noiseBuffer = actx.createBuffer(1, noiseBufferSize, actx.sampleRate);
+            const noiseData = noiseBuffer.getChannelData(0); for (let i = 0; i < noiseBufferSize; i++) noiseData[i] = Math.random() * 2 - 1;
+            const breathSrc = actx.createBufferSource(); breathSrc.buffer = noiseBuffer; breathSrc.loop = true;
+            const breathFilter = actx.createBiquadFilter(); breathFilter.type = 'bandpass'; breathFilter.frequency.value = note * 4; breathFilter.Q.value = 0.5;
+            const breathGain = actx.createGain(); breathGain.gain.value = 0.03; 
+
+            const masterGain = actx.createGain();
+            masterGain.gain.setValueAtTime(0, t);
+            masterGain.gain.linearRampToValueAtTime(0.5, t + 0.1); 
+            masterGain.gain.exponentialRampToValueAtTime(0.3, t + duration * 0.6); 
+            masterGain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+
+            dynFilter.frequency.setValueAtTime(note, t);
+            dynFilter.frequency.exponentialRampToValueAtTime(note * 4, t + 0.15); 
+            dynFilter.frequency.linearRampToValueAtTime(note * 2, t + duration);
+
+            carrier.connect(dynFilter); breathSrc.connect(breathFilter); breathFilter.connect(breathGain); breathGain.connect(dynFilter); 
+            dynFilter.connect(bodyFilter); bodyFilter.connect(masterGain); masterGain.connect(warmDistortion); 
+            warmDistortion.connect(limiter); warmDistortion.connect(reverbNode);
+
+            const vib = actx.createOscillator(); vib.frequency.value = 4.0;
+            const vibGain = actx.createGain(); vibGain.gain.value = 0;
+            vibGain.gain.setValueAtTime(0, t); vibGain.gain.linearRampToValueAtTime(note * 0.015, t + 0.6); 
+            vib.connect(vibGain); vibGain.connect(carrier.frequency);
+
+            carrier.start(t); modulator.start(t); breathSrc.start(t); vib.start(t);
+            carrier.stop(t + duration); modulator.stop(t + duration); breathSrc.stop(t + duration); vib.stop(t + duration);
+        }
+
+        function playChord(chordName, duration, arpeggioSpeed = 0.02) {
+            if(!isMusicRunning) return;
+            const t = actx.currentTime;
+            const freqs = [...CHORDS[chordName + "_L"], ...CHORDS[chordName + "_R"]];
+            const lfo = actx.createOscillator(); lfo.frequency.value = 4.5; 
+            const lfoGain = actx.createGain(); lfoGain.gain.value = 0.25; 
+            const tremoloMaster = actx.createGain(); tremoloMaster.gain.value = 1; 
+            lfo.connect(lfoGain); lfoGain.connect(tremoloMaster.gain); lfo.start(t); lfo.stop(t+duration);
+
+            freqs.forEach((f, i) => {
+                const osc = actx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.value = f;
+                const oscSub = actx.createOscillator(); oscSub.type = 'triangle'; oscSub.frequency.value = f;
+                const oscGain = actx.createGain(); oscGain.gain.value = 0.4;
+                const subGain = actx.createGain(); subGain.gain.value = 0.8; 
+                const deepSub = actx.createOscillator(); deepSub.type = 'sine'; deepSub.frequency.value = 50; 
+                const deepGain = actx.createGain(); deepGain.gain.setValueAtTime(0.5, t + (i*arpeggioSpeed));
+                deepGain.gain.exponentialRampToValueAtTime(0.001, t + (i*arpeggioSpeed) + 0.15); 
+                osc.connect(oscGain); oscSub.connect(subGain);
+                const filter = actx.createBiquadFilter(); filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(f * 3, t + (i*arpeggioSpeed));
+                filter.frequency.exponentialRampToValueAtTime(f * 0.5, t + (i*arpeggioSpeed) + 0.3); 
+                const noiseLen = 0.03; const noiseBuff = actx.createBuffer(1, actx.sampleRate * noiseLen, actx.sampleRate);
+                const nData = noiseBuff.getChannelData(0); for(let k=0; k<nData.length; k++) nData[k] = (Math.random()*2-1);
+                const hammer = actx.createBufferSource(); hammer.buffer = noiseBuff;
+                const hammerFilter = actx.createBiquadFilter(); hammerFilter.type = 'lowpass'; hammerFilter.frequency.value = 600; 
+                const hammerGain = actx.createGain(); hammerGain.gain.value = 0.4; 
+                const env = actx.createGain(); const startT = t + (i * arpeggioSpeed);
+                env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(0.3, startT + 0.01); 
+                env.gain.exponentialRampToValueAtTime(0.1, startT + 0.5); env.gain.exponentialRampToValueAtTime(0.001, startT + duration);
+                oscGain.connect(filter); subGain.connect(filter); filter.connect(env);
+                hammer.connect(hammerFilter); hammerFilter.connect(hammerGain); hammerGain.connect(env);
+                deepSub.connect(deepGain); deepGain.connect(tremoloMaster); env.connect(tremoloMaster);
+                osc.start(startT); osc.stop(startT + duration); oscSub.start(startT); oscSub.stop(startT + duration);
+                hammer.start(startT); deepSub.start(startT); deepSub.stop(startT + 0.2);
+            });
+            tremoloMaster.connect(limiter); tremoloMaster.connect(reverbNode);
+        }
+
+        function playBass(note, duration) {
+            if(!isMusicRunning) return;
+            const t = actx.currentTime;
+            const osc = actx.createOscillator(); osc.type = 'triangle'; osc.frequency.value = note;
+            const filter = actx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 220; 
+            const env = actx.createGain();
+            env.gain.setValueAtTime(0, t);
+            env.gain.linearRampToValueAtTime(0.7, t + 0.03); 
+            env.gain.exponentialRampToValueAtTime(0.01, t + duration);
+            osc.connect(filter); filter.connect(env); env.connect(limiter);
+            osc.start(t); osc.stop(t + duration);
+        }
+
+        function playDrum(type) {
+            if(!isMusicRunning) return;
+            const t = actx.currentTime;
+            if (type === 'kick') {
+                const osc = actx.createOscillator(); osc.frequency.setValueAtTime(120, t); osc.frequency.exponentialRampToValueAtTime(0.01, t + 0.5);
+                const gain = actx.createGain(); gain.gain.setValueAtTime(0.8, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+                osc.connect(gain); gain.connect(limiter); osc.start(t); osc.stop(t + 0.5);
+            }
+            else if (type === 'snare') { 
+                const bufferSize = actx.sampleRate * 0.1; const buffer = actx.createBuffer(1, bufferSize, actx.sampleRate);
+                const data = buffer.getChannelData(0); for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                const noise = actx.createBufferSource(); noise.buffer = buffer;
+                const filt = actx.createBiquadFilter(); filt.type = 'bandpass'; filt.frequency.value = 2000;
+                const gain = actx.createGain(); gain.gain.setValueAtTime(0.4, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+                noise.connect(filt); filt.connect(gain); gain.connect(musicMaster); noise.start(t);
+            }
+            else if (type === 'ride') {
+                const bufferSize = actx.sampleRate * 0.5; 
+                const buffer = actx.createBuffer(1, bufferSize, actx.sampleRate);
+                const data = buffer.getChannelData(0); for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                const noise = actx.createBufferSource(); noise.buffer = buffer;
+                const filt = actx.createBiquadFilter(); filt.type = 'highpass'; filt.frequency.value = 6000;
+                const gain = actx.createGain(); 
+                gain.gain.setValueAtTime(0, t);
+                gain.gain.linearRampToValueAtTime(0.25, t + 0.02); 
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.4); 
+                noise.connect(filt); filt.connect(gain); gain.connect(musicMaster); noise.start(t);
+            }
+        }
+
+        function startAtmosphere() {
+            const t = actx.currentTime;
+            const buffSize = actx.sampleRate * 2; const b = actx.createBuffer(1, buffSize, actx.sampleRate);
+            const d = b.getChannelData(0); let lastOut = 0;
+            for(let i=0; i<buffSize; i++) {
+                const white = Math.random()*2-1; d[i] = (lastOut + (0.02*white)) / 1.02; lastOut = d[i]; d[i] *= 3.5;
+            }
+            const noise = actx.createBufferSource(); noise.buffer = b; noise.loop = true;
+            const filter = actx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 1000; filter.Q.value = 1;
+            const lfo = actx.createOscillator(); lfo.frequency.value = 0.5; 
+            const lfoGain = actx.createGain(); lfoGain.gain.value = 0.05;
+            const masterG = actx.createGain(); masterG.gain.value = 0.04; 
+            noise.connect(filter); filter.connect(masterG); lfo.connect(lfoGain); lfoGain.connect(masterG.gain);
+            masterG.connect(musicMaster); noise.start(t); lfo.start(t);
+        }
+
+        function scheduler() {
+            if(!isMusicRunning) return;
+            const lookahead = 25.0; const scheduleAheadTime = 0.1;
+            while (nextNoteTime < actx.currentTime + scheduleAheadTime) {
+                runPattern(nextNoteTime, musicBeat);
+                const secondsPerBeat = 60.0 / currentTempo;
+                nextNoteTime += secondsPerBeat;
+                musicBeat++;
+            }
+            musicTimerID = setTimeout(scheduler, lookahead);
+        }
+
+        function runPattern(t, b) {
+            // MODO 0: CLASSIC NOIR (Archivos)
+            if (musicMode === 0) {
+                const bassNotes = [32.70, 38.89, 43.65, 46.25]; 
+                playBass(bassNotes[b % 4], 0.6); 
+                if (b % 4 === 0) playDrum('ride'); 
+                if (b % 4 === 2 || b % 4 === 0) playDrum('snare'); 
+                if (b % 8 === 0) playChord('cm11', 4, 0.05);
+                if (b % 16 === 4) playSax(SCALES.noir_theme[0], 0.8, 'normal'); 
+                if (b % 16 === 5) playSax(SCALES.noir_theme[1], 0.8, 'normal'); 
+                if (b % 16 === 6) playSax(SCALES.noir_theme[0], 0.8, 'normal'); 
+                if (b % 16 === 7) playSax(SCALES.noir_theme[3], 2.0, 'growl'); 
+            }
+            // MODO 1: DOOM JAZZ (Menú Principal / Config)
+            else if (musicMode === 1) {
+                if (b % 8 === 0) playBass(32.70, 6.0); 
+                if (b % 8 === 4) playBass(46.25, 6.0); 
+                if (b % 8 === 0) playDrum('ride'); 
+                if (b % 8 === 0) playDrum('kick'); 
+                if (b % 8 === 1) playDrum('kick'); 
+                if (b % 8 === 4) playDrum('snare'); 
+                if (b % 8 === 0) playChord('doom_cluster', 8, 0.3); 
+                if (b % 16 === 0) playSax(SCALES.mystery_dim[0], 2.5, 'growl'); 
+                if (b % 16 === 4) playSax(SCALES.mystery_dim[1], 3.0, 'growl'); 
+            }
+            // MODO 2: TWIN PEAKS (Tutorial / Manual)
+            else if (musicMode === 2) {
+                if (b % 4 === 0) playBass(43.65, 2.0); // F1
+                if (b % 4 === 2) playBass(43.65, 2.0); 
+                if (b % 8 === 0) playDrum('ride'); 
+                if (b % 8 === 0) playChord('f_maj', 4, 0.1); 
+                if (b % 8 === 4) playChord('f_min', 4, 0.1);
+            }
+            // MODO 3: TAXI DRIVER (Juego)
+            else if (musicMode === 3) {
+                playBass(49.00, 0.4); 
+                if (b % 4 === 0 || b % 8 === 7) playDrum('ride'); 
+                if (b % 4 === 2) playDrum('kick');
+                if (b % 4 === 2) playChord('taxi_stab', 0.2, 0.0); 
+                if (b % 8 === 0) playSax(SCALES.urban_penta[3], 0.8, 'normal'); 
+                if (b % 8 === 3) playSax(SCALES.urban_penta[2], 0.8, 'normal'); 
+                if (b % 8 === 6) playSax(SCALES.urban_penta[4], 1.5, 'growl'); 
+            }
+        }
+        // ==========================================
+        // === FIN MOTOR DE AUDIO ===
+        // ==========================================
+
         const CACHE_NAME = 'bio-breach-audio-v1';
-        // MODIFICACIÓN: Recuperar la configuración guardada o usar 5 por defecto
         let currentMosaicMode = parseInt(localStorage.getItem('bioBreachMosaic')) || 5; 
-        let tempMosaicMode = currentMosaicMode; // Inicializar temp con el actual
+        let tempMosaicMode = currentMosaicMode; 
         
         let DP = {}; 
 
@@ -514,12 +862,14 @@
         function openArchives() {
             playSFX('click');
             renderWall();
+            fadeToMode(0); // CLASSIC NOIR
             document.getElementById('archives-screen').style.display = 'flex';
             document.getElementById('main-menu').style.display = 'none';
         }
 
         function closeArchives() {
             playSFX('click');
+            fadeToMode(1); // BACK TO DOOM JAZZ
             document.getElementById('archives-screen').style.display = 'none';
             document.getElementById('main-menu').style.display = 'flex';
         }
@@ -535,7 +885,7 @@
             }
 
             solvedList.forEach(data => {
-                const rotation = (Math.random() * 10) - 5; // Rotación aleatoria entre -5 y 5 grados
+                const rotation = (Math.random() * 10) - 5; 
                 const card = document.createElement('div');
                 card.className = 'wall-card';
                 card.style.transform = `rotate(${rotation}deg)`;
@@ -559,6 +909,7 @@
 
         function openSettings() {
             playSFX('click');
+            // Nota: Settings es un modal sobre el menú, así que mantenemos DOOM JAZZ (Modo 1)
             document.getElementById('settings-modal').style.display = 'flex';
             selectMosaic(currentMosaicMode); 
         }
@@ -599,7 +950,6 @@
                     clearInterval(interval);
                     setTimeout(() => {
                         currentMosaicMode = newMode;
-                        // MODIFICACIÓN: Guardar la nueva configuración en localStorage
                         localStorage.setItem('bioBreachMosaic', newMode);
                         updateBoardClass();
                         loading.style.display = 'none';
@@ -731,6 +1081,7 @@
 
         function showTutorial() {
             playSFX('click');
+            fadeToMode(2); // TWIN PEAKS
             document.getElementById('main-menu').style.display = 'none';
             document.getElementById('tutorial-screen').style.display = 'flex';
         }
@@ -740,14 +1091,16 @@
             if (window.parent && typeof window.parent.cerrarMotor === 'function') {
                 window.parent.cerrarMotor();
             } else {
-                alert("SISTEMA DESCONECTADO DEL NÚCLEO.");
+                fadeToMode(1); // BACK TO DOOM JAZZ
+                alert("SISTEMA DESCONECTADO DEL NÚCLEO. SIMULANDO SALIDA.");
             }
         }
 
         function startGame() {
             playSFX('click');
+            fadeToMode(3); // TAXI DRIVER
             document.getElementById('tutorial-screen').style.display = 'none';
-            document.getElementById('main-ui').style.display = 'flex'; /* Flex para la estructura */
+            document.getElementById('main-ui').style.display = 'flex'; 
             initGame();
         }
 
@@ -769,6 +1122,7 @@
             playSFX('click', true); 
             gameActive = false;
             closeAbortModal();
+            fadeToMode(1); // Vuelve al menú con DOOM JAZZ
             document.getElementById('main-ui').style.display = 'none';
             document.getElementById('main-menu').style.display = 'flex';
         }
@@ -814,6 +1168,10 @@
             document.getElementById('overlay').classList.remove('active');
             document.getElementById('main-ui').classList.remove('blur-effect');
             document.getElementById('out').style.color = "var(--terminal-green)";
+            
+            // Asegurar que la música del juego vuelve si venimos de Win/Lose
+            restoreMusic();
+            
             playSFX('newCase', true);
             
             currentReward = Math.floor(Math.random() * 500) + 100;
@@ -1002,6 +1360,9 @@
 
         function endGame(win) {
             gameActive = false;
+            // CORTAR MÚSICA
+            silenceMusic();
+            
             document.getElementById('main-ui').classList.add('blur-effect');
             document.getElementById('overlay').classList.add('active');
             const rewardMsg = document.getElementById('overlay-reward-msg');
