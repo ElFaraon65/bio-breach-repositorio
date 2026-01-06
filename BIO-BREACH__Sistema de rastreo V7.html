@@ -35,7 +35,7 @@
         #interaction-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(10px); /* Efecto borroso del fondo */
+            backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             z-index: 9999;
             display: flex; justify-content: center; align-items: center;
@@ -536,7 +536,10 @@
             dm_L: [73.42, 110.00, 146.83], dm_R: [293.66, 349.23, 440.00],
             doom_cluster_L: [65.41, 77.78, 92.50], doom_cluster_R: [155.56, 185.00, 220.00],
             taxi_stab_L: [146.83, 185.00, 233.08], taxi_stab_R: [369.99, 440.00, 523.25],
-            f_min_L: [87.31, 103.83, 130.81], f_min_R: [174.61, 207.65, 261.63]
+            f_min_L: [87.31, 103.83, 130.81], f_min_R: [174.61, 207.65, 261.63],
+            // New chords for extended play
+            eb_maj7_L: [155.56, 196.00, 233.08], eb_maj7_R: [311.13, 392.00, 466.16],
+            d7alt_L: [146.83, 185.00, 246.94], d7alt_R: [293.66, 369.99, 440.00]
         };
 
         const SCALES = {
@@ -545,7 +548,9 @@
             lydian: [261.63, 329.63, 369.99, 392.00, 440.00], 
             mystery_dim: [65.41, 77.78, 92.50, 110.00, 130.81], 
             urban_penta: [196.00, 233.08, 261.63, 293.66, 349.23], 
-            noir_theme: [196.00, 207.65, 233.08, 261.63, 293.66]
+            noir_theme: [196.00, 207.65, 233.08, 261.63, 293.66],
+            // New scale for extended variation
+            taxi_extended: [196.00, 233.08, 261.63, 293.66, 311.13, 349.23, 392.00, 466.16]
         };
 
         // Función para inicializar el sistema de audio completo
@@ -648,6 +653,7 @@
 
         function setMusicModeData(m) {
             musicMode = m;
+            musicBeat = 0; // Reset beat on mode change to start sequence fresh
             // 0: Classic, 1: Doom, 2: Twin Peaks, 3: Taxi Driver
             const tempos = [95, 80, 60, 105]; 
             currentTempo = tempos[m];
@@ -837,15 +843,89 @@
                 if (b % 8 === 0) playChord('f_maj', 4, 0.1); 
                 if (b % 8 === 4) playChord('f_min', 4, 0.1);
             }
-            // MODO 3: TAXI DRIVER (Juego)
+            // MODO 3: TAXI DRIVER (Juego) - EXTENDED 4 MINUTES LOGIC
             else if (musicMode === 3) {
-                playBass(49.00, 0.4); 
-                if (b % 4 === 0 || b % 8 === 7) playDrum('ride'); 
-                if (b % 4 === 2) playDrum('kick');
-                if (b % 4 === 2) playChord('taxi_stab', 0.2, 0.0); 
-                if (b % 8 === 0) playSax(SCALES.urban_penta[3], 0.8, 'normal'); 
-                if (b % 8 === 3) playSax(SCALES.urban_penta[2], 0.8, 'normal'); 
-                if (b % 8 === 6) playSax(SCALES.urban_penta[4], 1.5, 'growl'); 
+                // 105 BPM -> 4 minutos = 420 beats exactos.
+                const loop = 420;
+                const lb = b % loop; // Beat local dentro del ciclo de 4 min
+
+                // --- BATERÍA ---
+                // Base Ride (Casi siempre presente pero varía)
+                if (lb < 380) { // Cortar al final para fade out
+                    if (lb % 2 === 0 || (lb % 4 === 3 && Math.random() > 0.4)) playDrum('ride');
+                }
+                
+                // Kick y Snare con evolución
+                if (lb > 32 && lb < 224) { // Fase normal
+                    if (lb % 4 === 0) playDrum('kick');
+                    if (lb % 8 === 6) playDrum('snare');
+                } else if (lb >= 224 && lb < 320) { // Fase caos/tensión (más activo)
+                     if (lb % 2 === 0) playDrum('kick');
+                     if (Math.random() > 0.6) playDrum('snare');
+                } else if (lb >= 320 && lb < 380) { // Retorno a calma
+                     if (lb % 4 === 0) playDrum('kick');
+                }
+
+                // --- BAJO ---
+                // Patrón evolutivo
+                if (lb < 32) { // Intro Minimalista
+                    if (lb % 8 === 0) playBass(49.00, 1.5); // G1
+                } 
+                else if (lb < 160) { // Walking Bass relajado
+                    const walk = [49.00, 58.27, 65.41, 73.42]; // Gm
+                    if (lb % 2 === 0) playBass(walk[(lb/2)%4], 0.8);
+                } 
+                else if (lb < 288) { // Tensión cromática
+                    if (lb % 2 === 0) playBass(Math.random() > 0.5 ? 46.25 : 49.00, 0.6); 
+                } 
+                else { // Outro
+                    if (lb % 8 === 0) playBass(49.00, 3.0);
+                }
+
+                // --- ACORDES (PIANO) ---
+                if (lb > 16 && lb < 360) {
+                    if (lb % 32 === 0) playChord('taxi_stab', 0.5, 0.0); // Gm stab
+                    if (lb % 32 === 16) playChord('cm11', 0.6, 0.05); // Cm cambio
+                    
+                    // Variación en la sección media
+                    if (lb > 128 && lb < 256 && lb % 16 === 12) {
+                        playChord(Math.random() > 0.5 ? 'eb_maj7' : 'd7alt', 0.4, 0.02);
+                    }
+                }
+
+                // --- SAXOFÓN (MELODÍA PRINCIPAL) ---
+                // Aquí está la variedad de tonos nuevos
+                
+                // Seccion A: Tema Principal (Low & Slow) - Beats 32-96
+                if (lb >= 32 && lb < 96) {
+                    if (lb % 16 === 0) playSax(SCALES.urban_penta[0], 2.0, 'normal');
+                    if (lb % 16 === 4) playSax(SCALES.urban_penta[2], 1.5, 'normal');
+                    if (lb % 16 === 14) playSax(SCALES.urban_penta[1], 1.0, 'normal');
+                }
+                
+                // Sección B: Desarrollo (Higher & Agitated) - Beats 96-192
+                else if (lb >= 96 && lb < 192) {
+                    // Usamos la escala extendida para notas nuevas
+                    if (lb % 8 === 0 && Math.random() > 0.3) playSax(SCALES.taxi_extended[4], 1.2, 'normal'); 
+                    if (lb % 16 === 10) playSax(SCALES.taxi_extended[6], 1.5, 'growl'); // Nota aguda con growl
+                    if (lb % 32 === 30) playSax(SCALES.taxi_extended[3], 0.5, 'normal');
+                }
+                
+                // Sección C: "The Breakdown" (Caos/Free Jazz) - Beats 192-288
+                else if (lb >= 192 && lb < 288) {
+                    if (lb % 4 === 0 && Math.random() > 0.4) {
+                        const randomNote = SCALES.taxi_extended[Math.floor(Math.random() * SCALES.taxi_extended.length)];
+                        playSax(randomNote * 2, 0.3, 'growl'); // Notas muy agudas y cortas
+                    }
+                }
+                
+                // Sección D: Retorno a la Melodía (Resolución) - Beats 288-360
+                else if (lb >= 288 && lb < 360) {
+                    if (lb % 16 === 0) playSax(SCALES.urban_penta[0], 2.5, 'normal');
+                    if (lb % 16 === 8) playSax(SCALES.urban_penta[3], 1.5, 'normal');
+                }
+                
+                // Outro: Silencio de saxo, solo ambiente
             }
         }
         // ==========================================
