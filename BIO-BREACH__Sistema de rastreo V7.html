@@ -970,17 +970,22 @@
                 card.className = 'wall-card';
                 card.style.transform = `rotate(${rotation}deg)`;
                 
+                // MODIFICADO: 
+                // 1. Se eliminó la etiqueta 'stamp-solved' (Capturado).
+                // 2. Se añadió el campo 'EDA' con la edad.
+                // 3. Se separaron los rasgos (TEZ y OJO).
                 card.innerHTML = `
                     <div class="pin"></div>
                     <div class="mugshot-zone"><span class="mugshot-icon">?</span></div>
                     <div class="wall-info">
-                        <b>EXP:</b> ${data.recordId}<br>
-                        <b>NOM:</b> ${data.n}<br>
-                        <b>ORI:</b> ${data.p}<br>
-                        <b>RAS:</b> ${data.t} / ${data.o}<br>
-                        <b>ACC:</b> ${data.accName}
+                        <b>EXPEDIENTE:</b> ${data.recordId}<br>
+                        <b>NOMBRE:</b> ${data.n}<br>
+                        <b>EDAD:</b> ${data.edad} AÑOS<br>
+                        <b>ORIGEN:</b> ${data.p}<br>
+                        <b>TEZ:</b> ${data.t}<br>
+                        <b>OJOS:</b> ${data.o}<br>
+                        <b>ACCESORIO:</b> ${data.accName}
                     </div>
-                    <div class="stamp-solved">CAPTURADO</div>
                 `;
                 container.appendChild(card);
             });
