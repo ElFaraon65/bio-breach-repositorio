@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIO-BREACH RESCUE</title>
+    <style>
+        body { background: #000; color: #ffd700; text-align: center; font-family: sans-serif; padding: 50px; }
+        .box { border: 2px solid #ffd700; padding: 20px; border-radius: 10px; background: #111; }
+        button { background: #ffd700; color: #000; border: none; padding: 15px; font-weight: bold; border-radius: 5px; margin-top: 20px; width: 100%; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>BIO-BREACH HUB</h1>
+        <p>SISTEMA REANIMADO</p>
+        <div id="debug">Esperando inicialización...</div>
+        <button onclick="probarCarga()">FORZAR LECTURA DE DATOS</button>
+    </div>
+
+    <script>
+        document.getElementById('debug').innerText = "JavaScript Activo";
+        
+        function probarCarga() {
+            const datos = localStorage.getItem('bio_breach_v_data');
+            if(datos) {
+                alert("Datos locales encontrados. El sistema está listo.");
+            } else {
+                alert("No hay datos locales. Necesitas descargar una versión cuando el Hub conecte.");
+            }
+            location.reload();
+        }
+    </script>
+</body>
+</html>
