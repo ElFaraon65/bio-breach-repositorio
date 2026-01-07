@@ -1,57 +1,38 @@
-// sw.js - Service Worker para Bio-Breach Hub
+const CACHE_NAME = 'bio-breach-v1';
+// Lista de archivos que el celular guardará para que abran sin señal
+const assets = [
+  './',
+  'index.html',
+  'versiones.json',
+  'manifest.json'
+];
 
-self.addEventListener('install', (event) => {
-    console.log('Service Worker instalado');
-    self.skipWaiting();
+// Instalación: El celular descarga los archivos básicos
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      console.log('Hub: Guardando archivos en memoria local...');
+      return cache.addAll(assets);
+    })
+  );
 });
 
-self.addEventListener('activate', (event) => {
-    console.log('Service Worker activado');
+// Activación: Limpia memorias viejas si actualizas el Hub
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(keys => {
+      return Promise.all(
+        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+      );
+    })
+  );
 });
 
-// ESCUCHA EVENTOS PUSH DEL SERVIDOR
-self.addEventListener('push', (event) => {
-    let data = { title: 'Bio-Breach Hub', body: 'Nueva actualización disponible', url: '/' };
-
-    if (event.data) {
-        try {
-            data = event.data.json(); // Espera JSON: { "title": "...", "body": "..." }
-        } catch (e) {
-            data.body = event.data.text();
-        }
-    }
-
-    const options = {
-        body: data.body,
-        icon: 'https://via.placeholder.com/128', // CAMBIAR POR TU ICONO REAL (URL)
-        badge: 'https://via.placeholder.com/64', // ICONO PEQUEÑO PARA LA BARRA (BLANCO Y NEGRO)
-        vibrate: [100, 50, 100],
-        data: {
-            url: data.url || '/'
-        }
-    };
-
-    event.waitUntil(
-        self.registration.showNotification(data.title, options)
-    );
-});
-
-// AL HACER CLIC EN LA NOTIFICACION
-self.addEventListener('notificationclick', (event) => {
-    event.notification.close();
-    event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-            // Si la app ya está abierta, enfócala
-            for (let i = 0; i < windowClients.length; i++) {
-                const client = windowClients[i];
-                if (client.url === '/' && 'focus' in client) {
-                    return client.focus();
-                }
-            }
-            // Si no, abre una nueva ventana
-            if (clients.openWindow) {
-                return clients.openWindow('/');
-            }
-        })
-    );
+// Intercepción: Si no hay señal, sirve los archivos desde la memoria
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request).then(cachedResponse => {
+      return cachedResponse || fetch(event.request);
+    })
+  );
 });
