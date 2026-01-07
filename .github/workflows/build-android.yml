@@ -2,18 +2,18 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ main ] # Se activa cada vez que subes algo a la rama main
+    branches: [ main ]
 
 jobs:
   build:
-    runs-on: ubuntu-latest # La máquina virtual usará Linux
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout del código
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # <--- ACTUALIZADO A V4
 
       - name: Instalar Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4 # <--- ACTUALIZADO A V4
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -28,7 +28,7 @@ jobs:
         run: cd android && ./gradlew assembleDebug
 
       - name: Subir el archivo resultante
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4 # <--- ACTUALIZADO A V4
         with:
-          name: app-debug.apk
+          name: app-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
