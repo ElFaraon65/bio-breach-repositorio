@@ -2,33 +2,144 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BIO-BREACH RESCUE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BIO-BREACH HUB</title>
+    <link rel="manifest" href="manifest.json">
     <style>
-        body { background: #000; color: #ffd700; text-align: center; font-family: sans-serif; padding: 50px; }
-        .box { border: 2px solid #ffd700; padding: 20px; border-radius: 10px; background: #111; }
-        button { background: #ffd700; color: #000; border: none; padding: 15px; font-weight: bold; border-radius: 5px; margin-top: 20px; width: 100%; }
+        :root { --gold: #ffd700; --bg: #0a0a0a; --card: #161616; --blue: #0078d4; --green: #00ff41; --orange: #ff8c00; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; user-select: none; }
+        .header { background: #000; padding: 20px; text-align: center; border-bottom: 2px solid var(--gold); position: sticky; top: 0; z-index: 10; }
+        .header h1 { margin: 0; font-size: 1.4rem; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; }
+        #status-bar { font-size: 0.65rem; color: var(--orange); text-transform: uppercase; margin-top: 5px; letter-spacing: 1px; }
+        .container { padding: 15px; padding-bottom: 100px; }
+        .project-card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid #333; display: flex; flex-direction: column; gap: 12px; transition: 0.3s; }
+        .v-name { font-size: 1.2rem; font-weight: bold; color: #fff; }
+        .v-status { font-size: 0.8rem; color: #888; display: flex; align-items: center; gap: 6px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #444; }
+        .dot.active { background: var(--green); box-shadow: 0 0 8px var(--green); }
+        .progress-container { width: 100%; background: #333; height: 10px; border-radius: 5px; overflow: hidden; display: none; margin-top: 10px; }
+        .progress-bar { width: 0%; height: 100%; background: var(--blue); transition: width 0.1s; }
+        .btn { border: none; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; text-align: center; transition: 0.2s; margin-top: 5px; color: white; }
+        .btn-play { background: var(--green); }
+        .btn-download { background: var(--blue); }
+        #game-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; }
+        iframe { width: 100%; height: 100%; border: none; }
+        #btn-cerrar { position: fixed; bottom: 20px; right: 20px; background: red; color: white; border: none; padding: 10px 20px; border-radius: 50px; z-index: 2000; font-weight: bold; display: none; }
     </style>
 </head>
 <body>
-    <div class="box">
+
+    <div class="header">
         <h1>BIO-BREACH HUB</h1>
-        <p>SISTEMA REANIMADO</p>
-        <div id="debug">Esperando inicialización...</div>
-        <button onclick="probarCarga()">FORZAR LECTURA DE DATOS</button>
+        <div id="status-bar">CARGANDO...</div>
     </div>
 
+    <div class="container" id="lista-versiones"></div>
+
+    <div id="game-view">
+        <iframe id="game-frame"></iframe>
+    </div>
+    
+    <button id="btn-cerrar" onclick="cerrarMotor()">CERRAR JUEGO</button>
+
     <script>
-        document.getElementById('debug').innerText = "JavaScript Activo";
-        
-        function probarCarga() {
-            const datos = localStorage.getItem('bio_breach_v_data');
-            if(datos) {
-                alert("Datos locales encontrados. El sistema está listo.");
-            } else {
-                alert("No hay datos locales. Necesitas descargar una versión cuando el Hub conecte.");
+        const URL_SERVIDOR = "https://elfaraon65.github.io/bio-breach-repositorio/"; 
+
+        // 1. CARGA INICIAL (Sin bloquear por Service Worker)
+        window.onload = () => {
+            actualizarInterfaz();
+            // Intentar registro de SW de forma silenciosa al final
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js').catch(e => console.log("Modo offline no disponible todavía"));
             }
-            location.reload();
+        };
+
+        function getVersionesLocales() {
+            return JSON.parse(localStorage.getItem('bio_breach_v_data')) || {};
+        }
+
+        async function sincroServidor() {
+            const statusBar = document.getElementById('status-bar');
+            try {
+                // Añadimos un timestamp para forzar a GitHub a dar el archivo real
+                const res = await fetch(URL_SERVIDOR + "versiones.json?t=" + Date.now());
+                const nube = await res.json();
+                statusBar.innerText = "SISTEMA EN LÍNEA";
+                statusBar.style.color = "var(--green)";
+                renderNube(nube);
+            } catch (e) {
+                statusBar.innerText = "MODO OFFLINE";
+                statusBar.style.color = "var(--orange)";
+            }
+        }
+
+        function renderNube(datosNube) {
+            const lista = document.getElementById('lista-versiones');
+            const locales = getVersionesLocales();
+            
+            datosNube.forEach(item => {
+                if (!locales[item.id] && !document.getElementById(`btn-dl-${item.id}`)) {
+                    const card = document.createElement('div');
+                    card.className = 'project-card';
+                    card.style.border = "1px dashed var(--blue)";
+                    card.innerHTML = `
+                        <div class="v-name">${item.nombre}</div>
+                        <div class="v-status"><div class="dot"></div> Disponible</div>
+                        <div class="progress-container" id="prog-cont-${item.id}"><div class="progress-bar" id="prog-bar-${item.id}"></div></div>
+                        <button class="btn btn-download" id="btn-dl-${item.id}" onclick="descargarEInstalar('${item.url}', '${item.id}', '${item.nombre}', '${item.version || '1.0'}', true)">DESCARGAR</button>
+                    `;
+                    lista.appendChild(card);
+                }
+            });
+        }
+
+        async function descargarEInstalar(url, id, nombre, versionNube, mostrar) {
+            const pCont = document.getElementById(`prog-cont-${id}`);
+            const pBar = document.getElementById(`prog-bar-${id}`);
+            const btn = document.getElementById(`btn-dl-${id}`);
+            if(btn) btn.style.display = "none";
+            if(pCont) pCont.style.display = "block";
+
+            try {
+                const res = await fetch(url);
+                const codigo = await res.text();
+                let locales = getVersionesLocales();
+                locales[id] = { nombre, codigo, version: versionNube };
+                localStorage.setItem('bio_breach_v_data', JSON.stringify(locales));
+                if(pBar) pBar.style.width = "100%";
+                setTimeout(() => actualizarInterfaz(), 500);
+            } catch (e) { alert("Error de red"); if(btn) btn.style.display = "block"; }
+        }
+
+        function actualizarInterfaz() {
+            const lista = document.getElementById('lista-versiones');
+            const locales = getVersionesLocales();
+            lista.innerHTML = "";
+            Object.keys(locales).forEach(id => {
+                const v = locales[id];
+                const card = document.createElement('div');
+                card.className = 'project-card';
+                card.innerHTML = `
+                    <div class="v-name">${v.nombre}</div>
+                    <div class="v-status"><div class="dot active"></div> En Memoria</div>
+                    <button class="btn btn-play" onclick="lanzarMotor('${id}')">INICIAR</button>
+                `;
+                lista.appendChild(card);
+            });
+            sincroServidor();
+        }
+
+        function lanzarMotor(id) {
+            document.getElementById('game-view').style.display = "block";
+            document.getElementById('btn-cerrar').style.display = "block";
+            const blob = new Blob([getVersionesLocales()[id].codigo], { type: 'text/html' });
+            document.getElementById('game-frame').src = URL.createObjectURL(blob);
+        }
+
+        function cerrarMotor() {
+            document.getElementById('game-view').style.display = "none";
+            document.getElementById('btn-cerrar').style.display = "none";
+            document.getElementById('game-frame').src = "about:blank";
         }
     </script>
 </body>
