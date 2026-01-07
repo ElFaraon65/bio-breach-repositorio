@@ -4,23 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BIO-BREACH HUB</title>
-    
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#ffd700">
-    <meta name="mobile-web-app-capable" content="yes">
-
     <style>
         :root { --gold: #ffd700; --bg: #0a0a0a; --card: #161616; --blue: #0078d4; --green: #00ff41; --orange: #ff8c00; }
-        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; padding: 0; user-select: none; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; user-select: none; }
+        
         .header { background: #000; padding: 20px; text-align: center; border-bottom: 2px solid var(--gold); position: sticky; top: 0; z-index: 10; }
-        .header h1 { margin: 0; font-size: 1.4rem; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; }
-        #status-bar { font-size: 0.65rem; color: var(--orange); text-transform: uppercase; margin-top: 5px; }
+        .header h1 { margin: 0; font-size: 1.4rem; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; }
+        
+        #status-bar { font-size: 0.65rem; color: var(--orange); text-transform: uppercase; margin-top: 5px; letter-spacing: 1px; }
+
         .container { padding: 15px; padding-bottom: 100px; }
-        .project-card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid #333; display: flex; flex-direction: column; gap: 12px; }
-        .v-name { font-size: 1.1rem; font-weight: bold; color: #fff; }
-        .btn { border: none; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; text-align: center; color: white; }
+        
+        .project-card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid #333; display: flex; flex-direction: column; gap: 12px; transition: 0.3s; }
+        
+        .v-name { font-size: 1.2rem; font-weight: bold; color: #fff; }
+        .v-status { font-size: 0.8rem; color: #888; display: flex; align-items: center; gap: 6px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #444; }
+        .dot.active { background: var(--green); box-shadow: 0 0 8px var(--green); }
+        .dot.offline { background: var(--orange); }
+
+        .progress-container { width: 100%; background: #333; height: 10px; border-radius: 5px; overflow: hidden; display: none; margin-top: 10px; }
+        .progress-bar { width: 0%; height: 100%; background: var(--blue); transition: width 0.1s; }
+
+        .btn { border: none; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; text-align: center; transition: 0.2s; margin-top: 5px; color: white; }
         .btn-play { background: var(--green); }
         .btn-download { background: var(--blue); }
+
         #game-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; }
         iframe { width: 100%; height: 100%; border: none; }
     </style>
@@ -29,7 +38,7 @@
 
     <div class="header">
         <h1>BIO-BREACH HUB</h1>
-        <div id="status-bar">CONECTANDO...</div>
+        <div id="status-bar">MODO LOCAL</div>
     </div>
 
     <div class="container" id="lista-versiones"></div>
@@ -39,67 +48,193 @@
     </div>
 
     <script>
-        // REGISTRO DEL SERVICE WORKER PARA EL MODO APP
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').catch(err => console.log("Modo App en espera"));
-            });
+        const URL_SERVIDOR = "https://elfaraon65.github.io/bio-breach-repositorio/"; 
+
+        window.onload = () => {
+            actualizarInterfaz();
+        };
+
+        function getVersionesLocales() {
+            return JSON.parse(localStorage.getItem('bio_breach_v_data')) || {};
         }
 
-        const URL_REPO = "https://elfaraon65.github.io/bio-breach-repositorio/versiones.json"; 
-
-        window.onload = () => { actualizarInterfaz(); };
-
-        function getLocales() { return JSON.parse(localStorage.getItem('bio_breach_v_data')) || {}; }
-
-        async function actualizarInterfaz() {
-            const lista = document.getElementById('lista-versiones');
-            const status = document.getElementById('status-bar');
-            const locales = getLocales();
-            
+        async function sincroServidor() {
+            const statusBar = document.getElementById('status-bar');
             try {
-                const res = await fetch(URL_REPO + "?t=" + Date.now());
+                const res = await fetch(URL_SERVIDOR + "versiones.json?t=" + new Date().getTime());
+                if (!res.ok) throw new Error();
                 const nube = await res.json();
-                status.innerText = "SISTEMA EN LÍNEA";
-                status.style.color = "var(--green)";
                 
-                lista.innerHTML = "";
-                nube.forEach(item => {
-                    const local = locales[item.id];
-                    const card = document.createElement('div');
-                    card.className = 'project-card';
-                    card.innerHTML = `
-                        <div class="v-name">${item.nombre}</div>
-                        <button class="btn ${local ? 'btn-play' : 'btn-download'}" 
-                                onclick="${local ? `lanzarMotor('${item.id}')` : `descargar('${item.url}','${item.id}','${item.nombre}')`}">
-                            ${local ? 'INICIAR' : 'DESCARGAR'}
-                        </button>
-                    `;
-                    lista.appendChild(card);
-                });
+                statusBar.innerText = "SISTEMA EN LÍNEA";
+                statusBar.style.color = "var(--green)";
+                
+                renderNube(nube);
             } catch (e) {
-                status.innerText = "MODO OFFLINE";
-                status.style.color = "var(--orange)";
+                console.log("Error de conexión con el repositorio. Usando datos locales.");
+                statusBar.innerText = "MODO DESCONECTADO (OFFLINE)";
+                statusBar.style.color = "var(--orange)";
+                
+                const lista = document.getElementById('lista-versiones');
+                if (Object.keys(getVersionesLocales()).length === 0) {
+                    lista.innerHTML = `<div style="text-align:center; padding:40px; color:#666;">Sin conexión y sin datos locales.</div>`;
+                }
             }
         }
 
-        async function descargar(url, id, nombre) {
-            alert("Descargando...");
+        function renderNube(datosNube) {
+            const lista = document.getElementById('lista-versiones');
+            const locales = getVersionesLocales();
+            
+            // Ordenar datos de la nube descendente por ID (V6, V5...)
+            datosNube.sort((a, b) => {
+                const numA = parseInt(a.id.replace(/\D/g, '')) || 0;
+                const numB = parseInt(b.id.replace(/\D/g, '')) || 0;
+                return numB - numA;
+            });
+
+            datosNube.forEach(item => {
+                const local = locales[item.id];
+                const emptyMsg = lista.querySelector('.empty-msg');
+                if(emptyMsg) emptyMsg.remove();
+
+                if (!local) {
+                    // Evitar duplicados visuales si ya existe en la lista
+                    if (!document.getElementById(`btn-dl-${item.id}`)) {
+                        const card = document.createElement('div');
+                        card.className = 'project-card';
+                        card.style.border = "1px dashed var(--blue)";
+                        card.innerHTML = `
+                            <div class="v-name">${item.nombre}</div>
+                            <div class="v-status"><div class="dot"></div> Disponible en Nube</div>
+                            <div class="progress-container" id="prog-cont-${item.id}">
+                                <div class="progress-bar" id="prog-bar-${item.id}"></div>
+                            </div>
+                            <button class="btn btn-download" id="btn-dl-${item.id}" onclick="descargarEInstalar('${item.url}', '${item.id}', '${item.nombre}', '${item.version || '1.0'}', true)">DESCARGAR</button>
+                        `;
+                        // Insertar al final para mantener el orden de la nube
+                        lista.appendChild(card);
+                    }
+                } else {
+                    verificarActualizacionSilenciosa(item, local);
+                }
+            });
+        }
+
+        async function verificarActualizacionSilenciosa(itemNube, itemLocal) {
             try {
-                const res = await fetch(url);
-                const codigo = await res.text();
-                let locales = getLocales();
-                locales[id] = { nombre, codigo };
-                localStorage.setItem('bio_breach_v_data', JSON.stringify(locales));
-                actualizarInterfaz();
-            } catch (e) { alert("Error de red"); }
+                const res = await fetch(itemNube.url + "?t=" + new Date().getTime());
+                const nuevoCodigo = await res.text();
+                
+                if (nuevoCodigo !== itemLocal.codigo) {
+                    console.log(`Cambio detectado en ${itemNube.nombre}. Actualizando datos...`);
+                    let locales = getVersionesLocales();
+                    locales[itemNube.id] = { 
+                        nombre: itemNube.nombre, 
+                        codigo: nuevoCodigo, 
+                        version: itemNube.version, 
+                        fecha: new Date().toLocaleString() 
+                    };
+                    localStorage.setItem('bio_breach_v_data', JSON.stringify(locales));
+                    // No refrescamos la interfaz completa aquí para evitar parpadeos, 
+                    // el cambio se verá en la próxima carga o tras una acción.
+                }
+            } catch (e) {
+                console.log("Error en verificación silenciosa");
+            }
+        }
+
+        async function descargarEInstalar(url, id, nombre, versionNube, mostrarProgreso = false) {
+            const btn = document.getElementById(`btn-dl-${id}`);
+            const pCont = document.getElementById(`prog-cont-${id}`);
+            const pBar = document.getElementById(`prog-bar-${id}`);
+            
+            if(mostrarProgreso && btn) btn.style.display = "none";
+            if(mostrarProgreso && pCont) pCont.style.display = "block";
+
+            try {
+                const response = await fetch(url + "?t=" + new Date().getTime());
+                if (!response.ok) throw new Error("Error");
+                
+                const codigo = await response.text();
+                
+                if (mostrarProgreso) {
+                    let progreso = 0;
+                    const intervalo = setInterval(() => {
+                        progreso += 20;
+                        if(pBar) pBar.style.width = progreso + "%";
+                        if (progreso >= 100) {
+                            clearInterval(intervalo);
+                            guardarYActualizar(id, nombre, codigo, versionNube);
+                        }
+                    }, 100);
+                } else {
+                    guardarYActualizar(id, nombre, codigo, versionNube);
+                }
+            } catch (error) { 
+                if(mostrarProgreso) alert("Error de descarga"); 
+                if(btn) btn.style.display = "block"; 
+            }
+        }
+
+        function guardarYActualizar(id, nombre, codigo, version) {
+            let locales = getVersionesLocales();
+            locales[id] = { nombre: nombre, codigo: codigo, version: version, fecha: new Date().toLocaleString() };
+            localStorage.setItem('bio_breach_v_data', JSON.stringify(locales));
+            actualizarInterfaz();
+        }
+
+        function actualizarInterfaz() {
+            const lista = document.getElementById('lista-versiones');
+            const locales = getVersionesLocales();
+            
+            // Orden descendente basado en el número de versión (V6 > V5)
+            const keys = Object.keys(locales).sort((a, b) => {
+                const numA = parseInt(a.replace(/\D/g, '')) || 0;
+                const numB = parseInt(b.replace(/\D/g, '')) || 0;
+                return numB - numA;
+            });
+
+            // Para evitar el "salto", solo vaciamos si hay cambios reales o es la carga inicial
+            lista.innerHTML = "";
+            
+            if (keys.length > 0) {
+                keys.forEach(id => {
+                    const v = locales[id];
+                    const card = document.createElement('div');
+                    card.className = 'project-card';
+                    card.id = `card-local-${id}`;
+                    
+                    const dotClass = navigator.onLine ? 'active' : 'offline';
+
+                    card.innerHTML = `
+                        <div class="v-name">${v.nombre}</div>
+                        <div class="v-status"><div class="dot ${dotClass}"></div> Listo en Memoria</div>
+                        <button class="btn btn-play" onclick="lanzarMotor('${id}')">INICIAR</button>
+                    `;
+                    lista.appendChild(card);
+                });
+            } else {
+                lista.innerHTML = `<div class="empty-msg" style="text-align:center; padding:40px; color:#666;">Buscando contenido en la nube...</div>`;
+            }
+            sincroServidor();
         }
 
         function lanzarMotor(id) {
-            document.getElementById('game-view').style.display = "block";
-            const blob = new Blob([getLocales()[id].codigo], { type: 'text/html' });
-            document.getElementById('game-frame').src = URL.createObjectURL(blob);
+            const view = document.getElementById('game-view');
+            const frame = document.getElementById('game-frame');
+            const locales = getVersionesLocales();
+            view.style.display = "block";
+            const blob = new Blob([locales[id].codigo], { type: 'text/html' });
+            frame.src = URL.createObjectURL(blob);
         }
+
+        function cerrarMotor() {
+            document.getElementById('game-view').style.display = "none";
+            document.getElementById('game-frame').src = "about:blank";
+        }
+        
+        window.addEventListener('online', actualizarInterfaz);
+        window.addEventListener('offline', actualizarInterfaz);
     </script>
 </body>
 </html>
