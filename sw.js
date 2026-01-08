@@ -1,48 +1,41 @@
-const CACHE_NAME = "bio-breach-v2";
-const ASSETS_TO_CACHE = [
+const CACHE_NAME = "bio-breach-v3";
+const ASSETS = [
   "./",
   "./index.html",
-  "./manifest.json",
-  "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png"
+  "./manifest.json"
 ];
 
-// 1. INSTALACIÓN: Descarga los archivos clave
+// 1. INSTALACIÓN: Solo guardamos lo crítico local
 self.addEventListener("install", (event) => {
   self.skipWaiting(); // Forza la activación inmediata
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      return cache.addAll(ASSETS);
     })
   );
 });
 
-// 2. ACTIVACIÓN: Limpia cachés viejas
+// 2. ACTIVACIÓN: Limpia versiones viejas
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
+    caches.keys().then((keys) => {
       return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            return caches.delete(cache);
-          }
+        keys.map((key) => {
+          if (key !== CACHE_NAME) return caches.delete(key);
         })
       );
     })
   );
-  self.clients.claim(); // Toma control de la página inmediatamente
+  self.clients.claim();
 });
 
-// 3. INTERCEPTOR (FETCH): Sirve desde caché si no hay internet
+// 3. INTERCEPTOR: Estrategia "Network First" (Mejor para juegos online)
+// Intenta bajar de internet primero. Si no hay red, usa la caché.
 self.addEventListener("fetch", (event) => {
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      // Si está en caché, lo devuelve. Si no, lo busca en internet.
-      return response || fetch(event.request).catch(() => {
-        // Si no hay internet y no está en caché, devuelve el index (modo offline)
-        if (event.request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
-      });
-    })
+    fetch(event.request)
+      .catch(() => {
+        return caches.match(event.request);
+      })
   );
 });
