@@ -1,4 +1,4 @@
-const CACHE_NAME = "bio-breach-v3";
+const CACHE_NAME = "bio-breach-v3.1";
 const ASSETS = [
   "./",
   "./index.html",
@@ -30,12 +30,36 @@ self.addEventListener("activate", (event) => {
 });
 
 // 3. INTERCEPTOR: Estrategia "Network First" (Mejor para juegos online)
-// Intenta bajar de internet primero. Si no hay red, usa la caché.
 self.addEventListener("fetch", (event) => {
+  // Manejo especial para share_target (POST requests)
+  if (event.request.method === 'POST') {
+    event.respondWith(Response.redirect('./index.html'));
+    return;
+  }
+  
   event.respondWith(
     fetch(event.request)
       .catch(() => {
         return caches.match(event.request);
       })
   );
+});
+
+// 4. FUNCIONES AVANZADAS (Para cumplir requisitos de PWA Builder)
+self.addEventListener('sync', (event) => {
+  console.log('Sincronización en segundo plano activada:', event.tag);
+});
+
+self.addEventListener('periodicsync', (event) => {
+  console.log('Sincronización periódica activada:', event.tag);
+});
+
+self.addEventListener('push', (event) => {
+  console.log('Notificación Push recibida');
+  const options = {
+    body: 'BIO-BREACH HUB Actualizado',
+    icon: 'https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png',
+    badge: 'https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png'
+  };
+  event.waitUntil(self.registration.showNotification('BIO-BREACH', options));
 });
