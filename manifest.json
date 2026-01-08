@@ -3,11 +3,19 @@
   "dir": "ltr",
   "display": "standalone",
   "name": "BIO-BREACH HUB",
-  "orientation": "any",
-  "scope": "/",
-  "short_name": "elfaraon65.github",
-  "start_url": "/",
-  "theme_color": "#ebc123",
-  "id": "thefaraDetective",
-  "description": "Juego de buscar a un culpable haciendo las preguntas indicadas para descartar a los inocentes."
+  "orientation": "portrait",
+  "scope": "./",
+  "short_name": "BB Hub",
+  "start_url": "./index.html",
+  "theme_color": "#ffd700",
+  "id": "bioBreachHub",
+  "description": "Launcher oficial de BIO-BREACH para gestión de versiones.",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
