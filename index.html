@@ -332,6 +332,22 @@
         
         window.addEventListener('online', actualizarInterfaz);
         window.addEventListener('offline', actualizarInterfaz);
-    </script>
+    // ... todo tu código actual (Service Worker, lanzarMotor, etc.)
+
+     </script>
+    const bypassCors = "https://corsproxy.io/?"; 
+
+    async function cargarArchivo(url) {
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error();
+            return await res.text();
+        } catch (e) {
+            console.log("Error de conexión detectado. Usando vía alterna...");
+            const resProxy = await fetch(bypassCors + encodeURIComponent(url));
+            return await resProxy.text();
+        }
+    }
+</script>
 </body>
 </html>
