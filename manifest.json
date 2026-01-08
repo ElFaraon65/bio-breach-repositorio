@@ -13,10 +13,7 @@
   "lang": "es-ES",
   "dir": "ltr",
   "categories": ["games", "entertainment", "utilities"],
-  "iarc_rating_id": "",
   "prefer_related_applications": false,
-  "related_applications": [],
-  "protocol_handlers": [],
   "edge_side_panel": {
     "preferred_width": 400
   },
@@ -41,26 +38,27 @@
     {
       "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Screenshots/Screenshot_20260107_210229.jpg",
       "form_factor": "narrow",
-      "label": "Inicio del Hub",
-      "type": "image/jpeg"
+      "label": "Inicio del Hub"
     },
     {
       "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Screenshots/Screenshot_20260107_210251.jpg",
       "form_factor": "narrow",
-      "label": "Interfaz de Versiones",
-      "type": "image/jpeg"
+      "label": "Interfaz de Versiones"
     },
     {
       "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Screenshots/Screenshot_20260107_210245.jpg",
       "form_factor": "narrow",
-      "label": "Panel de Control",
-      "type": "image/jpeg"
+      "label": "Panel de Control"
     },
     {
       "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Screenshots/Screenshot_20260107_210513.jpg",
       "form_factor": "narrow",
-      "label": "Sistema de Juego",
-      "type": "image/jpeg"
+      "label": "Sistema de Juego"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Screenshots/Screenshot_20260107_210513.jpg",
+      "form_factor": "wide",
+      "label": "Vista de Escritorio"
     }
   ],
   "shortcuts": [
