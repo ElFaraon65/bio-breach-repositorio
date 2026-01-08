@@ -13,10 +13,8 @@
   "lang": "es-ES",
   "dir": "ltr",
   "categories": ["games", "entertainment", "utilities"],
-  "iarc_rating_id": "",
   "prefer_related_applications": false,
-  "related_applications": [],
-  "protocol_handlers": [],
+  "scope_extensions": [],
   "edge_side_panel": {
     "preferred_width": 400
   },
