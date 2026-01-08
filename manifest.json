@@ -6,7 +6,7 @@
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "tabbed"],
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "background_color": "#0a0a0a",
   "theme_color": "#ffd700",
   "orientation": "portrait",
@@ -21,30 +21,7 @@
       "origin": "https://elfaraon65.github.io"
     }
   ],
-  "share_target": {
-    "action": "./index.html",
-    "method": "GET",
-    "enctype": "application/x-www-form-urlencoded",
-    "params": {
-      "title": "title",
-      "text": "text",
-      "url": "url"
-    }
-  },
-  "file_handlers": [
-    {
-      "action": "./index.html",
-      "accept": {
-        "text/plain": [".txt", ".log"]
-      }
-    }
-  ],
-  "protocol_handlers": [
-    {
-      "protocol": "web+bbhub",
-      "url": "./index.html?type=%s"
-    }
-  ],
+  "protocol_handlers": [],
   "edge_side_panel": {
     "preferred_width": 400
   },
