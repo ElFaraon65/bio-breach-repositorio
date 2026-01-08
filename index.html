@@ -30,17 +30,17 @@
 
     <meta name="referrer" content="strict-origin-when-cross-origin">
     
-         <meta http-equiv="Content-Security-Policy" 
-          content="default-src 'self' https://elfaraon65.github.io https://raw.githubusercontent.com https://corsproxy.io; 
-                   script-src 'self' 'unsafe-inline' 'unsafe-eval' https://storage.googleapis.com blob:; 
-                   style-src 'self' 'unsafe-inline'; 
-                   img-src 'self' data: https://raw.githubusercontent.com blob:; 
-                   connect-src 'self' https://elfaraon65.github.io https://raw.githubusercontent.com https://corsproxy.io; 
-                   frame-src 'self' blob: data:;">
+    <meta http-equiv="Content-Security-Policy" 
+          content="default-src 'self' https: data: blob: 'unsafe-inline' 'unsafe-eval'; 
+                   script-src 'self' 'unsafe-inline' 'unsafe-eval' https: blob:; 
+                   style-src 'self' 'unsafe-inline' https:; 
+                   img-src 'self' data: https: blob:; 
+                   connect-src 'self' https: wss: blob: data:; 
+                   frame-src 'self' blob: data: https:;">
 
     <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), vr=(), accelerometer=(), gyroscope=(), magnetometer=()">
 
-    <link rel="manifest" href="./manifest.json?v=blue_fix">
+    <link rel="manifest" href="./manifest.json?v=fix_connection">
 
     <style>
         :root { --gold: #ffd700; --bg: #0a0a0a; --card: #161616; --blue: #0078d4; --green: #00ff41; --orange: #ff8c00; }
@@ -86,48 +86,33 @@
     </div>
 
     <script>
-        // Movemos esto fuera de window.onload para que el auditor lo detecte SIEMPRE
+        // Registro del Service Worker
         if ("serviceWorker" in navigator) {
-            // Agregamos ?v=final para obligar al navegador a ver el archivo como nuevo
-            navigator.serviceWorker.register("./sw.js?v=final_audit", { scope: "./" })
+            // Se usa un timestamp para intentar forzar la actualización del registro
+            navigator.serviceWorker.register("./sw.js?v=" + new Date().getTime(), { scope: "./" })
                 .then(async reg => {
                     console.log("SW Activo (Scope):", reg.scope);
                     
-                    // --- ACTIVACIÓN DE FUNCIONES AVANZADAS (Corrección PWA Builder) ---
-                    
-                    // 1. SOLICITAR PERMISO DE NOTIFICACIONES (Requisito para Push)
+                    // Actualización manual del SW si hay uno esperando
+                    if (reg.waiting) {
+                        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                    }
+
+                    // --- FUNCIONES AVANZADAS ---
                     if ('Notification' in window && Notification.permission === 'default') {
-                        // Intentamos pedir permiso suavemente para que el auditor lo detecte
                         Notification.requestPermission().catch(e => console.log("Notificaciones bloqueadas"));
                     }
-
-                    // 2. REGISTRAR BACKGROUND SYNC
                     if ('sync' in reg) {
-                        try {
-                            await reg.sync.register('sync-datos');
-                            console.log('Background Sync: Registrado exitosamente');
-                        } catch (err) {
-                            console.log('Background Sync: No soportado o error', err);
-                        }
+                        try { await reg.sync.register('sync-datos'); } catch (err) {}
                     }
-
-                    // 3. REGISTRAR PERIODIC SYNC (Sincronización Periódica)
                     if ('periodicSync' in reg) {
                         try {
                             const status = await navigator.permissions.query({ name: 'periodic-background-sync' });
                             if (status.state === 'granted') {
-                                await reg.periodicSync.register('sync-periodico', {
-                                    minInterval: 12 * 60 * 60 * 1000 // 12 horas
-                                });
-                                console.log('Periodic Sync: Registrado exitosamente');
-                            } else {
-                                console.log('Periodic Sync: Permiso no otorgado (Normal en Android sin instalar)');
+                                await reg.periodicSync.register('sync-periodico', { minInterval: 12 * 60 * 60 * 1000 });
                             }
-                        } catch (err) {
-                            console.log('Periodic Sync: No soportado en este navegador');
-                        }
+                        } catch (err) {}
                     }
-                    // ------------------------------------------------------------------
                 })
                 .catch(err => console.error("SW Error:", err));
         }
@@ -135,10 +120,8 @@
 
     <script>
         const URL_SERVIDOR = "https://elfaraon65.github.io/bio-breach-repositorio/"; 
-        // URL del Proxy para evitar errores de conexión en APK/CORS
         const BYPASS_CORS = "https://corsproxy.io/?"; 
 
-        // Solo un window.onload para evitar conflictos
         window.onload = () => {
             actualizarInterfaz();
         };
@@ -147,26 +130,22 @@
             return JSON.parse(localStorage.getItem('bio_breach_v_data')) || {};
         }
 
-        // FUNCIÓN MAESTRA DE CONEXIÓN (CORREGIDA PARA INTEGRAR EL PROXY)
+        // Función de conexión robusta (Intenta directo -> Proxy)
         async function cargarRecursoSeguro(url) {
-            // Añadimos timestamp para evitar cache antigua
             const urlConTiempo = url + (url.includes('?') ? '&' : '?') + "t=" + new Date().getTime();
-            
             try {
-                // Intento 1: Conexión Directa
                 const res = await fetch(urlConTiempo);
-                if (!res.ok) throw new Error("Fallo conexión directa status: " + res.status);
+                if (!res.ok) throw new Error("Status: " + res.status);
                 return res;
             } catch (e) {
-                console.warn("Conexión directa falló, activando protocolo de respaldo (Proxy)...", e);
+                console.warn("Fallo directo, intentando proxy...", e);
                 try {
-                    // Intento 2: Usando Proxy
                     const targetUrl = BYPASS_CORS + encodeURIComponent(urlConTiempo);
                     const resProxy = await fetch(targetUrl);
-                    if (!resProxy.ok) throw new Error("Fallo conexión proxy");
+                    if (!resProxy.ok) throw new Error("Fallo proxy");
                     return resProxy;
                 } catch (errorProxy) {
-                    console.error("Error fatal de conexión:", errorProxy);
+                    console.error("Conexión fallida total:", errorProxy);
                     throw errorProxy;
                 }
             }
@@ -175,7 +154,6 @@
         async function sincroServidor() {
             const statusBar = document.getElementById('status-bar');
             try {
-                // USAMOS LA NUEVA FUNCIÓN SEGURA
                 const res = await cargarRecursoSeguro(URL_SERVIDOR + "versiones.json");
                 const nube = await res.json();
                 
@@ -184,13 +162,13 @@
                 
                 renderNube(nube);
             } catch (e) {
-                console.log("Error de conexión con el repositorio. Usando datos locales.");
+                console.log("Modo Offline activado");
                 statusBar.innerText = "MODO DESCONECTADO (OFFLINE)";
                 statusBar.style.color = "var(--orange)";
                 
                 const lista = document.getElementById('lista-versiones');
                 if (Object.keys(getVersionesLocales()).length === 0) {
-                    lista.innerHTML = `<div style="text-align:center; padding:40px; color:#666;">Sin conexión y sin datos locales.<br>Intenta reiniciar la app.</div>`;
+                    lista.innerHTML = `<div style="text-align:center; padding:40px; color:#666;">Sin conexión y sin datos.<br>Reinicia la app.</div>`;
                 }
             }
         }
@@ -233,7 +211,6 @@
 
         async function verificarActualizacionSilenciosa(itemNube, itemLocal) {
             try {
-                // USAMOS LA NUEVA FUNCIÓN SEGURA
                 const res = await cargarRecursoSeguro(itemNube.url);
                 const nuevoCodigo = await res.text();
                 
@@ -246,10 +223,9 @@
                         fecha: new Date().toLocaleString() 
                     };
                     localStorage.setItem('bio_breach_v_data', JSON.stringify(locales));
-                    console.log("Actualización silenciosa completada para " + itemNube.nombre);
                 }
             } catch (e) {
-                console.log("Error en verificación silenciosa");
+                console.log("No se pudo verificar actualización silenciosa");
             }
         }
 
@@ -262,7 +238,6 @@
             if(mostrarProgreso && pCont) pCont.style.display = "block";
 
             try {
-                // USAMOS LA NUEVA FUNCIÓN SEGURA
                 const response = await cargarRecursoSeguro(url);
                 const codigo = await response.text();
                 
@@ -281,7 +256,7 @@
                 }
             } catch (error) { 
                 console.error(error);
-                if(mostrarProgreso) alert("Error de descarga: Verifica tu conexión"); 
+                if(mostrarProgreso) alert("Error de descarga. Verifica tu internet."); 
                 if(btn) btn.style.display = "block"; 
             }
         }
@@ -311,7 +286,6 @@
                     const card = document.createElement('div');
                     card.className = 'project-card';
                     card.id = `card-local-${id}`;
-                    
                     const dotClass = navigator.onLine ? 'active' : 'offline';
 
                     card.innerHTML = `
@@ -322,7 +296,7 @@
                     lista.appendChild(card);
                 });
             } else {
-                lista.innerHTML = `<div class="empty-msg" style="text-align:center; padding:40px; color:#666;">Buscando contenido en la nube...</div>`;
+                lista.innerHTML = `<div class="empty-msg" style="text-align:center; padding:40px; color:#666;">Buscando contenido...</div>`;
             }
             sincroServidor();
         }
@@ -333,21 +307,20 @@
             const locales = getVersionesLocales();
             
             if (!locales[id]) {
-                alert("Error: No se encontraron datos locales para esta versión.");
+                alert("Error: Datos dañados. Intenta borrar caché.");
                 return;
             }
 
             view.style.display = "block";
             
-            // Método de escritura directa: más compatible con APKs y WebViews de Android
+            // Inyección segura compatible con APKs
             try {
                 const doc = frame.contentDocument || frame.contentWindow.document;
                 doc.open();
                 doc.write(locales[id].codigo);
                 doc.close();
             } catch (e) {
-                console.error("Error al inyectar código:", e);
-                // Plan B: Si la escritura directa falla, usamos el método de Blob como respaldo
+                console.error("Error lanzando motor:", e);
                 const blob = new Blob([locales[id].codigo], { type: 'text/html' });
                 frame.src = URL.createObjectURL(blob);
             }
@@ -355,7 +328,6 @@
 
         function cerrarMotor() {
             document.getElementById('game-view').style.display = "none";
-            // Limpiamos el frame para liberar memoria y detener sonidos del juego
             document.getElementById('game-frame').src = "about:blank";
         }        
         
