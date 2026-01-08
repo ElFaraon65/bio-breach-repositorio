@@ -89,46 +89,8 @@
         // Movemos esto fuera de window.onload para que el auditor lo detecte SIEMPRE
         if ("serviceWorker" in navigator) {
             // Agregamos ?v=final para obligar al navegador a ver el archivo como nuevo
-            navigator.serviceWorker.register("./sw.js?v=final_audit", { scope: "./" })
-                .then(async reg => {
-                    console.log("SW Activo (Scope):", reg.scope);
-                    
-                    // --- ACTIVACIÓN DE FUNCIONES AVANZADAS (Corrección PWA Builder) ---
-                    
-                    // 1. SOLICITAR PERMISO DE NOTIFICACIONES (Requisito para Push)
-                    if ('Notification' in window && Notification.permission === 'default') {
-                        // Intentamos pedir permiso suavemente para que el auditor lo detecte
-                        Notification.requestPermission().catch(e => console.log("Notificaciones bloqueadas"));
-                    }
-
-                    // 2. REGISTRAR BACKGROUND SYNC
-                    if ('sync' in reg) {
-                        try {
-                            await reg.sync.register('sync-datos');
-                            console.log('Background Sync: Registrado exitosamente');
-                        } catch (err) {
-                            console.log('Background Sync: No soportado o error', err);
-                        }
-                    }
-
-                    // 3. REGISTRAR PERIODIC SYNC (Sincronización Periódica)
-                    if ('periodicSync' in reg) {
-                        try {
-                            const status = await navigator.permissions.query({ name: 'periodic-background-sync' });
-                            if (status.state === 'granted') {
-                                await reg.periodicSync.register('sync-periodico', {
-                                    minInterval: 12 * 60 * 60 * 1000 // 12 horas
-                                });
-                                console.log('Periodic Sync: Registrado exitosamente');
-                            } else {
-                                console.log('Periodic Sync: Permiso no otorgado (Normal en Android sin instalar)');
-                            }
-                        } catch (err) {
-                            console.log('Periodic Sync: No soportado en este navegador');
-                        }
-                    }
-                    // ------------------------------------------------------------------
-                })
+            navigator.serviceWorker.register("./sw.js?v=final", { scope: "./" })
+                .then(reg => console.log("SW Activo (Scope):", reg.scope))
                 .catch(err => console.error("SW Error:", err));
         }
     </script>
