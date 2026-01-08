@@ -1,16 +1,25 @@
 {
   "name": "BIO-BREACH HUB",
   "short_name": "BB Hub",
-  "start_url": "index.html",
+  "description": "Launcher oficial de BIO-BREACH para gestión de versiones.",
+  "start_url": "./index.html",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0a0a0a",
   "theme_color": "#ffd700",
+  "scope": "/",
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/refs/heads/main/Logo%20de%20BIO-BREACH.png",
+      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
