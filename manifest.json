@@ -1,21 +1,59 @@
 {
-  "background_color": "#000000",
-  "dir": "ltr",
-  "display": "standalone",
   "name": "BIO-BREACH HUB",
-  "orientation": "portrait",
-  "scope": "./",
   "short_name": "BB Hub",
-  "start_url": "./index.html",
-  "theme_color": "#ffd700",
+  "description": "Launcher oficial de BIO-BREACH. Gestiona, descarga y juega versiones exclusivas.",
   "id": "bioBreachHub",
-  "description": "Launcher oficial de BIO-BREACH para gestión de versiones.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#ffd700",
+  "orientation": "portrait",
+  "lang": "es",
+  "dir": "ltr",
+  "categories": ["games", "entertainment", "utilities"],
+  "iarc_rating_id": "",
+  "prefer_related_applications": false,
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
   "icons": [
     {
       "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Pantalla de Inicio"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Gestor de Versiones"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ver Versiones",
+      "short_name": "Versiones",
+      "description": "Ir directo a la lista de descargas",
+      "url": "./index.html",
+      "icons": [{ "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png", "sizes": "512x512" }]
     }
   ]
 }
