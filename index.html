@@ -31,11 +31,11 @@
     <meta name="referrer" content="strict-origin-when-cross-origin">
     
          <meta http-equiv="Content-Security-Policy" 
-          content="default-src 'self' https://elfaraon65.github.io https://raw.githubusercontent.com; 
+          content="default-src 'self' https://elfaraon65.github.io https://raw.githubusercontent.com https://corsproxy.io; 
                    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://storage.googleapis.com blob:; 
                    style-src 'self' 'unsafe-inline'; 
                    img-src 'self' data: https://raw.githubusercontent.com blob:; 
-                   connect-src 'self' https://elfaraon65.github.io https://raw.githubusercontent.com; 
+                   connect-src 'self' https://elfaraon65.github.io https://raw.githubusercontent.com https://corsproxy.io; 
                    frame-src 'self' blob: data:;">
 
     <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), vr=(), accelerometer=(), gyroscope=(), magnetometer=()">
@@ -135,6 +135,8 @@
 
     <script>
         const URL_SERVIDOR = "https://elfaraon65.github.io/bio-breach-repositorio/"; 
+        // URL del Proxy para evitar errores de conexión en APK/CORS
+        const BYPASS_CORS = "https://corsproxy.io/?"; 
 
         // Solo un window.onload para evitar conflictos
         window.onload = () => {
@@ -145,11 +147,36 @@
             return JSON.parse(localStorage.getItem('bio_breach_v_data')) || {};
         }
 
+        // FUNCIÓN MAESTRA DE CONEXIÓN (CORREGIDA PARA INTEGRAR EL PROXY)
+        async function cargarRecursoSeguro(url) {
+            // Añadimos timestamp para evitar cache antigua
+            const urlConTiempo = url + (url.includes('?') ? '&' : '?') + "t=" + new Date().getTime();
+            
+            try {
+                // Intento 1: Conexión Directa
+                const res = await fetch(urlConTiempo);
+                if (!res.ok) throw new Error("Fallo conexión directa status: " + res.status);
+                return res;
+            } catch (e) {
+                console.warn("Conexión directa falló, activando protocolo de respaldo (Proxy)...", e);
+                try {
+                    // Intento 2: Usando Proxy
+                    const targetUrl = BYPASS_CORS + encodeURIComponent(urlConTiempo);
+                    const resProxy = await fetch(targetUrl);
+                    if (!resProxy.ok) throw new Error("Fallo conexión proxy");
+                    return resProxy;
+                } catch (errorProxy) {
+                    console.error("Error fatal de conexión:", errorProxy);
+                    throw errorProxy;
+                }
+            }
+        }
+
         async function sincroServidor() {
             const statusBar = document.getElementById('status-bar');
             try {
-                const res = await fetch(URL_SERVIDOR + "versiones.json?t=" + new Date().getTime());
-                if (!res.ok) throw new Error();
+                // USAMOS LA NUEVA FUNCIÓN SEGURA
+                const res = await cargarRecursoSeguro(URL_SERVIDOR + "versiones.json");
                 const nube = await res.json();
                 
                 statusBar.innerText = "SISTEMA EN LÍNEA";
@@ -163,7 +190,7 @@
                 
                 const lista = document.getElementById('lista-versiones');
                 if (Object.keys(getVersionesLocales()).length === 0) {
-                    lista.innerHTML = `<div style="text-align:center; padding:40px; color:#666;">Sin conexión y sin datos locales.</div>`;
+                    lista.innerHTML = `<div style="text-align:center; padding:40px; color:#666;">Sin conexión y sin datos locales.<br>Intenta reiniciar la app.</div>`;
                 }
             }
         }
@@ -206,7 +233,8 @@
 
         async function verificarActualizacionSilenciosa(itemNube, itemLocal) {
             try {
-                const res = await fetch(itemNube.url + "?t=" + new Date().getTime());
+                // USAMOS LA NUEVA FUNCIÓN SEGURA
+                const res = await cargarRecursoSeguro(itemNube.url);
                 const nuevoCodigo = await res.text();
                 
                 if (nuevoCodigo !== itemLocal.codigo) {
@@ -218,6 +246,7 @@
                         fecha: new Date().toLocaleString() 
                     };
                     localStorage.setItem('bio_breach_v_data', JSON.stringify(locales));
+                    console.log("Actualización silenciosa completada para " + itemNube.nombre);
                 }
             } catch (e) {
                 console.log("Error en verificación silenciosa");
@@ -233,9 +262,8 @@
             if(mostrarProgreso && pCont) pCont.style.display = "block";
 
             try {
-                const response = await fetch(url + "?t=" + new Date().getTime());
-                if (!response.ok) throw new Error("Error");
-                
+                // USAMOS LA NUEVA FUNCIÓN SEGURA
+                const response = await cargarRecursoSeguro(url);
                 const codigo = await response.text();
                 
                 if (mostrarProgreso) {
@@ -252,7 +280,8 @@
                     guardarYActualizar(id, nombre, codigo, versionNube);
                 }
             } catch (error) { 
-                if(mostrarProgreso) alert("Error de descarga"); 
+                console.error(error);
+                if(mostrarProgreso) alert("Error de descarga: Verifica tu conexión"); 
                 if(btn) btn.style.display = "block"; 
             }
         }
@@ -298,7 +327,7 @@
             sincroServidor();
         }
 
-                function lanzarMotor(id) {
+        function lanzarMotor(id) {
             const view = document.getElementById('game-view');
             const frame = document.getElementById('game-frame');
             const locales = getVersionesLocales();
@@ -324,7 +353,7 @@
             }
         }
 
-                function cerrarMotor() {
+        function cerrarMotor() {
             document.getElementById('game-view').style.display = "none";
             // Limpiamos el frame para liberar memoria y detener sonidos del juego
             document.getElementById('game-frame').src = "about:blank";
@@ -332,22 +361,6 @@
         
         window.addEventListener('online', actualizarInterfaz);
         window.addEventListener('offline', actualizarInterfaz);
-    // ... todo tu código actual (Service Worker, lanzarMotor, etc.)
-
-     </script>
-    const bypassCors = "https://corsproxy.io/?"; 
-
-    async function cargarArchivo(url) {
-        try {
-            const res = await fetch(url);
-            if (!res.ok) throw new Error();
-            return await res.text();
-        } catch (e) {
-            console.log("Error de conexión detectado. Usando vía alterna...");
-            const resProxy = await fetch(bypassCors + encodeURIComponent(url));
-            return await resProxy.text();
-        }
-    }
-</script>
+    </script>
 </body>
 </html>
