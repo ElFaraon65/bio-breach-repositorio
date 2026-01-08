@@ -1,4 +1,4 @@
-const CACHE_NAME = "bio-breach-v3.1";
+const CACHE_NAME = "bio-breach-v4.0-final";
 const ASSETS = [
   "./",
   "./index.html",
@@ -29,9 +29,8 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// 3. INTERCEPTOR: Estrategia "Network First" (Mejor para juegos online)
+// 3. INTERCEPTOR: Estrategia "Network First"
 self.addEventListener("fetch", (event) => {
-  // Manejo especial para share_target (POST requests)
   if (event.request.method === 'POST') {
     event.respondWith(Response.redirect('./index.html'));
     return;
@@ -45,21 +44,48 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
-// 4. FUNCIONES AVANZADAS (Para cumplir requisitos de PWA Builder)
+// 4. FUNCIONES AVANZADAS (PWA BUILDER & SYNC)
+
+// Background Sync
 self.addEventListener('sync', (event) => {
-  console.log('Sincronización en segundo plano activada:', event.tag);
+  if (event.tag === 'sync-datos') {
+    console.log('SW: Ejecutando sincronización de fondo (sync-datos)');
+    // Aquí iría la lógica real de sincronización, por ahora solo valida la función
+  }
 });
 
+// Periodic Sync
 self.addEventListener('periodicsync', (event) => {
-  console.log('Sincronización periódica activada:', event.tag);
+  if (event.tag === 'sync-periodico') {
+    console.log('SW: Ejecutando sincronización periódica (sync-periodico)');
+    // Aquí se actualizaría contenido cada 12h-24h
+  }
 });
 
+// Push Notifications
 self.addEventListener('push', (event) => {
-  console.log('Notificación Push recibida');
+  console.log('SW: Notificación Push recibida');
+  
   const options = {
-    body: 'BIO-BREACH HUB Actualizado',
+    body: event.data ? event.data.text() : 'BIO-BREACH HUB: Nueva versión disponible',
     icon: 'https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png',
-    badge: 'https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png'
+    badge: 'https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png',
+    vibrate: [100, 50, 100],
+    data: {
+      dateOfArrival: Date.now(),
+      primaryKey: 1
+    }
   };
-  event.waitUntil(self.registration.showNotification('BIO-BREACH', options));
+  
+  event.waitUntil(
+    self.registration.showNotification('BIO-BREACH HUB', options)
+  );
+});
+
+// Clic en notificación
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.openWindow('./index.html')
+  );
 });
