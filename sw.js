@@ -1,47 +1,48 @@
-// This is the "Offline page" service worker
+const CACHE_NAME = "bio-breach-v2";
+const ASSETS_TO_CACHE = [
+  "./",
+  "./index.html",
+  "./manifest.json",
+  "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png"
+];
 
-importScripts('https://storage.googleapis.com/workbox-cdn/releases/5.1.2/workbox-sw.js');
-
-const CACHE = "pwabuilder-page";
-
-// SE CAMBIÓ EL TODO POR TU ARCHIVO REAL
-const offlineFallbackPage = "index.html";
-
-self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
-    self.skipWaiting();
-  }
-});
-
-self.addEventListener('install', async (event) => {
+// 1. INSTALACIÓN: Descarga los archivos clave
+self.addEventListener("install", (event) => {
+  self.skipWaiting(); // Forza la activación inmediata
   event.waitUntil(
-    caches.open(CACHE)
-      .then((cache) => cache.add(offlineFallbackPage))
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS_TO_CACHE);
+    })
   );
 });
 
-if (workbox.navigationPreload.isSupported()) {
-  workbox.navigationPreload.enable();
-}
+// 2. ACTIVACIÓN: Limpia cachés viejas
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            return caches.delete(cache);
+          }
+        })
+      );
+    })
+  );
+  self.clients.claim(); // Toma control de la página inmediatamente
+});
 
-self.addEventListener('fetch', (event) => {
-  if (event.request.mode === 'navigate') {
-    event.respondWith((async () => {
-      try {
-        const preloadResp = await event.preloadResponse;
-
-        if (preloadResp) {
-          return preloadResp;
+// 3. INTERCEPTOR (FETCH): Sirve desde caché si no hay internet
+self.addEventListener("fetch", (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      // Si está en caché, lo devuelve. Si no, lo busca en internet.
+      return response || fetch(event.request).catch(() => {
+        // Si no hay internet y no está en caché, devuelve el index (modo offline)
+        if (event.request.mode === 'navigate') {
+          return caches.match('./index.html');
         }
-
-        const networkResp = await fetch(event.request);
-        return networkResp;
-      } catch (error) {
-
-        const cache = await caches.open(CACHE);
-        const cachedResp = await cache.match(offlineFallbackPage);
-        return cachedResp;
-      }
-    })());
-  }
+      });
+    })
+  );
 });

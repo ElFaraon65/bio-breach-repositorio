@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BIO-BREACH HUB</title>
     
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BB Hub">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png">
+
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://elfaraon65.github.io https://raw.githubusercontent.com 'unsafe-inline' 'unsafe-eval' blob: data:;">
+
+    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), vr=()">
+    
+    <meta name="theme-color" content="#ffd700">
+
     <link rel="manifest" href="manifest.json">
 
     <style>
@@ -138,7 +149,6 @@
                         fecha: new Date().toLocaleString() 
                     };
                     localStorage.setItem('bio_breach_v_data', JSON.stringify(locales));
-                    // No refrescamos la interfaz completa aquí para evitar parpadeos
                 }
             } catch (e) {
                 console.log("Error en verificación silenciosa");
@@ -237,16 +247,19 @@
         window.addEventListener('online', actualizarInterfaz);
         window.addEventListener('offline', actualizarInterfaz);
 
-        // --- REGISTRO DEL SERVICE WORKER (Esto activa la instalación) ---
+        // --- REGISTRO DEL SERVICE WORKER MEJORADO ---
         if ("serviceWorker" in navigator) {
             window.addEventListener("load", () => {
+                // Definimos explícitamente el SCOPE para evitar errores de validación
                 navigator.serviceWorker
-                    .register("./sw.js")
+                    .register("./sw.js", { scope: "./" }) 
                     .then((reg) => {
-                        console.log("[BIO-BREACH] Service Worker registrado con éxito: ", reg.scope);
+                        console.log("[BIO-BREACH] SW registrado. Scope: ", reg.scope);
+                        // Forzamos actualización si hay cambios
+                        reg.update();
                     })
                     .catch((err) => {
-                        console.error("[BIO-BREACH] Falló el registro del Service Worker: ", err);
+                        console.error("[BIO-BREACH] Error al registrar SW: ", err);
                     });
             });
         }

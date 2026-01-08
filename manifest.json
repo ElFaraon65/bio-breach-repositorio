@@ -6,16 +6,20 @@
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
   "background_color": "#0a0a0a",
   "theme_color": "#ffd700",
   "orientation": "portrait",
   "lang": "es",
   "dir": "ltr",
   "categories": ["games", "entertainment", "utilities"],
+  "iarc_rating_id": "",
   "prefer_related_applications": false,
   "launch_handler": {
     "client_mode": "focus-existing"
   },
+  "file_handlers": [],
+  "protocol_handlers": [],
   "icons": [
     {
       "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png",
