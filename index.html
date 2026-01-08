@@ -5,29 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BIO-BREACH HUB</title>
 
-    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="description" content="Launcher oficial de BIO-BREACH. Gestiona, descarga y juega versiones exclusivas del sistema de rastreo.">
+    <meta name="theme-color" content="#ffd700">
+    <link rel="canonical" href="https://elfaraon65.github.io/bio-breach-repositorio/" />
+
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BB Hub">
+
+    <link rel="manifest" href="manifest.json">
 
     <meta http-equiv="Content-Security-Policy" 
           content="default-src 'self' https://elfaraon65.github.io https://raw.githubusercontent.com; 
                    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://storage.googleapis.com; 
-                   style-src 'self' 'unsafe-inline'; 
-                   img-src 'self' data: https://raw.githubusercontent.com; 
                    connect-src 'self' https://elfaraon65.github.io https://raw.githubusercontent.com; 
+                   img-src 'self' data: https://raw.githubusercontent.com blob:; 
+                   style-src 'self' 'unsafe-inline'; 
                    frame-src 'self' blob: data:;">
-
-    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), vr=(), accelerometer=(), gyroscope=(), magnetometer=()">
-
-    <meta name="theme-color" content="#ffd700">
-    <meta name="description" content="Launcher oficial de BIO-BREACH. Gestiona y juega versiones exclusivas.">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="BB Hub">
     
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="BB Hub">
-    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png">
-
-    <link rel="manifest" href="manifest.json">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
 
     <style>
         :root { --gold: #ffd700; --bg: #0a0a0a; --card: #161616; --blue: #0078d4; --green: #00ff41; --orange: #ff8c00; }
@@ -73,8 +71,18 @@
     </div>
 
     <script>
+        // --- 1. REGISTRO INMEDIATO DEL SERVICE WORKER (Para PWA Builder) ---
+        // Se coloca al inicio para asegurar que el auditor lo detecte
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("./sw.js", { scope: "./" })
+                .then(reg => console.log("SW Registrado Scope:", reg.scope))
+                .catch(err => console.error("SW Fallo:", err));
+        }
+
+        // --- 2. LÓGICA DEL LAUNCHER (Tu código original intacto) ---
         const URL_SERVIDOR = "https://elfaraon65.github.io/bio-breach-repositorio/"; 
 
+        // Unificamos la carga para evitar conflictos
         window.onload = () => {
             actualizarInterfaz();
         };
@@ -110,7 +118,7 @@
             const lista = document.getElementById('lista-versiones');
             const locales = getVersionesLocales();
             
-            // Ordenar datos de la nube descendente por ID (V6, V5...)
+            // Ordenar datos descendente
             datosNube.sort((a, b) => {
                 const numA = parseInt(a.id.replace(/\D/g, '')) || 0;
                 const numB = parseInt(b.id.replace(/\D/g, '')) || 0;
@@ -123,7 +131,6 @@
                 if(emptyMsg) emptyMsg.remove();
 
                 if (!local) {
-                    // Evitar duplicados visuales
                     if (!document.getElementById(`btn-dl-${item.id}`)) {
                         const card = document.createElement('div');
                         card.className = 'project-card';
@@ -209,7 +216,6 @@
             const lista = document.getElementById('lista-versiones');
             const locales = getVersionesLocales();
             
-            // Orden descendente
             const keys = Object.keys(locales).sort((a, b) => {
                 const numA = parseInt(a.replace(/\D/g, '')) || 0;
                 const numB = parseInt(b.replace(/\D/g, '')) || 0;
@@ -256,21 +262,6 @@
         
         window.addEventListener('online', actualizarInterfaz);
         window.addEventListener('offline', actualizarInterfaz);
-
-        // --- REGISTRO DEL SERVICE WORKER (Para PWA Builder) ---
-        if ("serviceWorker" in navigator) {
-            // Registramos en window load para asegurar que la página ya cargó
-            window.addEventListener("load", () => {
-                navigator.serviceWorker
-                    .register("./sw.js", { scope: "./" }) // Scope explícito
-                    .then((reg) => {
-                        console.log("[BIO-BREACH] SW OK. Scope: ", reg.scope);
-                    })
-                    .catch((err) => {
-                        console.error("[BIO-BREACH] SW Error: ", err);
-                    });
-            });
-        }
     </script>
 </body>
 </html>
