@@ -6,7 +6,7 @@
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "tabbed"],
   "background_color": "#0a0a0a",
   "theme_color": "#ffd700",
   "orientation": "portrait",
@@ -16,7 +16,35 @@
   "iarc_rating_id": "",
   "prefer_related_applications": false,
   "related_applications": [],
-  "protocol_handlers": [],
+  "scope_extensions": [
+    {
+      "origin": "https://elfaraon65.github.io"
+    }
+  ],
+  "share_target": {
+    "action": "./index.html",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "file_handlers": [
+    {
+      "action": "./index.html",
+      "accept": {
+        "text/plain": [".txt", ".log"]
+      }
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+bbhub",
+      "url": "./index.html?type=%s"
+    }
+  ],
   "edge_side_panel": {
     "preferred_width": 400
   },
@@ -57,6 +85,12 @@
       "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Screenshots/Screenshot_20260107_210513.jpg",
       "form_factor": "narrow",
       "label": "Sistema de Juego"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/refs/heads/main/Screenshots/Screenshot_20260107_231203.jpg",
+      "form_factor": "wide",
+      "label": "Escritorio PC Simulado",
+      "type": "image/jpg"
     }
   ],
   "shortcuts": [
