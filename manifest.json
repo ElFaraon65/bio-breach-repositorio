@@ -1,25 +1,13 @@
 {
-  "name": "BIO-BREACH HUB",
-  "short_name": "BB Hub",
-  "description": "Launcher oficial de BIO-BREACH para gestión de versiones.",
-  "start_url": "./index.html",
+  "background_color": "#000000",
+  "dir": "ltr",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#0a0a0a",
-  "theme_color": "#ffd700",
+  "name": "BIO-BREACH HUB",
+  "orientation": "any",
   "scope": "/",
-  "icons": [
-    {
-      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
-  ]
+  "short_name": "elfaraon65.github",
+  "start_url": "/",
+  "theme_color": "#ebc123",
+  "id": "thefaraDetective",
+  "description": "Juego de buscar a un culpable haciendo las preguntas indicadas para descartar a los inocentes."
 }
