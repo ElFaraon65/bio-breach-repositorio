@@ -4,17 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BIO-BREACH HUB</title>
+
+    <meta name="theme-color" content="#ffd700">
+    <meta name="description" content="Launcher oficial de BIO-BREACH">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BB Hub">
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png">
-
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://elfaraon65.github.io https://raw.githubusercontent.com 'unsafe-inline' 'unsafe-eval' blob: data:;">
-
-    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), vr=()">
-    
-    <meta name="theme-color" content="#ffd700">
 
     <link rel="manifest" href="manifest.json">
 
@@ -62,6 +59,14 @@
     </div>
 
     <script>
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("./sw.js", { scope: "./" })
+                .then(reg => console.log("SW Registrado", reg))
+                .catch(err => console.error("SW Error", err));
+        }
+    </script>
+
+    <script>
         const URL_SERVIDOR = "https://elfaraon65.github.io/bio-breach-repositorio/"; 
 
         window.onload = () => {
@@ -99,7 +104,7 @@
             const lista = document.getElementById('lista-versiones');
             const locales = getVersionesLocales();
             
-            // Ordenar datos de la nube descendente por ID (V6, V5...)
+            // Ordenar datos: Primero V6, luego V5, etc.
             datosNube.sort((a, b) => {
                 const numA = parseInt(a.id.replace(/\D/g, '')) || 0;
                 const numB = parseInt(b.id.replace(/\D/g, '')) || 0;
@@ -112,7 +117,6 @@
                 if(emptyMsg) emptyMsg.remove();
 
                 if (!local) {
-                    // Evitar duplicados visuales si ya existe en la lista
                     if (!document.getElementById(`btn-dl-${item.id}`)) {
                         const card = document.createElement('div');
                         card.className = 'project-card';
@@ -125,7 +129,6 @@
                             </div>
                             <button class="btn btn-download" id="btn-dl-${item.id}" onclick="descargarEInstalar('${item.url}', '${item.id}', '${item.nombre}', '${item.version || '1.0'}', true)">DESCARGAR</button>
                         `;
-                        // Insertar al final para mantener el orden de la nube
                         lista.appendChild(card);
                     }
                 } else {
@@ -140,7 +143,6 @@
                 const nuevoCodigo = await res.text();
                 
                 if (nuevoCodigo !== itemLocal.codigo) {
-                    console.log(`Cambio detectado en ${itemNube.nombre}. Actualizando datos...`);
                     let locales = getVersionesLocales();
                     locales[itemNube.id] = { 
                         nombre: itemNube.nombre, 
@@ -150,9 +152,7 @@
                     };
                     localStorage.setItem('bio_breach_v_data', JSON.stringify(locales));
                 }
-            } catch (e) {
-                console.log("Error en verificación silenciosa");
-            }
+            } catch (e) { console.log("Silent Check Fail"); }
         }
 
         async function descargarEInstalar(url, id, nombre, versionNube, mostrarProgreso = false) {
@@ -199,7 +199,6 @@
             const lista = document.getElementById('lista-versiones');
             const locales = getVersionesLocales();
             
-            // Orden descendente basado en el número de versión (V6 > V5)
             const keys = Object.keys(locales).sort((a, b) => {
                 const numA = parseInt(a.replace(/\D/g, '')) || 0;
                 const numB = parseInt(b.replace(/\D/g, '')) || 0;
@@ -239,30 +238,8 @@
             frame.src = URL.createObjectURL(blob);
         }
 
-        function cerrarMotor() {
-            document.getElementById('game-view').style.display = "none";
-            document.getElementById('game-frame').src = "about:blank";
-        }
-        
         window.addEventListener('online', actualizarInterfaz);
         window.addEventListener('offline', actualizarInterfaz);
-
-        // --- REGISTRO DEL SERVICE WORKER MEJORADO ---
-        if ("serviceWorker" in navigator) {
-            window.addEventListener("load", () => {
-                // Definimos explícitamente el SCOPE para evitar errores de validación
-                navigator.serviceWorker
-                    .register("./sw.js", { scope: "./" }) 
-                    .then((reg) => {
-                        console.log("[BIO-BREACH] SW registrado. Scope: ", reg.scope);
-                        // Forzamos actualización si hay cambios
-                        reg.update();
-                    })
-                    .catch((err) => {
-                        console.error("[BIO-BREACH] Error al registrar SW: ", err);
-                    });
-            });
-        }
     </script>
 </body>
 </html>

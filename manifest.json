@@ -6,20 +6,23 @@
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone"],
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "background_color": "#0a0a0a",
   "theme_color": "#ffd700",
   "orientation": "portrait",
-  "lang": "es",
+  "lang": "es-ES",
   "dir": "ltr",
   "categories": ["games", "entertainment", "utilities"],
   "iarc_rating_id": "",
   "prefer_related_applications": false,
+  "related_applications": [],
+  "protocol_handlers": [],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
   "launch_handler": {
     "client_mode": "focus-existing"
   },
-  "file_handlers": [],
-  "protocol_handlers": [],
   "icons": [
     {
       "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png",
@@ -66,9 +69,9 @@
   ],
   "shortcuts": [
     {
-      "name": "Iniciar BIO-BREACH",
+      "name": "Jugar Ahora",
       "short_name": "Jugar",
-      "description": "Entrar directamente al Hub",
+      "description": "Entrar al juego",
       "url": "./index.html",
       "icons": [{ "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png", "sizes": "512x512" }]
     }
