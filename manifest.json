@@ -1,6 +1,6 @@
 {
   "name": "BIO-BREACH HUB",
-  "short_name": "BB Hub",
+  "short_name": "Bio Breach Hub",
   "description": "Launcher oficial de BIO-BREACH. Gestiona, descarga y juega versiones exclusivas del sistema de rastreo.",
   "id": "bioBreachHub",
   "start_url": "./index.html",
