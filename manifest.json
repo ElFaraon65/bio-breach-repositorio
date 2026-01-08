@@ -13,8 +13,15 @@
   "lang": "es-ES",
   "dir": "ltr",
   "categories": ["games", "entertainment", "utilities"],
+  "iarc_rating_id": "",
   "prefer_related_applications": false,
-  "scope_extensions": [],
+  "related_applications": [],
+  "scope_extensions": [
+    {
+      "origin": "https://elfaraon65.github.io"
+    }
+  ],
+  "protocol_handlers": [],
   "edge_side_panel": {
     "preferred_width": 400
   },
