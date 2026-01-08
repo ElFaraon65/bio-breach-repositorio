@@ -13,10 +13,7 @@
   "lang": "es-ES",
   "dir": "ltr",
   "categories": ["games", "entertainment", "utilities"],
-  "iarc_rating_id": "",
   "prefer_related_applications": false,
-  "related_applications": [],
-  "protocol_handlers": [],
   "edge_side_panel": {
     "preferred_width": 400
   },
@@ -57,6 +54,11 @@
       "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Screenshots/Screenshot_20260107_210513.jpg",
       "form_factor": "narrow",
       "label": "Sistema de Juego"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/refs/heads/main/Screenshots/Screenshot_20260107_231203.jpg",
+      "form_factor": "wide",
+      "label": "Vista PC Terminal"
     }
   ],
   "shortcuts": [
