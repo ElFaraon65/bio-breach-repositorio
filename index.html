@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BIO-BREACH HUB</title>
+    
     <link rel="manifest" href="manifest.json">
+
     <style>
         :root { --gold: #ffd700; --bg: #0a0a0a; --card: #161616; --blue: #0078d4; --green: #00ff41; --orange: #ff8c00; }
         body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; user-select: none; }
@@ -237,19 +239,18 @@
         window.addEventListener('online', actualizarInterfaz);
         window.addEventListener('offline', actualizarInterfaz);
 
-        // --- INTEGRACION SERVICE WORKER ---
+        // --- REGISTRO DEL SERVICE WORKER (Para instalar la App) ---
         if ("serviceWorker" in navigator) {
-            if (navigator.serviceWorker.controller) {
-                console.log("[PWA Builder] active service worker found, no need to register");
-            } else {
+            window.addEventListener("load", () => {
                 navigator.serviceWorker
-                .register("pwabuilder-sw.js", {
-                    scope: "./"
-                })
-                .then(function (reg) {
-                    console.log("[PWA Builder] Service worker has been registered for scope: " + reg.scope);
-                });
-            }
+                    .register("./sw.js")
+                    .then((reg) => {
+                        console.log("[BIO-BREACH] Service Worker registrado con éxito: ", reg.scope);
+                    })
+                    .catch((err) => {
+                        console.error("[BIO-BREACH] Falló el registro del Service Worker: ", err);
+                    });
+            });
         }
     </script>
 </body>
