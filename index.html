@@ -138,8 +138,7 @@
                         fecha: new Date().toLocaleString() 
                     };
                     localStorage.setItem('bio_breach_v_data', JSON.stringify(locales));
-                    // No refrescamos la interfaz completa aquí para evitar parpadeos, 
-                    // el cambio se verá en la próxima carga o tras una acción.
+                    // No refrescamos la interfaz completa aquí para evitar parpadeos
                 }
             } catch (e) {
                 console.log("Error en verificación silenciosa");
@@ -197,7 +196,6 @@
                 return numB - numA;
             });
 
-            // Para evitar el "salto", solo vaciamos si hay cambios reales o es la carga inicial
             lista.innerHTML = "";
             
             if (keys.length > 0) {
@@ -239,7 +237,7 @@
         window.addEventListener('online', actualizarInterfaz);
         window.addEventListener('offline', actualizarInterfaz);
 
-        // --- REGISTRO DEL SERVICE WORKER (Para instalar la App) ---
+        // --- REGISTRO DEL SERVICE WORKER (Esto activa la instalación) ---
         if ("serviceWorker" in navigator) {
             window.addEventListener("load", () => {
                 navigator.serviceWorker
