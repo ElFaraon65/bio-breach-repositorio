@@ -30,9 +30,9 @@
 
     <meta name="referrer" content="strict-origin-when-cross-origin">
     
-    <meta http-equiv="Content-Security-Policy" 
+         <meta http-equiv="Content-Security-Policy" 
           content="default-src 'self' https://elfaraon65.github.io https://raw.githubusercontent.com; 
-                   script-src 'self' 'unsafe-inline' 'unsafe-eval' https://storage.googleapis.com; 
+                   script-src 'self' 'unsafe-inline' 'unsafe-eval' https://storage.googleapis.com blob:; 
                    style-src 'self' 'unsafe-inline'; 
                    img-src 'self' data: https://raw.githubusercontent.com blob:; 
                    connect-src 'self' https://elfaraon65.github.io https://raw.githubusercontent.com; 
@@ -298,19 +298,37 @@
             sincroServidor();
         }
 
-        function lanzarMotor(id) {
+                function lanzarMotor(id) {
             const view = document.getElementById('game-view');
             const frame = document.getElementById('game-frame');
             const locales = getVersionesLocales();
+            
+            if (!locales[id]) {
+                alert("Error: No se encontraron datos locales para esta versión.");
+                return;
+            }
+
             view.style.display = "block";
-            const blob = new Blob([locales[id].codigo], { type: 'text/html' });
-            frame.src = URL.createObjectURL(blob);
+            
+            // Método de escritura directa: más compatible con APKs y WebViews de Android
+            try {
+                const doc = frame.contentDocument || frame.contentWindow.document;
+                doc.open();
+                doc.write(locales[id].codigo);
+                doc.close();
+            } catch (e) {
+                console.error("Error al inyectar código:", e);
+                // Plan B: Si la escritura directa falla, usamos el método de Blob como respaldo
+                const blob = new Blob([locales[id].codigo], { type: 'text/html' });
+                frame.src = URL.createObjectURL(blob);
+            }
         }
 
-        function cerrarMotor() {
+                function cerrarMotor() {
             document.getElementById('game-view').style.display = "none";
+            // Limpiamos el frame para liberar memoria y detener sonidos del juego
             document.getElementById('game-frame').src = "about:blank";
-        }
+        }        
         
         window.addEventListener('online', actualizarInterfaz);
         window.addEventListener('offline', actualizarInterfaz);
