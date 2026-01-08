@@ -40,25 +40,21 @@
   "screenshots": [
     {
       "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Screenshots/Screenshot_20260107_210229.jpg",
-      "type": "image/jpeg",
       "form_factor": "narrow",
       "label": "Inicio del Hub"
     },
     {
       "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Screenshots/Screenshot_20260107_210251.jpg",
-      "type": "image/jpeg",
       "form_factor": "narrow",
       "label": "Interfaz de Versiones"
     },
     {
       "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Screenshots/Screenshot_20260107_210245.jpg",
-      "type": "image/jpeg",
       "form_factor": "narrow",
       "label": "Panel de Control"
     },
     {
       "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Screenshots/Screenshot_20260107_210513.jpg",
-      "type": "image/jpeg",
       "form_factor": "narrow",
       "label": "Sistema de Juego"
     }
