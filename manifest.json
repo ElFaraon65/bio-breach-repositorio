@@ -16,11 +16,6 @@
   "iarc_rating_id": "",
   "prefer_related_applications": false,
   "related_applications": [],
-  "scope_extensions": [
-    {
-      "origin": "https://elfaraon65.github.io"
-    }
-  ],
   "protocol_handlers": [],
   "edge_side_panel": {
     "preferred_width": 400
@@ -66,12 +61,6 @@
       "form_factor": "narrow",
       "label": "Sistema de Juego",
       "type": "image/jpeg"
-    },
-    {
-      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/refs/heads/main/Screenshots/Screenshot_20260107_231203.jpg",
-      "form_factor": "wide",
-      "label": "Escritorio PC Simulado",
-      "type": "image/jpeg"
     }
   ],
   "shortcuts": [
@@ -80,7 +69,7 @@
       "short_name": "Jugar",
       "description": "Entrar al juego",
       "url": "./index.html",
-      "icons": [{ "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png", "sizes": "512x512", "type": "image/png" }]
+      "icons": [{ "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png", "sizes": "512x512" }]
     }
   ]
 }
