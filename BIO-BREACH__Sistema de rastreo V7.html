@@ -31,7 +31,31 @@
             overscroll-behavior-y: contain;
         }
 
-        /* --- PANTALLA DE INTERACCIÓN INICIAL (NUEVO) --- */
+        /* --- EFECTOS VISUALES (PUNTOS) --- */
+        .flying-point {
+            position: fixed;
+            color: var(--gold);
+            font-weight: bold;
+            font-size: 1.5rem;
+            pointer-events: none;
+            z-index: 6000;
+            text-shadow: 0 0 5px var(--gold);
+            transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        
+        .point-impact {
+            animation: impactShake 0.3s ease-in-out;
+            color: #fff !important;
+            text-shadow: 0 0 10px #fff !important;
+        }
+
+        @keyframes impactShake {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.5); }
+            100% { transform: scale(1); }
+        }
+
+        /* --- PANTALLA DE INTERACCIÓN INICIAL --- */
         #interaction-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6);
@@ -122,7 +146,7 @@
         .btn-exit:hover { background: #333; color: white; border-color: #666; }
 
         /* --- CONFIGURACIÓN Y MODALES --- */
-        #settings-modal, #tutorial-screen, #abort-confirm, #overlay {
+        #settings-modal, #tutorial-screen, #abort-confirm, #overlay, #migration-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.98);
             display: none; flex-direction: column;
@@ -131,8 +155,8 @@
         }
         
         #settings-modal { z-index: 3500; }
-        #overlay, #abort-confirm { background: rgba(0, 0, 0, 0.95); z-index: 2000; text-align: center; }
-        #overlay.active, #abort-confirm.active { display: flex; opacity: 1; }
+        #overlay, #abort-confirm, #migration-modal { background: rgba(0, 0, 0, 0.95); z-index: 2000; text-align: center; }
+        #overlay.active, #abort-confirm.active, #migration-modal.active { display: flex; opacity: 1; }
 
         .tutorial-box {
             width: 100%;
@@ -207,7 +231,11 @@
             background: var(--dark-red); border: 1px solid #300;
             position: absolute; top: -5px; left: 50%; transform: translateX(-50%);
             box-shadow: 1px 2px 4px rgba(0,0,0,0.5);
+            z-index: 10;
         }
+        /* Variaciones de Pin por Puntaje */
+        .pin.gold { background: var(--gold); border-color: #886600; box-shadow: 0 0 5px var(--gold); }
+        .pin.blue { background: #0088ff; border-color: #003366; box-shadow: 0 0 5px #0088ff; }
 
         .mugshot-zone {
             width: 100%; height: 90px;
@@ -423,6 +451,21 @@
         </div>
     </div>
 
+    <div id="migration-modal">
+        <div class="tutorial-box">
+            <h2 style="color: var(--gold);">ACTUALIZACIÓN SISTEMA V7</h2>
+            <div style="border: 1px solid var(--terminal-green); padding: 10px; margin-bottom: 15px; background: rgba(0,255,0,0.05);">
+                <p style="color: var(--terminal-green); font-size: 0.8rem; margin: 0;">PROTOCOLO DE REINICIO APLICADO</p>
+            </div>
+            <p style="font-size: 0.9rem; color: #ddd;">
+                Para garantizar la integridad de los nuevos protocolos de investigación, se han devuelto los casos antiguos al servidor central.
+            </p>
+            <div id="migration-reward" style="margin: 20px 0; font-size: 1.1rem; color: var(--gold); border-top: 1px dashed #444; border-bottom: 1px dashed #444; padding: 10px;">
+                </div>
+            <button class="btn-main" onclick="closeMigrationModal()">ENTENDIDO</button>
+        </div>
+    </div>
+
     <div id="archives-screen">
         <div class="wall-header">
             <div class="wall-title-text">CRIMINALES ATRAPADOS</div>
@@ -476,7 +519,11 @@
                 El sistema bloqueará nuevos comandos hasta que elimines a TODOS los sospechosos que creas incorrectos. <b>¡CUIDADO!</b> Si eliminas al sospechoso equivocado, no habrá aviso.
             </div>
             <div class="step">
-                <b>3. OBJETIVO ÚNICO</b>
+                <b>3. SISTEMA DE PUNTOS</b>
+                Eliminar múltiples sospechosos con una sola pregunta otorga puntos extra (3+ sospechosos = +5 PTS). El puntaje total define tu recompensa y el color de la ficha en el muro (Dorado, Azul, Rojo).
+            </div>
+             <div class="step">
+                <b>4. OBJETIVO ÚNICO</b>
                 La misión termina cuando descubres al culpable. Si lo descartas por error, pierdes el contrato inmediatamente.
             </div>
             <button class="btn-main" onclick="startGame()">ENTENDIDO</button>
@@ -504,6 +551,7 @@
     <div class="machine-body" id="main-ui">
         <div id="case-info-bar">
             <span id="case-id-display">CASO #----</span>
+            <span id="game-points" style="color: var(--terminal-green)">PTS: 0</span>
             <button class="btn-mini" onclick="initGame()">NUEVO CASO</button>
             <span style="color: var(--victory)">RECOMPENSA: <span id="case-reward-display">0</span> S/</span>
         </div>
@@ -970,12 +1018,14 @@
                 card.className = 'wall-card';
                 card.style.transform = `rotate(${rotation}deg)`;
                 
-                // MODIFICADO: 
-                // 1. Se eliminó la etiqueta 'stamp-solved' (Capturado).
-                // 2. Se añadió el campo 'EDA' con la edad.
-                // 3. Se separaron los rasgos (TEZ y OJO).
+                // Determinar clase del pin según puntos
+                let pinClass = "";
+                const pts = data.points || 0;
+                if(pts >= 30) pinClass = "gold";
+                else if(pts >= 15) pinClass = "blue";
+                
                 card.innerHTML = `
-                    <div class="pin"></div>
+                    <div class="pin ${pinClass}"></div>
                     <div class="mugshot-zone"><span class="mugshot-icon">?</span></div>
                     <div class="wall-info">
                         <b>EXPEDIENTE:</b> ${data.recordId}<br>
@@ -1075,9 +1125,47 @@
             }
         }
 
+        // --- SISTEMA DE MIGRACIÓN NATIVA (V7 UPDATE) ---
+        function checkMigration() {
+            // Clave interna modificada para reflejar V7 update (sin mencionar V8)
+            if (!localStorage.getItem('bioBreach_v7_update_migration')) {
+                const oldSolved = JSON.parse(localStorage.getItem('bioBreachSolved') || '[]');
+                const count = oldSolved.length;
+                
+                if (count > 0) {
+                    const bonus = count * 100;
+                    let currentMoney = parseInt(localStorage.getItem('bioBreachMoney')) || 0;
+                    currentMoney += bonus;
+                    localStorage.setItem('bioBreachMoney', currentMoney);
+                    
+                    // Resetear historial para devolver casos al sistema
+                    localStorage.setItem('bioBreachSolved', '[]');
+                    localStorage.setItem('bioBreachUsedIDs', '[]');
+                    
+                    // Mostrar Modal Nativo en lugar de Alert
+                    const rewardBox = document.getElementById('migration-reward');
+                    rewardBox.innerHTML = `
+                        CASOS ANTERIORES: <b style="color:#fff">${count}</b><br>
+                        BONIFICACIÓN RECIBIDA: <b style="color:var(--victory)">+${bonus} S/</b>
+                    `;
+                    document.getElementById('migration-modal').classList.add('active');
+                }
+                
+                localStorage.setItem('bioBreach_v7_update_migration', 'true');
+                totalMoney = parseInt(localStorage.getItem('bioBreachMoney')) || 0;
+                updateWalletUI();
+            }
+        }
+        
+        function closeMigrationModal() {
+            playSFX('click');
+            document.getElementById('migration-modal').classList.remove('active');
+        }
+
         window.addEventListener('load', () => {
             preloadAssets();
             updateBoardClass();
+            checkMigration(); // Verificar migración al cargar
         });
 
         const AUDIO_CONFIG = {
@@ -1135,6 +1223,8 @@
         
         let pendingDiscards = []; 
         let lastQueryText = "";   
+        let matchPoints = 0; 
+        let pointsPool = 0; // Banco de puntos pendientes de visualización
 
         async function typeWriter(text, elementId, speed = 20) {
             if (isTyping) return;
@@ -1260,6 +1350,11 @@
             playSFX('newCase', true);
             
             currentReward = Math.floor(Math.random() * 500) + 100;
+            // Resetear puntos de investigación y pool
+            matchPoints = 0;
+            pointsPool = 0;
+            document.getElementById('game-points').innerText = "PTS: " + matchPoints;
+
             document.getElementById('case-id-display').innerText = `CASO #${Math.floor(Math.random() * 9000) + 1000}`;
             document.getElementById('case-reward-display').innerText = currentReward;
             
@@ -1361,6 +1456,37 @@
             }
         }
 
+        // --- FUNCION DE ANIMACIÓN DE PUNTOS ---
+        function spawnFloatingPoint(startX, startY, val) {
+            if (val <= 0) return;
+            
+            const el = document.createElement('div');
+            el.className = 'flying-point';
+            el.innerText = `+${val}`;
+            el.style.left = startX + 'px';
+            el.style.top = startY + 'px';
+            document.body.appendChild(el);
+
+            const target = document.getElementById('game-points').getBoundingClientRect();
+            // Ajustar destino al centro del contador
+            const destX = target.left + (target.width / 2);
+            const destY = target.top + (target.height / 2);
+
+            // Forzar reflow para animación
+            requestAnimationFrame(() => {
+                el.style.transform = `translate(${destX - startX}px, ${destY - startY}px) scale(0.5)`;
+                el.style.opacity = '0';
+            });
+
+            setTimeout(() => {
+                el.remove();
+                matchPoints += val;
+                document.getElementById('game-points').innerText = "PTS: " + matchPoints;
+                document.getElementById('game-points').classList.add('point-impact');
+                setTimeout(() => document.getElementById('game-points').classList.remove('point-impact'), 300);
+            }, 800);
+        }
+
         function renderBoard() {
             const board = document.getElementById('board');
             board.innerHTML = '';
@@ -1379,6 +1505,31 @@
 
                         if (pendingDiscards.length > 0) {
                             playSFX('discard');
+                            
+                            // --- EFECTO VISUAL DE PUNTOS ---
+                            // Obtener coordenadas de la tarjeta
+                            const rect = cardEl.getBoundingClientRect();
+                            const centerX = rect.left + rect.width / 2;
+                            const centerY = rect.top + rect.height / 2;
+
+                            // Distribuir puntos del pool
+                            let ptsToGive = 0;
+                            if (pointsPool > 0) {
+                                // Lógica simple de distribución entera:
+                                // Dividir el pool restante entre los descartes restantes
+                                const remainingDiscards = pendingDiscards.length; // Incluye al actual aun no borrado de la lista logica
+                                ptsToGive = Math.ceil(pointsPool / remainingDiscards);
+                                
+                                // Ajuste para no dar más de lo que hay
+                                if (ptsToGive > pointsPool) ptsToGive = pointsPool;
+                                pointsPool -= ptsToGive;
+                            }
+                            
+                            if (ptsToGive > 0) {
+                                spawnFloatingPoint(centerX, centerY, ptsToGive);
+                            }
+                            // --------------------------------
+
                             discardVisual(cardEl);
                             
                             if (pendingDiscards.includes(p.n)) {
@@ -1455,15 +1606,20 @@
             
             if (win) { 
                 playSFX('win', true); 
-                totalMoney += currentReward;
                 
+                // CALCULO DE BONIFICACIÓN POR PUNTOS
+                const pointBonus = matchPoints * 10;
+                totalMoney += currentReward + pointBonus;
+                
+                objetivo.points = matchPoints; // Guardar puntos en registro
+
                 const solvedList = JSON.parse(localStorage.getItem('bioBreachSolved') || '[]');
                 solvedList.push(objetivo);
                 localStorage.setItem('bioBreachSolved', JSON.stringify(solvedList));
 
                 document.getElementById('overlay-title').innerText = "OBJETIVO LOCALIZADO"; 
                 document.getElementById('overlay-title').style.color = "var(--victory)";
-                rewardMsg.innerText = `+${currentReward} S/ TRANSFERIDOS`;
+                rewardMsg.innerHTML = `+${currentReward} S/ CONTRATO<br><span style="color:var(--gold)">+${pointBonus} S/ BONUS (${matchPoints} PTS)</span>`;
                 
                 desc.innerHTML = `
                     <div class="dossier-container">
@@ -1645,6 +1801,23 @@
                     }).map(p => p.n);
 
                     lastQueryText = `CONSULTA: ${q}<br>RESPUESTA: ${respText}`;
+
+                    // --- SISTEMA DE PUNTOS DE INVESTIGACIÓN (MODIFICADO) ---
+                    let earned = 0;
+                    let count = pendingDiscards.length;
+                    if(count > 0) {
+                        if(count >= 8) earned = 10;
+                        else if(count >= 5) earned = 8;
+                        else if(count >= 3) earned = 5;
+                        else earned = count; 
+                        
+                        // NO sumar inmediatamente. Almacenar en POOL para efecto visual
+                        pointsPool = earned;
+                        
+                        // Mensaje de texto indicativo
+                        lastQueryText += ` <span style="color:var(--gold)">[DETECTADOS: ${earned} PTS]</span>`;
+                    }
+                    // ------------------------------------------
 
                     if (pendingDiscards.length > 0) {
                         const msg = `${lastQueryText}<br><span style="color:var(--hazard)">BLOQUEO ACTIVO: ELIMINE A ${pendingDiscards.length} SOSPECHOSOS INCOMPATIBLES.</span>`;
