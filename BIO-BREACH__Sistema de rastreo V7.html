@@ -146,6 +146,7 @@
         .btn-exit:hover { background: #333; color: white; border-color: #666; }
 
         /* --- CONFIGURACIÓN Y MODALES --- */
+        /* Agregado #migration-modal a la lista de modales para heredar estilos */
         #settings-modal, #tutorial-screen, #abort-confirm, #overlay, #migration-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.98);
@@ -155,8 +156,9 @@
         }
         
         #settings-modal { z-index: 3500; }
-        #overlay, #abort-confirm, #migration-modal { background: rgba(0, 0, 0, 0.95); z-index: 2000; text-align: center; }
-        #overlay.active, #abort-confirm.active, #migration-modal.active { display: flex; opacity: 1; }
+        #migration-modal { z-index: 4500; } /* Z-Index alto para asegurar visibilidad sobre todo */
+        #overlay, #abort-confirm { background: rgba(0, 0, 0, 0.95); z-index: 2000; text-align: center; }
+        #overlay.active, #abort-confirm.active { display: flex; opacity: 1; }
 
         .tutorial-box {
             width: 100%;
@@ -451,21 +453,6 @@
         </div>
     </div>
 
-    <div id="migration-modal">
-        <div class="tutorial-box">
-            <h2 style="color: var(--gold);">ACTUALIZACIÓN SISTEMA V7</h2>
-            <div style="border: 1px solid var(--terminal-green); padding: 10px; margin-bottom: 15px; background: rgba(0,255,0,0.05);">
-                <p style="color: var(--terminal-green); font-size: 0.8rem; margin: 0;">PROTOCOLO DE REINICIO APLICADO</p>
-            </div>
-            <p style="font-size: 0.9rem; color: #ddd;">
-                Para garantizar la integridad de los nuevos protocolos de investigación, se han devuelto los casos antiguos al servidor central.
-            </p>
-            <div id="migration-reward" style="margin: 20px 0; font-size: 1.1rem; color: var(--gold); border-top: 1px dashed #444; border-bottom: 1px dashed #444; padding: 10px;">
-                </div>
-            <button class="btn-main" onclick="closeMigrationModal()">ENTENDIDO</button>
-        </div>
-    </div>
-
     <div id="archives-screen">
         <div class="wall-header">
             <div class="wall-title-text">CRIMINALES ATRAPADOS</div>
@@ -489,6 +476,28 @@
             <button class="btn-exit" onclick="exitGame()">SALIR DEL SISTEMA</button>
         </div>
         <div id="preload-status">SISTEMA: EN LÍNEA</div>
+    </div>
+
+    <div id="migration-modal">
+        <div class="tutorial-box" style="border-color: var(--terminal-green);">
+            <h2 style="color: var(--terminal-green); text-shadow: 0 0 10px rgba(0,255,65,0.4);">REPORTE DE SISTEMA</h2>
+            <p style="color: #eee; font-size: 0.9rem; margin-bottom: 20px;">ACTUALIZACIÓN CRÍTICA DETECTADA</p>
+            
+            <div class="step" style="border-left-color: var(--terminal-green);">
+                <b>ESTADO DE BASE DE DATOS:</b>
+                <span style="color: #aaa;">HISTORIAL PURGADO POR COMPATIBILIDAD V8.</span>
+            </div>
+            
+            <div class="step" style="border-left-color: var(--gold);">
+                <b>RECOMPENSA OTORGADA:</b>
+                <div style="margin-top: 5px;">
+                    CRIMINALES PROCESADOS: <span id="mig-count" style="color: white; font-weight: bold;">0</span><br>
+                    BONIFICACIÓN: <span id="mig-money" style="color: var(--gold); font-size: 1.2rem; font-weight: bold;">0</span> S/
+                </div>
+            </div>
+
+            <button class="btn-main" onclick="closeMigrationModal()" style="background: #222; border-color: var(--terminal-green); color: var(--terminal-green);">CONFIRMAR RECEPCIÓN</button>
+        </div>
     </div>
 
     <div id="settings-modal">
@@ -1125,10 +1134,10 @@
             }
         }
 
-        // --- SISTEMA DE MIGRACIÓN NATIVA (V7 UPDATE) ---
+        // --- SISTEMA DE MIGRACIÓN (Nuevo Solicitado) ---
+        // Se ha reemplazado el alert() por un manejo de DOM (modal)
         function checkMigration() {
-            // Clave interna modificada para reflejar V7 update (sin mencionar V8)
-            if (!localStorage.getItem('bioBreach_v7_update_migration')) {
+            if (!localStorage.getItem('bioBreach_v8_migration')) {
                 const oldSolved = JSON.parse(localStorage.getItem('bioBreachSolved') || '[]');
                 const count = oldSolved.length;
                 
@@ -1142,24 +1151,22 @@
                     localStorage.setItem('bioBreachSolved', '[]');
                     localStorage.setItem('bioBreachUsedIDs', '[]');
                     
-                    // Mostrar Modal Nativo en lugar de Alert
-                    const rewardBox = document.getElementById('migration-reward');
-                    rewardBox.innerHTML = `
-                        CASOS ANTERIORES: <b style="color:#fff">${count}</b><br>
-                        BONIFICACIÓN RECIBIDA: <b style="color:var(--victory)">+${bonus} S/</b>
-                    `;
-                    document.getElementById('migration-modal').classList.add('active');
+                    // MOSTRAR MODAL EN LUGAR DE ALERT
+                    document.getElementById('mig-count').innerText = count;
+                    document.getElementById('mig-money').innerText = bonus;
+                    document.getElementById('migration-modal').style.display = 'flex';
+                    playSFX('newCase');
                 }
-                
-                localStorage.setItem('bioBreach_v7_update_migration', 'true');
+                localStorage.setItem('bioBreach_v8_migration', 'true');
                 totalMoney = parseInt(localStorage.getItem('bioBreachMoney')) || 0;
                 updateWalletUI();
             }
         }
-        
+
+        // Función para cerrar el nuevo modal
         function closeMigrationModal() {
             playSFX('click');
-            document.getElementById('migration-modal').classList.remove('active');
+            document.getElementById('migration-modal').style.display = 'none';
         }
 
         window.addEventListener('load', () => {
