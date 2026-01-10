@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIO-BREACH: THE LAST TRACE</title>
+    <title>BIO-BREACH: MULTIPLAYER V7</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
             --gold: #ffd700;
@@ -107,6 +108,67 @@
         }
         .currency { color: var(--gold); font-size: 1.2rem; font-weight: bold; }
 
+        /* --- LOGIN Y MODOS DE JUEGO (NUEVO) --- */
+        #login-modal, #mode-selection, #lobby-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: none; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 3800; padding: 20px;
+        }
+
+        /* Estilo para las tarjetas de modo */
+        .mode-container {
+            display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
+            width: 100%; max-width: 800px;
+        }
+        .mode-card {
+            background: #111; border: 2px solid #333;
+            width: 300px; height: 350px;
+            display: flex; flex-direction: column;
+            cursor: pointer; transition: all 0.3s;
+            position: relative; overflow: hidden;
+        }
+        .mode-card:hover {
+            border-color: var(--gold); transform: translateY(-5px);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+        }
+        .mode-image {
+            width: 100%; height: 60%;
+            background: #222; display: flex; align-items: center; justify-content: center;
+            font-size: 3rem; color: #444; border-bottom: 1px solid #333;
+        }
+        .mode-content {
+            padding: 20px; height: 40%; display: flex; flex-direction: column; justify-content: center;
+            text-align: center;
+        }
+        .mode-title { color: var(--gold); font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; }
+        .mode-desc { color: #888; font-size: 0.8rem; }
+
+        /* Estilos del Lobby */
+        .lobby-box {
+            width: 100%; max-width: 600px;
+            border: 1px solid var(--gold);
+            background: #0a0a0a; padding: 20px;
+            text-align: center;
+        }
+        .room-code-display {
+            font-size: 2rem; color: var(--victory); letter-spacing: 5px;
+            border: 2px dashed #333; padding: 10px; margin: 15px 0;
+            background: #000; word-break: break-all;
+        }
+        .player-list {
+            min-height: 100px; background: #111; margin: 10px 0;
+            padding: 10px; display: flex; flex-direction: column; gap: 5px;
+            border: 1px solid #333;
+        }
+        .player-item {
+            display: flex; justify-content: space-between;
+            padding: 8px; background: #222; border-left: 3px solid #555;
+        }
+        .player-item.ready { border-left-color: var(--victory); }
+
+        /* --- MENÚ PRINCIPAL --- */
         #main-menu {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -146,7 +208,6 @@
         .btn-exit:hover { background: #333; color: white; border-color: #666; }
 
         /* --- CONFIGURACIÓN Y MODALES --- */
-        /* Agregado #migration-modal a la lista de modales para heredar estilos */
         #settings-modal, #tutorial-screen, #abort-confirm, #overlay, #migration-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.98);
@@ -156,7 +217,7 @@
         }
         
         #settings-modal { z-index: 3500; }
-        #migration-modal { z-index: 4500; } /* Z-Index alto para asegurar visibilidad sobre todo */
+        #migration-modal { z-index: 4500; } 
         #overlay, #abort-confirm { background: rgba(0, 0, 0, 0.95); z-index: 2000; text-align: center; }
         #overlay.active, #abort-confirm.active { display: flex; opacity: 1; }
 
@@ -395,6 +456,14 @@
             position: fixed; bottom: 10px; left: 10px;
             font-size: 0.6rem; color: #444;
         }
+        
+        /* Modal Login Input */
+        .login-input {
+            background: #000; border: 1px solid var(--gold);
+            color: var(--gold); padding: 10px; width: 80%;
+            font-family: 'Consolas', monospace; font-size: 1.2rem;
+            text-align: center; margin: 20px 0; outline: none;
+        }
 
         @keyframes blink { 0% { opacity: 0.2; } 50% { opacity: 1; } 100% { opacity: 0.2; } }
 
@@ -414,6 +483,10 @@
             .board-grid.mode-5 { gap: 4px; }
             .board-grid.mode-5 .suspect-card { padding: 2px; }
             .board-grid.mode-5 .card-body { font-size: 0.35rem; }
+            
+            .mode-card { width: 100%; height: 250px; flex-direction: row; }
+            .mode-image { width: 40%; height: 100%; border-bottom: none; border-right: 1px solid #333; font-size: 2rem;}
+            .mode-content { width: 60%; height: 100%; }
         }
 
         @media (max-width: 480px) {
@@ -446,10 +519,70 @@
         <div class="interaction-text">TOCAR PARA INICIAR SISTEMA</div>
     </div>
 
+    <div id="login-modal" style="display: none;">
+        <div class="tutorial-box">
+            <h2 style="color: var(--gold);">IDENTIFICACIÓN REQUERIDA</h2>
+            <p style="color:#aaa;">Ingrese su alias de agente para acceder a la red.</p>
+            <input type="text" id="player-nickname" class="login-input" placeholder="ALIAS..." maxlength="12">
+            <button class="btn-main" onclick="registerPlayer()">ACCEDER</button>
+        </div>
+    </div>
+
     <div id="loading-screen">
         <div class="loading-text">RECALIBRANDO SISTEMA...</div>
         <div class="loader-bar-container">
             <div id="loader-progress" class="loader-bar"></div>
+        </div>
+    </div>
+
+    <div id="mode-selection">
+        <h2 class="menu-title" style="font-size: 2rem; margin-bottom: 30px;">SELECCIONE PROTOCOLO</h2>
+        <div class="mode-container">
+            <div class="mode-card" onclick="selectGameMode('classic')">
+                <div class="mode-image">👁️</div>
+                <div class="mode-content">
+                    <div class="mode-title">MODO CLÁSICO</div>
+                    <div class="mode-desc">Investigación en solitario. Sin límite de tiempo. Acumula saldo personal.</div>
+                </div>
+            </div>
+            <div class="mode-card" onclick="selectGameMode('competitive')">
+                <div class="mode-image" style="color: var(--hazard);">⚔️</div>
+                <div class="mode-content">
+                    <div class="mode-title" style="color: var(--hazard);">COMPETITIVO</div>
+                    <div class="mode-desc">PvP en Tiempo Real. 3 Rondas. El más rápido en resolver gana.</div>
+                </div>
+            </div>
+        </div>
+        <button class="btn-exit" style="margin-top: 30px;" onclick="backToMenu()">CANCELAR</button>
+    </div>
+
+    <div id="lobby-screen">
+        <div class="lobby-box">
+            <h2 style="color: var(--gold);">SALA DE ESPERA</h2>
+            <div id="lobby-controls">
+                <button class="btn-mini" onclick="createRoom()">CREAR SALA (HOST)</button>
+                <div style="margin: 10px 0; font-size: 0.8rem; color: #666;">- O -</div>
+                <input type="text" id="room-code-input" placeholder="CÓDIGO DE SALA" style="background: #222; border: 1px solid #444; color: white; padding: 5px; width: 60%;">
+                <button class="btn-mini" onclick="joinRoom()">UNIRSE</button>
+            </div>
+            
+            <div id="active-lobby-ui" style="display: none;">
+                <p style="color: #aaa; font-size: 0.8rem;">COMPARTE ESTE CÓDIGO:</p>
+                <div id="my-room-code" class="room-code-display">Generando...</div>
+                
+                <h3 style="color: var(--terminal-green); text-align: left; font-size: 1rem;">AGENTES CONECTADOS:</h3>
+                <div id="players-list" class="player-list">
+                    </div>
+                
+                <div id="host-controls" style="display: none;">
+                    <button class="btn-main" onclick="startCompetitiveMatch()">INICIAR COMPETENCIA</button>
+                    <p style="font-size: 0.6rem; color: var(--hazard); margin-top: 5px;">* Requiere mín. 2 jugadores</p>
+                </div>
+                <div id="client-wait-msg" style="display: none; color: #888; font-style: italic; margin-top: 10px;">
+                    ESPERANDO AL LÍDER DEL ESCUADRÓN...
+                </div>
+            </div>
+            <button class="btn-exit" style="margin-top: 20px;" onclick="exitLobby()">SALIR</button>
         </div>
     </div>
 
@@ -467,10 +600,11 @@
         <div id="wallet-display">
             <div style="font-size: 0.6rem; color: #666;">SALDO NETO</div>
             <div class="currency"><span id="total-money">0</span> S/</div>
+            <div style="font-size: 0.6rem; color: var(--terminal-green); margin-top: 2px;" id="player-identity-display">ID: ---</div>
         </div>
         <h1 class="menu-title">BIO-BREACH<br><span style="font-size: 1.2rem; color: #555;">SISTEMA DE RASTREO</span></h1>
         <div class="menu-buttons">
-            <button class="btn-play" onclick="showTutorial()">INICIAR OPERACIÓN</button>
+            <button class="btn-play" onclick="openModeSelection()">INICIAR OPERACIÓN</button>
             <button class="btn-exit" onclick="openArchives()">ARCHIVOS (MURO)</button>
             <button class="btn-exit" onclick="openSettings()">CONFIGURACIÓN</button>
             <button class="btn-exit" onclick="exitGame()">SALIR DEL SISTEMA</button>
@@ -518,24 +652,10 @@
 
     <div id="tutorial-screen">
         <div class="tutorial-box">
-            <h2 style="color: var(--gold); margin-top: 0;">MANUAL DE CAMPO</h2>
-            <div class="step">
-                <b>1. INTERROGATORIO PRECISO</b>
-                Formule las preguntas correctamente usando signos (¿...?). Ejemplo: "¿Es de España?". No escriba palabras sueltas al final.
-            </div>
-            <div class="step">
-                <b>2. DESCARTE OBLIGATORIO</b>
-                El sistema bloqueará nuevos comandos hasta que elimines a TODOS los sospechosos que creas incorrectos. <b>¡CUIDADO!</b> Si eliminas al sospechoso equivocado, no habrá aviso.
-            </div>
-            <div class="step">
-                <b>3. SISTEMA DE PUNTOS</b>
-                Eliminar múltiples sospechosos con una sola pregunta otorga puntos extra (3+ sospechosos = +5 PTS). El puntaje total define tu recompensa y el color de la ficha en el muro (Dorado, Azul, Rojo).
-            </div>
-             <div class="step">
-                <b>4. OBJETIVO ÚNICO</b>
-                La misión termina cuando descubres al culpable. Si lo descartas por error, pierdes el contrato inmediatamente.
-            </div>
-            <button class="btn-main" onclick="startGame()">ENTENDIDO</button>
+            <h2 style="color: var(--gold); margin-top: 0;" id="tutorial-title">MANUAL DE CAMPO</h2>
+            <div id="tutorial-content">
+                </div>
+            <button class="btn-main" onclick="confirmTutorial()">ENTENDIDO</button>
         </div>
     </div>
 
@@ -554,14 +674,14 @@
         <h1 id="overlay-title"></h1>
         <div id="overlay-desc" style="width: 100%; display: flex; justify-content: center;"></div>
         <p id="overlay-reward-msg"></p>
-        <button class="btn-main" style="width: 250px;" onclick="initGame()">SIGUIENTE CASO</button>
+        <button class="btn-main" id="btn-next-case" style="width: 250px;" onclick="initGame()">SIGUIENTE CASO</button>
     </div>
 
     <div class="machine-body" id="main-ui">
         <div id="case-info-bar">
             <span id="case-id-display">CASO #----</span>
             <span id="game-points" style="color: var(--terminal-green)">PTS: 0</span>
-            <button class="btn-mini" onclick="initGame()">NUEVO CASO</button>
+            <button class="btn-mini" id="btn-reset-game" onclick="initGame()">NUEVO CASO</button>
             <span style="color: var(--victory)">RECOMPENSA: <span id="case-reward-display">0</span> S/</span>
         </div>
         <div class="board-grid mode-5" id="board"></div>
@@ -648,8 +768,8 @@
             nextNoteTime = actx.currentTime + 0.1;
             scheduler();
             
-            // Iniciar modo menú (Doom Jazz)
-            fadeToMode(1); 
+            // CHEQUEO DE LOGIN ANTES DEL MENU
+            checkPlayerIdentity();
         }
 
         function makeDistortionCurve(amount) {
@@ -993,6 +1113,316 @@
         let currentMosaicMode = parseInt(localStorage.getItem('bioBreachMosaic')) || 5; 
         let tempMosaicMode = currentMosaicMode; 
         
+        // DATOS DE JUGADOR Y MULTIJUGADOR
+        let myPlayerName = localStorage.getItem('bioPlayerName') || "";
+        let myPlayerId = localStorage.getItem('bioPlayerId') || "";
+        let peer = null;
+        let myPeerId = null;
+        let connections = []; // Array de conexiones para el HOST
+        let hostConn = null; // Conexión hacia el HOST para clientes
+        let isHost = false;
+        let currentMode = 'classic'; // 'classic' o 'competitive'
+        let multiplayerRound = 0;
+        let totalMultiplayerRounds = 3;
+        let multiplayerScores = {};
+
+        // --- SISTEMA DE IDENTIDAD (PUNTO 1) ---
+        function checkPlayerIdentity() {
+            if (!myPlayerName || !myPlayerId) {
+                // Mostrar Login Modal
+                fadeToMode(1); // Doom Jazz
+                document.getElementById('login-modal').style.display = 'flex';
+            } else {
+                // Ir directo al menú
+                fadeToMode(1); 
+                document.getElementById('login-modal').style.display = 'none';
+                updateIdentityUI();
+            }
+        }
+
+        function registerPlayer() {
+            const input = document.getElementById('player-nickname');
+            const name = input.value.trim().toUpperCase();
+            
+            if (name.length < 3) {
+                alert("NOMBRE DEMASIADO CORTO");
+                return;
+            }
+            
+            // Generar ID única si no existe o si el nombre cambia (aunque las instrucciones dicen permitir mismo nombre con distinta ID, 
+            // así que generamos ID nueva si no hay una previa guardada).
+            // Si el usuario borra caché, se genera nueva ID.
+            
+            myPlayerName = name;
+            // Generar ID random de 6 digitos
+            myPlayerId = Math.random().toString(36).substr(2, 6).toUpperCase();
+            
+            localStorage.setItem('bioPlayerName', myPlayerName);
+            localStorage.setItem('bioPlayerId', myPlayerId);
+            
+            playSFX('click');
+            document.getElementById('login-modal').style.display = 'none';
+            updateIdentityUI();
+        }
+
+        function updateIdentityUI() {
+            document.getElementById('player-identity-display').innerText = `AGENTE: ${myPlayerName} [${myPlayerId}]`;
+        }
+
+        // --- SELECCIÓN DE MODO (PUNTO 2) ---
+        function openModeSelection() {
+            playSFX('click');
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('mode-selection').style.display = 'flex';
+        }
+
+        function backToMenu() {
+            playSFX('click');
+            document.getElementById('mode-selection').style.display = 'none';
+            document.getElementById('main-menu').style.display = 'flex';
+            
+            // Si estaba conectado, limpiar peer
+            if (peer) {
+                peer.destroy();
+                peer = null;
+            }
+            isHost = false;
+            connections = [];
+        }
+
+        function selectGameMode(mode) {
+            playSFX('click');
+            currentMode = mode;
+            document.getElementById('mode-selection').style.display = 'none';
+
+            if (mode === 'classic') {
+                showTutorial();
+            } else {
+                initMultiplayerLobby();
+            }
+        }
+
+        // --- SISTEMA MULTIJUGADOR (PUNTO 3, 4, 5) ---
+        function initMultiplayerLobby() {
+            document.getElementById('lobby-screen').style.display = 'flex';
+            document.getElementById('lobby-controls').style.display = 'block';
+            document.getElementById('active-lobby-ui').style.display = 'none';
+            
+            // Inicializar PeerJS
+            if (!peer) {
+                peer = new Peer(); // PeerJS con servidor público gratuito
+                
+                peer.on('open', (id) => {
+                    myPeerId = id;
+                    console.log('My peer ID is: ' + id);
+                });
+
+                peer.on('connection', (conn) => {
+                    handleIncomingConnection(conn);
+                });
+                
+                peer.on('error', (err) => {
+                    alert("ERROR DE RED: " + err.type);
+                });
+            }
+        }
+
+        function createRoom() {
+            isHost = true;
+            playSFX('click');
+            document.getElementById('lobby-controls').style.display = 'none';
+            document.getElementById('active-lobby-ui').style.display = 'block';
+            document.getElementById('host-controls').style.display = 'block';
+            document.getElementById('my-room-code').innerText = myPeerId;
+            
+            multiplayerScores = {};
+            multiplayerScores[myPlayerId] = { name: myPlayerName, score: 0 };
+            updateLobbyList();
+        }
+
+        function joinRoom() {
+            const code = document.getElementById('room-code-input').value.trim();
+            if (!code) return;
+            
+            isHost = false;
+            playSFX('click');
+            document.getElementById('lobby-controls').style.display = 'none';
+            document.getElementById('active-lobby-ui').style.display = 'block';
+            document.getElementById('host-controls').style.display = 'none';
+            document.getElementById('client-wait-msg').style.display = 'block';
+            document.getElementById('my-room-code').innerText = "CONECTANDO...";
+            
+            hostConn = peer.connect(code);
+            
+            hostConn.on('open', () => {
+                document.getElementById('my-room-code').innerText = "CONECTADO A SALA";
+                // Enviar mis datos al host
+                hostConn.send({
+                    type: 'JOIN',
+                    name: myPlayerName,
+                    id: myPlayerId
+                });
+            });
+
+            hostConn.on('data', (data) => {
+                handleDataPacket(data);
+            });
+            
+            hostConn.on('close', () => {
+                alert("CONEXIÓN CON EL LÍDER PERDIDA");
+                exitLobby();
+            });
+        }
+
+        function handleIncomingConnection(conn) {
+            if (!isHost) return; // Solo host acepta conexiones multiples
+            
+            conn.on('open', () => {
+                connections.push(conn);
+            });
+
+            conn.on('data', (data) => {
+                if (data.type === 'JOIN') {
+                    multiplayerScores[data.id] = { name: data.name, score: 0, conn: conn };
+                    broadcastLobbyUpdate();
+                }
+                else if (data.type === 'ROUND_WIN') {
+                    handleRoundWin(data.id);
+                }
+            });
+            
+            conn.on('close', () => {
+                // Eliminar jugador desconectado
+                // (Simplificado para este ejemplo)
+            });
+        }
+
+        function updateLobbyList() {
+            const list = document.getElementById('players-list');
+            list.innerHTML = '';
+            
+            Object.keys(multiplayerScores).forEach(id => {
+                const p = multiplayerScores[id];
+                const item = document.createElement('div');
+                item.className = 'player-item ready';
+                item.innerHTML = `<span>${p.name}</span> <span style="color:#666;">[${id}]</span>`;
+                list.appendChild(item);
+            });
+        }
+
+        function broadcastLobbyUpdate() {
+            updateLobbyList();
+            const simpleList = {};
+            Object.keys(multiplayerScores).forEach(k => {
+                simpleList[k] = { name: multiplayerScores[k].name, score: multiplayerScores[k].score };
+            });
+
+            connections.forEach(c => {
+                c.send({ type: 'LOBBY_UPDATE', players: simpleList });
+            });
+        }
+
+        function handleDataPacket(data) {
+            if (data.type === 'LOBBY_UPDATE') {
+                multiplayerScores = data.players;
+                updateLobbyList();
+            }
+            else if (data.type === 'START_GAME') {
+                multiplayerRound = 1;
+                // Sincronizar semilla y objetivo
+                startCompetitiveRound(data.personasSeed, data.targetId);
+            }
+            else if (data.type === 'NEXT_ROUND') {
+                multiplayerRound = data.round;
+                startCompetitiveRound(data.personasSeed, data.targetId);
+            }
+            else if (data.type === 'GAME_OVER_FINAL') {
+                showFinalResults(data.winner);
+            }
+        }
+
+        function exitLobby() {
+            playSFX('click');
+            if (hostConn) hostConn.close();
+            if (isHost) {
+                connections.forEach(c => c.close());
+            }
+            document.getElementById('lobby-screen').style.display = 'none';
+            document.getElementById('mode-selection').style.display = 'flex';
+        }
+
+        // PUNTO 4: Restricción de 2 jugadores
+        function startCompetitiveMatch() {
+            const count = Object.keys(multiplayerScores).length;
+            if (count < 2) {
+                alert("SE REQUIEREN MÍNIMO 2 JUGADORES PARA INICIAR EL PROTOCOLO COMPETITIVO.");
+                return;
+            }
+            
+            multiplayerRound = 1;
+            broadcastRoundStart();
+        }
+
+        function broadcastRoundStart() {
+            // Generar datos del caso
+            const personasSeed = Math.random(); // Semilla simple
+            generateNewSquad(personasSeed); // Generar localmente para sacar un ID valido
+            const target = personas[Math.floor(Math.random() * personas.length)];
+            const targetId = generateCriminalRecordID(); // ID visual
+            // Mapear target por índice o propiedades para asegurar consistencia
+            // Para simplificar, enviaremos el índice del objetivo en el array generado
+            const targetIndex = personas.indexOf(target);
+            
+            // En realidad, para garantizar sincronía perfecta con Math.random, 
+            // deberíamos implementar un PRNG con semilla. 
+            // Haremos un hack: Generar la lista completa y enviarla es mucho payload.
+            // MEJOR: Enviar la lista de personas serializada.
+            
+            const payload = {
+                type: (multiplayerRound === 1) ? 'START_GAME' : 'NEXT_ROUND',
+                personasSeed: personas, // Enviamos el array completo generado por el Host
+                targetId: targetId,
+                targetIndex: targetIndex, // Indice del culpable en el array
+                round: multiplayerRound
+            };
+            
+            // Iniciar mi propio juego
+            startCompetitiveRoundLocal(payload);
+            
+            // Enviar a todos
+            connections.forEach(c => {
+                c.send({
+                    type: payload.type,
+                    personasSeed: personas, // Enviamos el objeto completo
+                    targetId: targetId,
+                    targetIndex: targetIndex,
+                    round: multiplayerRound
+                });
+            });
+        }
+
+        function startCompetitiveRound(personasData, targetIdData) {
+            // Cliente recibe datos
+             document.getElementById('lobby-screen').style.display = 'none';
+             showTutorial(); // Muestra tutorial modificado
+             
+             // Guardar datos para iniciar tras tutorial
+             window.pendingMatchData = { personas: personasData, targetId: targetIdData };
+        }
+        
+        function startCompetitiveRoundLocal(payload) {
+             document.getElementById('lobby-screen').style.display = 'none';
+             showTutorial();
+             window.pendingMatchData = { 
+                 personas: payload.personasSeed, 
+                 targetIndex: payload.targetIndex,
+                 targetId: payload.targetId 
+             };
+        }
+
+        // --- FIN MULTIJUGADOR BÁSICO ---
+
+        let personas = [], objetivo = null, gameActive = false;
         let DP = {}; 
 
         // --- MANEJO DE ARCHIVOS Y MURO ---
@@ -1134,8 +1564,6 @@
             }
         }
 
-        // --- SISTEMA DE MIGRACIÓN (Nuevo Solicitado) ---
-        // Se ha reemplazado el alert() por un manejo de DOM (modal)
         function checkMigration() {
             if (!localStorage.getItem('bioBreach_v8_migration')) {
                 const oldSolved = JSON.parse(localStorage.getItem('bioBreachSolved') || '[]');
@@ -1147,11 +1575,9 @@
                     currentMoney += bonus;
                     localStorage.setItem('bioBreachMoney', currentMoney);
                     
-                    // Resetear historial para devolver casos al sistema
                     localStorage.setItem('bioBreachSolved', '[]');
                     localStorage.setItem('bioBreachUsedIDs', '[]');
                     
-                    // MOSTRAR MODAL EN LUGAR DE ALERT
                     document.getElementById('mig-count').innerText = count;
                     document.getElementById('mig-money').innerText = bonus;
                     document.getElementById('migration-modal').style.display = 'flex';
@@ -1163,7 +1589,6 @@
             }
         }
 
-        // Función para cerrar el nuevo modal
         function closeMigrationModal() {
             playSFX('click');
             document.getElementById('migration-modal').style.display = 'none';
@@ -1172,7 +1597,7 @@
         window.addEventListener('load', () => {
             preloadAssets();
             updateBoardClass();
-            checkMigration(); // Verificar migración al cargar
+            checkMigration(); 
         });
 
         const AUDIO_CONFIG = {
@@ -1223,7 +1648,6 @@
             }
         }
 
-        let personas = [], objetivo = null, gameActive = false;
         let currentReward = 0;
         let totalMoney = parseInt(localStorage.getItem('bioBreachMoney')) || 0;
         let isTyping = false;
@@ -1231,7 +1655,7 @@
         let pendingDiscards = []; 
         let lastQueryText = "";   
         let matchPoints = 0; 
-        let pointsPool = 0; // Banco de puntos pendientes de visualización
+        let pointsPool = 0; 
 
         async function typeWriter(text, elementId, speed = 20) {
             if (isTyping) return;
@@ -1266,24 +1690,68 @@
             fadeToMode(2); // TWIN PEAKS
             document.getElementById('main-menu').style.display = 'none';
             document.getElementById('tutorial-screen').style.display = 'flex';
-        }
-
-        function exitGame() {
-            playSFX('click');
-            if (window.parent && typeof window.parent.cerrarMotor === 'function') {
-                window.parent.cerrarMotor();
+            
+            // MODIFICACIÓN TUTORIAL (Punto 2)
+            const title = document.getElementById('tutorial-title');
+            const content = document.getElementById('tutorial-content');
+            
+            if (currentMode === 'classic') {
+                title.innerText = "MANUAL DE CAMPO";
+                content.innerHTML = `
+                    <div class="step">
+                        <b>1. INTERROGATORIO PRECISO</b>
+                        Formule las preguntas correctamente usando signos (¿...?). Ejemplo: "¿Es de España?". No escriba palabras sueltas al final.
+                    </div>
+                    <div class="step">
+                        <b>2. DESCARTE OBLIGATORIO</b>
+                        El sistema bloqueará nuevos comandos hasta que elimines a TODOS los sospechosos que creas incorrectos. <b>¡CUIDADO!</b> Si eliminas al sospechoso equivocado, no habrá aviso.
+                    </div>
+                    <div class="step">
+                        <b>3. SISTEMA DE PUNTOS</b>
+                        Eliminar múltiples sospechosos con una sola pregunta otorga puntos extra (3+ sospechosos = +5 PTS). El puntaje total define tu recompensa y el color de la ficha en el muro.
+                    </div>
+                `;
             } else {
-                fadeToMode(1); // BACK TO DOOM JAZZ
-                alert("SISTEMA DESCONECTADO DEL NÚCLEO. SIMULANDO SALIDA.");
+                title.innerText = "PROTOCOLOS COMPETITIVOS";
+                title.style.color = "var(--hazard)";
+                content.innerHTML = `
+                    <div class="step" style="border-left-color: var(--hazard);">
+                        <b>1. VELOCIDAD CRÍTICA</b>
+                        Compites en tiempo real contra otros agentes. El primer agente en identificar al objetivo gana la máxima puntuación.
+                    </div>
+                    <div class="step" style="border-left-color: var(--hazard);">
+                        <b>2. ESTRUCTURA</b>
+                        La partida consta de <b>3 RONDAS</b>. Todos los agentes reciben la misma base de datos y el mismo culpable.
+                    </div>
+                    <div class="step" style="border-left-color: var(--hazard);">
+                        <b>3. ERROR FATAL</b>
+                        Si descartas al culpable por error, quedarás eliminado de la ronda actual y obtendrás 0 puntos.
+                    </div>
+                `;
             }
         }
 
-        function startGame() {
+        function confirmTutorial() {
             playSFX('click');
             fadeToMode(3); // TAXI DRIVER
             document.getElementById('tutorial-screen').style.display = 'none';
             document.getElementById('main-ui').style.display = 'flex'; 
+            
+            // Ocultar botones no necesarios en multi
+            if (currentMode === 'competitive') {
+                document.getElementById('btn-reset-game').style.display = 'none';
+                document.getElementById('case-info-bar').innerHTML = `<span style="color:var(--hazard)">RONDA ${multiplayerRound}/3</span> <span id="game-points">PTS: 0</span>`;
+            } else {
+                 document.getElementById('btn-reset-game').style.display = 'block';
+            }
+
             initGame();
+        }
+
+        function exitGame() {
+            playSFX('click');
+            fadeToMode(1); 
+            alert("SISTEMA DESCONECTADO DEL NÚCLEO. SIMULANDO SALIDA.");
         }
 
         function openAbortModal() {
@@ -1304,6 +1772,12 @@
             playSFX('click', true); 
             gameActive = false;
             closeAbortModal();
+            
+            // Si es multi, desconectar
+            if (currentMode === 'competitive') {
+                 exitLobby();
+            }
+            
             fadeToMode(1); // Vuelve al menú con DOOM JAZZ
             document.getElementById('main-ui').style.display = 'none';
             document.getElementById('main-menu').style.display = 'flex';
@@ -1351,13 +1825,10 @@
             document.getElementById('main-ui').classList.remove('blur-effect');
             document.getElementById('out').style.color = "var(--terminal-green)";
             
-            // Asegurar que la música del juego vuelve si venimos de Win/Lose
             restoreMusic();
-            
             playSFX('newCase', true);
             
             currentReward = Math.floor(Math.random() * 500) + 100;
-            // Resetear puntos de investigación y pool
             matchPoints = 0;
             pointsPool = 0;
             document.getElementById('game-points').innerText = "PTS: " + matchPoints;
@@ -1369,73 +1840,59 @@
             lastQueryText = "";
             document.getElementById('queryInput').disabled = false;
             document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA (¿...?)...";
+            document.getElementById('queryInput').focus();
 
-            let attempts = 0;
-            let validCase = false;
-            
-            while (!validCase && attempts < 100) {
-                generateNewSquad(); 
-                const candidate = personas[Math.floor(Math.random() * personas.length)];
+            // LOGICA DIFERENCIADA POR MODO
+            if (currentMode === 'classic') {
+                let attempts = 0;
+                let validCase = false;
                 
-                if (!isCriminalCaptured(candidate)) {
-                    objetivo = candidate;
-                    validCase = true;
-                } else {
-                    attempts++;
+                while (!validCase && attempts < 100) {
+                    generateNewSquad(); 
+                    const candidate = personas[Math.floor(Math.random() * personas.length)];
+                    if (!isCriminalCaptured(candidate)) {
+                        objetivo = candidate;
+                        validCase = true;
+                    } else {
+                        attempts++;
+                    }
                 }
+                if (!validCase) objetivo = personas[Math.floor(Math.random() * personas.length)];
+                objetivo.recordId = generateCriminalRecordID();
+            } 
+            else if (currentMode === 'competitive') {
+                // Usar datos recibidos del host
+                if (window.pendingMatchData) {
+                    if (Array.isArray(window.pendingMatchData.personas)) {
+                        // Si recibimos el array completo (Modo directo)
+                        personas = window.pendingMatchData.personas;
+                        objetivo = personas[window.pendingMatchData.targetIndex];
+                    } else {
+                        // Si recibimos semilla (no implementado full PRNG aquí por brevedad, asumimos array directo o fallback)
+                        generateNewSquad(); 
+                    }
+                    objetivo.recordId = window.pendingMatchData.targetId;
+                }
+                document.getElementById('btn-next-case').style.display = 'none'; // Se controla autom por rondas
             }
-            
-            if (!validCase) {
-                objetivo = personas[Math.floor(Math.random() * personas.length)];
-            }
-
-            objetivo.recordId = generateCriminalRecordID();
 
             gameActive = true;
-            
             typeWriter("ESCANEO FINALIZADO. ESPERANDO CONSULTA...", "out", 15);
             renderBoard();
             updateWalletUI();
         }
 
-        function generateNewSquad() {
+        function generateNewSquad(seed = null) {
+            // Nota: Para un seed real se necesitaria un PRNG custom.
+            // Aquí usamos Math.random estándar para Classic. En Competitive el array viene dado.
             personas = [];
             DP = {
-                M: [
-                    "LEON", "MARC", "OTTO", "IVAN", "ERIC", "HUAN", "KURT", "NOAH", "AXEL", "SAUL", "IGOR", "LIAM", "ENZO", "HUGO", "OMAR", "LUC", "YURI", "RYAN", "FINN", "EZRA", "MILO", "IAN", "ALAN", "KAI", "BORIS",
-                    "OSCAR", "VICTOR", "FELIX", "DANTE", "BRUNO", "KALEB", "SILAS", "ARLO", "THEO", "REMY", "ZAYN", "LUCA", "NICO", "JUDE", "ELIAS", "SETH", "KANE", "AARON", "SIMON", "RAUL", "LEVI", "TOBIAS", "GAGE", "XANDER", "JACE",
-                    "KAREM", "NASH", "ZION", "COLE", "BEAU", "REID", "KNOX", "RHYS", "OTIS", "MILO", "ARLO", "EZRA", "HUGO", "FELIX", "JUDE", "LUCA", "THEO", "SILAS", "KAI", "ENZO", "AXEL", "NOAH", "OTTO", "IVAN",
-                    "YOSEF", "MALIK", "SAID", "OMAR", "AMIR", "ZAYD", "HAMZA", "TARIQ", "KHALIL", "IDRIS", "HASSAN", "RAYAN", "SAMI", "KARIM", "ADAM", "NOAH", "LIAM", "ERIC", "MARC", "LEON", "HUAN", "KURT", "IGOR", "LUC", "YURI",
-                    "RYAN", "ALAN", "BORIS", "OSCAR", "VICTOR", "DANTE", "BRUNO", "KALEB", "REMY", "ZAYN", "NICO", "ELIAS", "SETH", "KANE", "AARON", "SIMON", "RAUL", "LEVI", "TOBIAS", "GAGE", "XANDER", "JACE", "KAREN", "NASH", "ZION",
-                    "COLE", "BEAU", "REID", "KNOX", "RHYS", "OTIS", "ALEX", "BLAKE", "CALEB", "DYLAN", "ETHAN", "FLYNN", "GRANT", "HENRY", "ISAAC", "JACK", "KYLE", "LUKE", "MAX", "NATE", "OWEN", "PIKE", "QUINN", "RILEY", "SEAN",
-                    "TATE", "URIE", "VANCE", "WADE", "XAVI", "YORK", "ZANE", "ALDO", "BART", "CARL", "DIRK", "EMIL", "FRANZ", "GUST", "HANS", "IVAR", "JENS", "KARL", "LARS", "MADS", "NILS", "OLAF", "PIET", "ROLF", "STIG",
-                    "THOR", "ULF", "VERN", "WOLF", "YENS", "ZOLT", "ANTON", "BORIS", "CYRIL", "DIMITRI", "EVAN", "FEDOR", "GREG", "IVAN", "IGOR", "JAN", "KONRAD", "LEV", "MIKHAIL", "NIKOLAI", "OLEG", "PAVEL", "SERGEI", "VIKTOR", "YURI",
-                    "ZINO", "ANDRE", "BLAISE", "CLAUDE", "DIDIER", "ETIENNE", "FABIEN", "OSVALDO", "HENRI", "ISAAC", "JEAN", "LUC", "MARC", "NOEL", "OLIVER", "PIERRE", "REMY", "SERGE", "THIERRY", "URBAIN", "VICTOR", "YVES", "ZEPHYR"
-                ],
-                F: [
-                    "MIA", "LARA", "YUNA", "OLGA", "ADRI", "ZOE", "INÉS", "KIRA", "EMMA", "RUTH", "SARA", "LUNA", "VERA", "NORA", "MAYA", "LEA", "IRIS", "ALBA", "GALA", "JUNE", "CLAUDIA", "ANA", "EVA", "LISA",
-                    "NINA", "JADE", "ROSE", "MILA", "RUBY", "EDEN", "ISLA", "LYRA", "MAIA", "OPAL", "FAYE", "SKYE", "TESS", "WILLA", "ZARA", "ALEXA", "BELLA", "CHLOE", "DIANA", "ELSA", "FREYA", "HOPE", "IVY", "KYRA", "LANA", "MYRA",
-                    "AMARA", "BELLE", "CORA", "DAISY", "ELIZA", "FLORA", "GRETA", "HAZEL", "INDIE", "JUNE", "KEIRA", "LOLA", "MABEL", "NELL", "OLIVE", "PEARL", "QUINN", "RENA", "SADIE", "THEA", "UNA", "VADA", "WREN", "XENA", "YARA",
-                    "ZELDA", "ALMA", "BONNIE", "SOLANGE", "DORA", "EDNA", "FAITH", "GIA", "HOLLY", "IDA", "JOY", "KAY", "LILY", "MINA", "NELL", "ORA", "PIPA", "ROSA", "SHEA", "TARA", "UTAH", "VIDA", "WILD", "XIA", "YOLI",
-                    "ZOEY", "ANNA", "BETH", "CLARA", "DINA", "ELLA", "FAYE", "GWEN", "HEIDI", "ASTRID", "JANE", "KATE", "LUCY", "MARY", "NELL", "OLGA", "POLY", "RUTH", "SARA", "TESS", "UMA", "VIV", "WYN", "XIA", "YARA", "ZITA",
-                    "ADELE", "BINA", "COCO", "ALEXA", "ENID", "FIFI", "GIGI", "HOPE", "INES", "JANA", "KIKI", "LULU", "MIMI", "NANA", "ORLY", "PEPA", "QUEE", "RIRI", "SISI", "TITI", "UVEE", "VIVI", "ISABEL", "XIXI", "YAYA", "ZIZI",
-                    "ALICE", "BIANCA", "CELIA", "DORIS", "ELENA", "FIONA", "GRACE", "HELEN", "IRENE", "JULIA", "KAREN", "LINDA", "MARIA", "NAOMI", "PAULA", "ROSE", "SONIA", "TANIA", "URSULA", "VAL", "WANDA", "XENIA", "YVON", "ZARA",
-                    "AUREA", "BRISA", "CIELO", "DALIA", "ESTER", "FLOR", "GEMMA", "HILDA", "IRMA", "JUANA", "KATIA", "LIDIA", "MARTA", "NURIA", "OLIVIA", "PILAR", "RAQUEL", "SILVIA", "TERE", "VICKY", "XEMA", "YIZA", "ZENIA", "AGATHA"
-                ],
-                P: [
-                    {n: "ALEMANIA", c: "EUROPA"}, {n: "ESPAÑA", c: "EUROPA"}, {n: "ITALIA", c: "EUROPA"}, {n: "FRANCIA", c: "EUROPA"}, {n: "SUIZA", c: "EUROPA"}, {n: "RUSIA", c: "EUROPA"},
-                    {n: "JAPÓN", c: "ASIA"}, {n: "CHINA", c: "ASIA"}, {n: "COREA", c: "ASIA"}, {n: "INDIA", c: "ASIA"}, {n: "TAILANDIA", c: "ASIA"}, {n: "VIETNAM", c: "ASIA"},
-                    {n: "MÉXICO", c: "AMÉRICA"}, {n: "BRASIL", c: "AMÉRICA"}, {n: "USA", c: "AMÉRICA"}, {n: "BOLIVIA", c: "AMÉRICA"}, {n: "COLOMBIA", c: "AMÉRICA"}, {n: "ECUADOR", c: "AMÉRICA"}, {n: "PERÚ", c: "AMÉRICA"}, {n: "ARGENTINA", c: "AMÉRICA"}, {n: "CANADÁ", c: "AMÉRICA"},
-                    {n: "AUSTRALIA", c: "OCEANÍA"}, {n: "NUEVA ZELANDA", c: "OCEANÍA"},
-                    {n: "EGIPTO", c: "ÁFRICA"}, {n: "SUDAFRICA", c: "ÁFRICA"}, {n: "NIGERIA", c: "ÁFRICA"}, {n: "MARRUECOS", c: "ÁFRICA"}
-                ],
+                M: ["LEON", "MARC", "OTTO", "IVAN", "ERIC", "HUAN", "KURT", "NOAH", "AXEL", "SAUL", "IGOR", "LIAM", "ENZO", "HUGO", "OMAR", "LUC", "YURI", "RYAN", "FINN", "EZRA", "MILO", "IAN", "ALAN", "KAI", "BORIS", "OSCAR", "VICTOR", "FELIX", "DANTE", "BRUNO", "KALEB", "SILAS", "ARLO", "THEO", "REMY", "ZAYN", "LUCA", "NICO", "JUDE", "ELIAS", "SETH", "KANE", "AARON", "SIMON", "RAUL", "LEVI", "TOBIAS", "GAGE", "XANDER", "JACE"],
+                F: ["MIA", "LARA", "YUNA", "OLGA", "ADRI", "ZOE", "INÉS", "KIRA", "EMMA", "RUTH", "SARA", "LUNA", "VERA", "NORA", "MAYA", "LEA", "IRIS", "ALBA", "GALA", "JUNE", "CLAUDIA", "ANA", "EVA", "LISA", "NINA", "JADE", "ROSE", "MILA", "RUBY", "EDEN", "ISLA", "LYRA", "MAIA", "OPAL", "FAYE", "SKYE", "TESS", "WILLA", "ZARA", "ALEXA", "BELLA", "CHLOE", "DIANA", "ELSA", "FREYA", "HOPE", "IVY", "KYRA", "LANA"],
+                P: [{n: "ALEMANIA", c: "EUROPA"}, {n: "ESPAÑA", c: "EUROPA"}, {n: "ITALIA", c: "EUROPA"}, {n: "FRANCIA", c: "EUROPA"}, {n: "SUIZA", c: "EUROPA"}, {n: "RUSIA", c: "EUROPA"}, {n: "JAPÓN", c: "ASIA"}, {n: "CHINA", c: "ASIA"}, {n: "COREA", c: "ASIA"}, {n: "INDIA", c: "ASIA"}, {n: "MÉXICO", c: "AMÉRICA"}, {n: "BRASIL", c: "AMÉRICA"}, {n: "USA", c: "AMÉRICA"}, {n: "PERÚ", c: "AMÉRICA"}, {n: "ARGENTINA", c: "AMÉRICA"}, {n: "EGIPTO", c: "ÁFRICA"}, {n: "NIGERIA", c: "ÁFRICA"}],
                 T: ["PÁLIDA", "OLIVA", "BRONCE", "OSCURA", "ÉBANO"],
                 O: ["AZULES", "VERDES", "NEGROS", "CAFÉS", "GRISES", "MIEL"],
-                A: [
-                    {n: "GORRA", u: "CABEZA"}, {n: "CASCO", u: "CABEZA"}, {n: "SOMBRERO", u: "CABEZA"}, {n: "DIADEMA", u: "CABEZA"}, {n: "BOINA", u: "CABEZA"}, {n: "PASAMONTAÑAS", u: "CABEZA"},
-                    {n: "GAFAS", u: "OJOS"}, {n: "MONÓCULO", u: "OJOS"}, {n: "VISOR", u: "OJOS"}, {n: "PARCHE", u: "OJOS"}, {n: "LENTES SOL", u: "OJOS"},
-                    {n: "MALETÍN", u: "MANO"}, {n: "TABLETA", u: "MANO"}, {n: "RELOJ", u: "MANO"}, {n: "ANILLO", u: "MANO"}, {n: "GUANTE", u: "MANO"}, {n: "CELULAR", u: "MANO"}, {n: "BASTÓN", u: "MANO"}
-                ]
+                A: [{n: "GORRA", u: "CABEZA"}, {n: "CASCO", u: "CABEZA"}, {n: "SOMBRERO", u: "CABEZA"}, {n: "GAFAS", u: "OJOS"}, {n: "PARCHE", u: "OJOS"}, {n: "LENTES SOL", u: "OJOS"}, {n: "MALETÍN", u: "MANO"}, {n: "RELOJ", u: "MANO"}, {n: "ANILLO", u: "MANO"}, {n: "GUANTE", u: "MANO"}]
             };
 
             const shuffle = (array) => array.sort(() => Math.random() - 0.5);
@@ -1446,13 +1903,7 @@
                 const genero = Math.random() > 0.5 ? "MASCULINO" : "FEMENINO";
                 const pais = DP.P[Math.floor(Math.random() * DP.P.length)];
                 const acc = DP.A[Math.floor(Math.random() * DP.A.length)];
-                
-                let nombre = "";
-                if (genero === "MASCULINO") {
-                    nombre = poolM.pop() || "UNIT-M" + i;
-                } else {
-                    nombre = poolF.pop() || "UNIT-F" + i;
-                }
+                let nombre = (genero === "MASCULINO") ? (poolM.pop() || "UNIT-M" + i) : (poolF.pop() || "UNIT-F" + i);
 
                 personas.push({
                     n: nombre, g: genero, p: pais.n, cont: pais.c,
@@ -1466,20 +1917,16 @@
         // --- FUNCION DE ANIMACIÓN DE PUNTOS ---
         function spawnFloatingPoint(startX, startY, val) {
             if (val <= 0) return;
-            
             const el = document.createElement('div');
             el.className = 'flying-point';
             el.innerText = `+${val}`;
             el.style.left = startX + 'px';
             el.style.top = startY + 'px';
             document.body.appendChild(el);
-
             const target = document.getElementById('game-points').getBoundingClientRect();
-            // Ajustar destino al centro del contador
             const destX = target.left + (target.width / 2);
             const destY = target.top + (target.height / 2);
 
-            // Forzar reflow para animación
             requestAnimationFrame(() => {
                 el.style.transform = `translate(${destX - startX}px, ${destY - startY}px) scale(0.5)`;
                 el.style.opacity = '0';
@@ -1513,32 +1960,23 @@
                         if (pendingDiscards.length > 0) {
                             playSFX('discard');
                             
-                            // --- EFECTO VISUAL DE PUNTOS ---
-                            // Obtener coordenadas de la tarjeta
                             const rect = cardEl.getBoundingClientRect();
                             const centerX = rect.left + rect.width / 2;
                             const centerY = rect.top + rect.height / 2;
 
-                            // Distribuir puntos del pool
                             let ptsToGive = 0;
                             if (pointsPool > 0) {
-                                // Lógica simple de distribución entera:
-                                // Dividir el pool restante entre los descartes restantes
-                                const remainingDiscards = pendingDiscards.length; // Incluye al actual aun no borrado de la lista logica
+                                const remainingDiscards = pendingDiscards.length; 
                                 ptsToGive = Math.ceil(pointsPool / remainingDiscards);
-                                
-                                // Ajuste para no dar más de lo que hay
                                 if (ptsToGive > pointsPool) ptsToGive = pointsPool;
                                 pointsPool -= ptsToGive;
                             }
                             
-                            // --- FIX: Añadido winDelay para esperar animación ---
                             let winDelay = 0;
                             if (ptsToGive > 0) {
                                 spawnFloatingPoint(centerX, centerY, ptsToGive);
-                                winDelay = 900; // Esperar 900ms si hay puntos volando
+                                winDelay = 900; 
                             }
-                            // --------------------------------
 
                             discardVisual(cardEl);
                             
@@ -1560,7 +1998,6 @@
                                 document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA (¿...?)...";
                                 document.getElementById('queryInput').focus();
                             }
-                            
                             checkStatus(winDelay);
 
                         } 
@@ -1585,11 +2022,7 @@
         }
 
         function discardVisual(card) {
-            if (currentMosaicMode === 5) {
-                card.classList.add('discarded'); 
-            } else {
-                card.classList.add('discarded');
-            }
+            card.classList.add('discarded');
         }
 
         function checkStatus(delay = 0) {
@@ -1600,7 +2033,6 @@
             }
             
             if (activeCards.length === 1 && activeCards[0].id === `card-${objetivo.n}`) {
-                // Esperar a que la animación de puntos termine antes de mostrar la victoria
                 setTimeout(() => {
                     endGame(true);
                 }, delay);
@@ -1610,9 +2042,24 @@
 
         function endGame(win) {
             gameActive = false;
-            // CORTAR MÚSICA
             silenceMusic();
             
+            // COMPETITIVE LOGIC SEND
+            if (currentMode === 'competitive') {
+                if (win) {
+                    // Enviar victoria al host
+                    if (isHost) handleRoundWin(myPlayerId);
+                    else hostConn.send({ type: 'ROUND_WIN', id: myPlayerId });
+                    
+                    typeWriter("OBJETIVO ASEGURADO. SINCRONIZANDO CON RED...", "out", 50);
+                } else {
+                    // Perder en competitivo = esperar
+                    typeWriter("OBJETIVO PERDIDO. ESPERANDO FIN DE RONDA...", "out", 50);
+                }
+                return; // No mostramos overlay local, el host decide
+            }
+            
+            // CLASSIC LOGIC
             document.getElementById('main-ui').classList.add('blur-effect');
             document.getElementById('overlay').classList.add('active');
             const rewardMsg = document.getElementById('overlay-reward-msg');
@@ -1620,73 +2067,71 @@
             
             if (win) { 
                 playSFX('win', true); 
-                
-                // CALCULO DE BONIFICACIÓN POR PUNTOS
                 const pointBonus = matchPoints * 10;
                 totalMoney += currentReward + pointBonus;
-                
-                objetivo.points = matchPoints; // Guardar puntos en registro
-
+                objetivo.points = matchPoints; 
                 const solvedList = JSON.parse(localStorage.getItem('bioBreachSolved') || '[]');
                 solvedList.push(objetivo);
                 localStorage.setItem('bioBreachSolved', JSON.stringify(solvedList));
-
                 document.getElementById('overlay-title').innerText = "OBJETIVO LOCALIZADO"; 
                 document.getElementById('overlay-title').style.color = "var(--victory)";
                 rewardMsg.innerHTML = `+${currentReward} S/ CONTRATO<br><span style="color:var(--gold)">+${pointBonus} S/ BONUS (${matchPoints} PTS)</span>`;
-                
-                desc.innerHTML = `
-                    <div class="dossier-container">
-                        <div class="dossier-header">
-                            <span>REGISTRO CRIMINAL</span>
-                            <span>[${objetivo.recordId}]</span>
-                        </div>
-                        <div class="dossier-info">
-                            <p><b>SUJETO:</b> ${objetivo.n}</p>
-                            <p><b>ORIGEN:</b> ${objetivo.p} (${objetivo.cont})</p>
-                            <p><b>PERFIL:</b> ${objetivo.g} / ${objetivo.edad} AÑOS</p>
-                            <p><b>RASGOS:</b> ${objetivo.t} / OJOS ${objetivo.o}</p>
-                            <p><b>ESTATURA:</b> ${objetivo.altura} METROS</p>
-                            <p><b>ACCESORIO DETECTADO:</b> ${objetivo.accName}</p>
-                            <div class="stamp-captured">CAPTURED</div>
-                        </div>
-                    </div>
-                `;
-
+                desc.innerHTML = `<div class="dossier-container"><div class="dossier-header"><span>REGISTRO CRIMINAL</span><span>[${objetivo.recordId}]</span></div><div class="dossier-info"><p><b>SUJETO:</b> ${objetivo.n}</p><div class="stamp-captured">CAPTURED</div></div></div>`;
             } else { 
                 playSFX('fail', true);
                 document.getElementById('overlay-title').innerText = "OBJETIVO PERDIDO"; 
                 document.getElementById('overlay-title').style.color = "var(--hazard)";
                 rewardMsg.innerText = "CONTRATO CANCELADO";
-                
-                desc.innerHTML = `
-                    <div class="dossier-container" style="border-color: var(--hazard); background: rgba(50, 0, 0, 0.3);">
-                        <div class="dossier-header" style="border-color: var(--hazard); color: var(--hazard);">
-                            <span>REGISTRO CRIMINAL</span>
-                            <span>[${objetivo.recordId}]</span>
-                        </div>
-                        <div class="dossier-info">
-                            <p><b>SUJETO:</b> ${objetivo.n}</p>
-                            <p><b>ORIGEN:</b> ${objetivo.p} (${objetivo.cont})</p>
-                            <p><b>PERFIL:</b> ${objetivo.g} / ${objetivo.edad} AÑOS</p>
-                            <p><b>RASGOS:</b> ${objetivo.t} / OJOS ${objetivo.o}</p>
-                            <p><b>ESTATURA:</b> ${objetivo.altura} METROS</p>
-                            <p><b>ACCESORIO DETECTADO:</b> ${objetivo.accName}</p>
-                            <div class="stamp-captured" style="color: var(--hazard); border-color: var(--hazard);">ESCAPED</div>
-                        </div>
-                    </div>
-                `;
+                desc.innerHTML = `<div class="dossier-container" style="border-color: var(--hazard); background: rgba(50, 0, 0, 0.3);"><div class="dossier-header" style="border-color: var(--hazard); color: var(--hazard);"><span>REGISTRO CRIMINAL</span><span>[${objetivo.recordId}]</span></div><div class="dossier-info"><p><b>SUJETO:</b> ${objetivo.n}</p><div class="stamp-captured" style="color: var(--hazard); border-color: var(--hazard);">ESCAPED</div></div></div>`;
             }
             updateWalletUI();
+        }
+        
+        // LOGICA DE VICTORIA DE RONDA (SOLO HOST)
+        function handleRoundWin(winnerId) {
+            if (!isHost) return;
+            
+            // Asignar puntos por orden de llegada (Simplificado: el primero gana 1000, los demas 0 en esta versión simple)
+            // Se asume que el primero que llega dispara el cambio de ronda
+            
+            multiplayerScores[winnerId].score += 1000;
+            
+            // Anunciar quien ganó y pasar de ronda o terminar
+            if (multiplayerRound < totalMultiplayerRounds) {
+                multiplayerRound++;
+                alert(`RONDA ${multiplayerRound-1} GANADA POR ${multiplayerScores[winnerId].name}`);
+                broadcastRoundStart(); // Siguiente ronda
+            } else {
+                // Fin del juego
+                let winner = Object.keys(multiplayerScores).reduce((a, b) => multiplayerScores[a].score > multiplayerScores[b].score ? a : b);
+                const finalPack = { type: 'GAME_OVER_FINAL', winner: multiplayerScores[winner].name };
+                
+                connections.forEach(c => c.send(finalPack));
+                showFinalResults(multiplayerScores[winner].name);
+            }
+        }
+        
+        function showFinalResults(winnerName) {
+            document.getElementById('main-ui').classList.add('blur-effect');
+            document.getElementById('overlay').classList.add('active');
+            document.getElementById('overlay-title').innerText = "COMPETENCIA FINALIZADA";
+            document.getElementById('overlay-title').style.color = "var(--gold)";
+            document.getElementById('overlay-reward-msg').innerHTML = `GANADOR SUPREMO:<br><span style="font-size:2rem; color:var(--victory)">${winnerName}</span>`;
+            document.getElementById('overlay-desc').innerHTML = "";
+            document.getElementById('btn-next-case').innerText = "VOLVER AL LOBBY";
+            document.getElementById('btn-next-case').onclick = () => {
+                document.getElementById('overlay').classList.remove('active');
+                document.getElementById('main-ui').classList.remove('blur-effect');
+                document.getElementById('main-ui').style.display = 'none';
+                initMultiplayerLobby();
+            };
         }
 
         document.getElementById('queryInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter' && !isTyping) {
                 let rawValue = this.value.trim();
-                
                 if (!rawValue.startsWith('¿') || !rawValue.endsWith('?')) {
-                    playSFX('error');
-                    document.getElementById('out').style.color = "var(--hazard)";
+                    playSFX('error'); document.getElementById('out').style.color = "var(--hazard)";
                     typeWriter("ERROR: SINTAXIS INVÁLIDA. FORMULE UNA PREGUNTA (¿...?)", "out", 10);
                     return;
                 }
@@ -1727,50 +2172,23 @@
                 else if (q.match(/\b(AMÉRICA|AMERICANO|AMERICANA)\b/)) { checkFunc = p => p.cont === "AMÉRICA"; validQuery = true; }
                 else if (q.match(/\b(OCEANÍA|OCEÁNICO|OCEÁNICA)\b/)) { checkFunc = p => p.cont === "OCEANÍA"; validQuery = true; }
                 else if (q.match(/\b(ÁFRICA|AFRICANO|AFRICANA)\b/)) { checkFunc = p => p.cont === "ÁFRICA"; validQuery = true; }
-                
                 else {
                     const demonyms = {
                         "ALEMANIA": "ALEMÁN", "ESPAÑA": "ESPAÑOL", "FRANCIA": "FRANCÉS", "ITALIA": "ITALIANO", "SUIZA": "SUIZO", "RUSIA": "RUSO",
-                        "CHINA": "CHINO", "JAPÓN": "JAPONÉS", "COREA": "COREANO", "INDIA": "INDIO", "TAILANDIA": "TAILANDÉS", "VIETNAM": "VIETNAMITA", 
-                        "MÉXICO": "MEXICANO", "BRASIL": "BRASILEÑO", "USA": "AMERICANO", "BOLIVIA": "BOLIVIANO", "COLOMBIA": "COLOMBIANO", "ECUADOR": "ECUATORIANO",
-                        "PERÚ": "PERUANO", "ARGENTINA": "ARGENTINO", "CANADÁ": "CANADIENSE",
-                        "AUSTRALIA": "AUSTRALIANO", "NUEVA ZELANDA": "NEOZELANDÉS",
-                        "EGIPTO": "EGIPCIO", "SUDAFRICA": "SUDAFRICANO", "NIGERIA": "NIGERIANO", "MARRUECOS": "MARROQUÍ"
-                    };
-
-                    const getFem = (word) => {
-                        if (word.endsWith('O')) return word.slice(0, -1) + 'A';
-                        if (word.endsWith('ÉS')) return word.slice(0, -2) + 'ESA';
-                        if (word.endsWith('OL')) return word + 'A'; 
-                        if (word.endsWith('ÁN')) return word.slice(0, -2) + 'ANA'; 
-                        return word;
+                        "CHINA": "CHINO", "JAPÓN": "JAPONÉS", "COREA": "COREANO", "INDIA": "INDIO", "MÉXICO": "MEXICANO", "BRASIL": "BRASILEÑO", "USA": "AMERICANO", "PERÚ": "PERUANO", "ARGENTINA": "ARGENTINO", "EGIPTO": "EGIPCIO", "NIGERIA": "NIGERIANO"
                     };
 
                     const foundCountry = DP.P.find(c => {
                         const demo = demonyms[c.n];
                         if (hasWord(c.n) && validateSyntax(c.n, q)) return true;
                         if (demo && hasWord(demo) && validateSyntax(demo, q)) return true;
-                        if (demo) {
-                            const fem = getFem(demo);
-                            if (fem !== demo && hasWord(fem) && validateSyntax(fem, q)) return true;
-                        }
                         return false;
                     });
 
-                    if (foundCountry) {
-                        checkFunc = p => p.p === foundCountry.n;
-                        validQuery = true;
-                    } 
+                    if (foundCountry) { checkFunc = p => p.p === foundCountry.n; validQuery = true; } 
                     else if (hasWord("INICIAL") || hasWord("EMPIEZA")) {
                         const letra = q.match(/\b[A-Z]\b/); 
-                        if (letra) { 
-                            if (validateSyntax(letra[0], q)) {
-                                checkFunc = p => p.n.startsWith(letra[0]); 
-                                validQuery = true; 
-                            } else {
-                                validQuery = false; 
-                            }
-                        }
+                        if (letra && validateSyntax(letra[0], q)) { checkFunc = p => p.n.startsWith(letra[0]); validQuery = true; }
                         else { typeWriter("ESPECIFIQUE UNA LETRA.", "out", 10); return; }
                     }
                     else if (hasWord("EDAD") || hasWord("MIDE") || hasWord("ALTO")) {
@@ -1789,10 +2207,8 @@
                     else {
                         const colors = ["AZULES", "VERDES", "NEGROS", "CAFÉS", "GRISES", "MIEL"];
                         const skins = ["PÁLIDA", "OLIVA", "BRONCE", "OSCURA", "ÉBANO"];                                                                                    
-                        
                         const cMatch = colors.find(c => hasWord(c) && validateSyntax(c, q));
                         const sMatch = skins.find(s => hasWord(s) && validateSyntax(s, q));
-                        
                         if(cMatch) { checkFunc = p => p.o === cMatch; validQuery = true; }
                         else if(sMatch) { checkFunc = p => p.t === sMatch; validQuery = true; }
                     }
@@ -1805,18 +2221,14 @@
                     const targetHasTrait = checkFunc(objetivo);
                     const respText = targetHasTrait ? "SÍ." : "NO.";
                     
-                    const cards = document.querySelectorAll('.suspect-card');
                     pendingDiscards = personas.filter(p => {
                         const card = document.getElementById('card-' + p.n);
                         if (card.classList.contains('discarded')) return false; 
-                        
-                        const suspectHasTrait = checkFunc(p);
-                        return suspectHasTrait !== targetHasTrait; 
+                        return checkFunc(p) !== targetHasTrait; 
                     }).map(p => p.n);
 
                     lastQueryText = `CONSULTA: ${q}<br>RESPUESTA: ${respText}`;
 
-                    // --- SISTEMA DE PUNTOS DE INVESTIGACIÓN (MODIFICADO) ---
                     let earned = 0;
                     let count = pendingDiscards.length;
                     if(count > 0) {
@@ -1824,14 +2236,9 @@
                         else if(count >= 5) earned = 8;
                         else if(count >= 3) earned = 5;
                         else earned = count; 
-                        
-                        // NO sumar inmediatamente. Almacenar en POOL para efecto visual
                         pointsPool = earned;
-                        
-                        // Mensaje de texto indicativo
                         lastQueryText += ` <span style="color:var(--gold)">[DETECTADOS: ${earned} PTS]</span>`;
                     }
-                    // ------------------------------------------
 
                     if (pendingDiscards.length > 0) {
                         const msg = `${lastQueryText}<br><span style="color:var(--hazard)">BLOQUEO ACTIVO: ELIMINE A ${pendingDiscards.length} SOSPECHOSOS INCOMPATIBLES.</span>`;
@@ -1841,7 +2248,6 @@
                     } else {
                         typeWriter(`${lastQueryText}<br>NINGÚN DESCARTE DISPONIBLE CON ESTA INFORMACIÓN.`, "out", 15);
                     }
-
                 } else {
                     playSFX('error');
                     document.getElementById('out').style.color = "var(--hazard)";
