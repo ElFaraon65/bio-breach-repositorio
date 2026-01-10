@@ -1532,8 +1532,11 @@
                                 pointsPool -= ptsToGive;
                             }
                             
+                            // --- FIX: Añadido winDelay para esperar animación ---
+                            let winDelay = 0;
                             if (ptsToGive > 0) {
                                 spawnFloatingPoint(centerX, centerY, ptsToGive);
+                                winDelay = 900; // Esperar 900ms si hay puntos volando
                             }
                             // --------------------------------
 
@@ -1544,7 +1547,7 @@
                             }
 
                             if (p.n === objetivo.n) {
-                                checkStatus(); 
+                                checkStatus(0); // Game Over inmediato
                                 return;
                             }
 
@@ -1558,14 +1561,14 @@
                                 document.getElementById('queryInput').focus();
                             }
                             
-                            checkStatus();
+                            checkStatus(winDelay);
 
                         } 
                         else if (lastQueryText !== "") {
                             playSFX('discard');
                             discardVisual(cardEl);
-                            if (p.n === objetivo.n) { checkStatus(); return; }
-                            checkStatus();
+                            if (p.n === objetivo.n) { checkStatus(0); return; }
+                            checkStatus(0);
                         }
                         else {
                             playSFX('error');
@@ -1589,7 +1592,7 @@
             }
         }
 
-        function checkStatus() {
+        function checkStatus(delay = 0) {
             const activeCards = Array.from(document.querySelectorAll('.suspect-card')).filter(c => !c.classList.contains('discarded'));
             
             if (document.getElementById(`card-${objetivo.n}`).classList.contains('discarded')) {
@@ -1597,7 +1600,11 @@
             }
             
             if (activeCards.length === 1 && activeCards[0].id === `card-${objetivo.n}`) {
-                return endGame(true);
+                // Esperar a que la animación de puntos termine antes de mostrar la victoria
+                setTimeout(() => {
+                    endGame(true);
+                }, delay);
+                return;
             }
         }
 
