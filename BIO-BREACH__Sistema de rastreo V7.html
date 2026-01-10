@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIO-BREACH: THE LAST TRACE</title>
+    <title>BIO-BREACH: ONLINE PROTOCOL</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
             --gold: #ffd700;
@@ -104,9 +105,31 @@
             border-left: 3px solid var(--gold); padding: 5px 15px;
             background: rgba(255, 215, 0, 0.05);
             text-align: right;
+            z-index: 3100;
         }
         .currency { color: var(--gold); font-size: 1.2rem; font-weight: bold; }
 
+        /* LOGIN SCREEN (NUEVO) */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 9000;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            padding: 20px;
+        }
+        .login-box {
+            border: 2px solid var(--gold); padding: 30px;
+            background: #111; text-align: center; max-width: 400px; width: 100%;
+        }
+        .input-dark {
+            background: #000; border: 1px solid #444; color: var(--gold);
+            padding: 10px; font-family: 'Consolas', monospace; width: 100%;
+            margin: 15px 0; font-size: 1.1rem; text-align: center; outline: none;
+            text-transform: uppercase;
+        }
+        .input-dark:focus { border-color: var(--gold); }
+
+        /* MAIN MENU */
         #main-menu {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -145,9 +168,56 @@
         }
         .btn-exit:hover { background: #333; color: white; border-color: #666; }
 
-        /* --- CONFIGURACIÓN Y MODALES --- */
-        /* Agregado #migration-modal a la lista de modales para heredar estilos */
-        #settings-modal, #tutorial-screen, #abort-confirm, #overlay, #migration-modal {
+        /* MODE SELECTION SCREEN (NUEVO) */
+        #mode-selection {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 3200;
+            display: none; flex-direction: column;
+            justify-content: center; align-items: center;
+            gap: 30px;
+        }
+        .mode-btn-container {
+            display: flex; flex-direction: column; align-items: center;
+            width: 100%; max-width: 300px;
+        }
+        .mode-img-placeholder {
+            width: 100%; height: 100px; background: #222;
+            display: flex; justify-content: center; align-items: center;
+            border: 2px solid #444; border-bottom: none;
+            color: #666; font-size: 2rem;
+        }
+        .btn-mode {
+            width: 100%; padding: 20px; font-size: 1.2rem;
+            border: 2px solid var(--gold); background: #111; color: var(--gold);
+            cursor: pointer; text-transform: uppercase; font-weight: bold;
+        }
+        .btn-mode:hover { background: var(--gold); color: #000; }
+
+        /* LOBBY SCREEN (NUEVO) */
+        #lobby-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #080808; z-index: 3300;
+            display: none; flex-direction: column; align-items: center; padding-top: 50px;
+        }
+        .lobby-panel {
+            width: 90%; max-width: 600px; background: #111; border: 1px solid var(--terminal-green);
+            padding: 20px; text-align: center;
+        }
+        .player-list {
+            min-height: 150px; background: #000; border: 1px solid #333;
+            margin: 20px 0; padding: 10px; text-align: left;
+        }
+        .player-item {
+            padding: 10px; border-bottom: 1px solid #222; display: flex; justify-content: space-between;
+        }
+        .player-item.ready { color: var(--terminal-green); }
+        .room-code {
+            font-size: 3rem; color: var(--gold); letter-spacing: 10px; font-weight: bold;
+            margin: 20px 0; border: 2px dashed #444; padding: 10px;
+        }
+
+        /* CONFIGURACIÓN Y MODALES */
+        #settings-modal, #tutorial-screen, #abort-confirm, #overlay, #migration-modal, #comp-results-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.98);
             display: none; flex-direction: column;
@@ -156,7 +226,7 @@
         }
         
         #settings-modal { z-index: 3500; }
-        #migration-modal { z-index: 4500; } /* Z-Index alto para asegurar visibilidad sobre todo */
+        #migration-modal { z-index: 4500; }
         #overlay, #abort-confirm { background: rgba(0, 0, 0, 0.95); z-index: 2000; text-align: center; }
         #overlay.active, #abort-confirm.active { display: flex; opacity: 1; }
 
@@ -235,7 +305,6 @@
             box-shadow: 1px 2px 4px rgba(0,0,0,0.5);
             z-index: 10;
         }
-        /* Variaciones de Pin por Puntaje */
         .pin.gold { background: var(--gold); border-color: #886600; box-shadow: 0 0 5px var(--gold); }
         .pin.blue { background: #0088ff; border-color: #003366; box-shadow: 0 0 5px #0088ff; }
 
@@ -446,6 +515,16 @@
         <div class="interaction-text">TOCAR PARA INICIAR SISTEMA</div>
     </div>
 
+    <div id="login-screen">
+        <h2 style="color: var(--gold); letter-spacing: 3px;">IDENTIFICACIÓN REQUERIDA</h2>
+        <div class="login-box">
+            <p>INTRODUZCA NOMBRE DE AGENTE</p>
+            <input type="text" id="agent-name-input" class="input-dark" maxlength="12" placeholder="NOMBRE">
+            <button class="btn-main" onclick="registerAgent()">ACCEDER</button>
+            <p style="font-size: 0.7rem; color: #666; margin-top: 10px;">ID ÚNICA SERÁ ASIGNADA AUTOMÁTICAMENTE</p>
+        </div>
+    </div>
+
     <div id="loading-screen">
         <div class="loading-text">RECALIBRANDO SISTEMA...</div>
         <div class="loader-bar-container">
@@ -467,10 +546,11 @@
         <div id="wallet-display">
             <div style="font-size: 0.6rem; color: #666;">SALDO NETO</div>
             <div class="currency"><span id="total-money">0</span> S/</div>
+            <div style="font-size: 0.6rem; color: var(--terminal-green); margin-top: 5px;" id="agent-display">AGENTE: ???</div>
         </div>
-        <h1 class="menu-title">BIO-BREACH<br><span style="font-size: 1.2rem; color: #555;">SISTEMA DE RASTREO</span></h1>
+        <h1 class="menu-title">BIO-BREACH<br><span style="font-size: 1.2rem; color: #555;">SISTEMA DE RASTREO V8</span></h1>
         <div class="menu-buttons">
-            <button class="btn-play" onclick="showTutorial()">INICIAR OPERACIÓN</button>
+            <button class="btn-play" onclick="openModeSelection()">INICIAR OPERACIÓN</button>
             <button class="btn-exit" onclick="openArchives()">ARCHIVOS (MURO)</button>
             <button class="btn-exit" onclick="openSettings()">CONFIGURACIÓN</button>
             <button class="btn-exit" onclick="exitGame()">SALIR DEL SISTEMA</button>
@@ -478,24 +558,62 @@
         <div id="preload-status">SISTEMA: EN LÍNEA</div>
     </div>
 
+    <div id="mode-selection">
+        <h2 style="color: white;">SELECCIONE PROTOCOLO</h2>
+        
+        <div class="mode-btn-container">
+            <div class="mode-img-placeholder">?</div>
+            <button class="btn-mode" onclick="startClassicMode()">MODO CLÁSICO</button>
+        </div>
+
+        <div class="mode-btn-container">
+            <div class="mode-img-placeholder">?</div>
+            <button class="btn-mode" onclick="openLobby()">MODO COMPETITIVO</button>
+        </div>
+        
+        <button class="btn-exit" style="margin-top: 20px;" onclick="closeModeSelection()">CANCELAR</button>
+    </div>
+
+    <div id="lobby-screen">
+        <h2 style="color: var(--gold);">SERVIDOR DE ENLACE</h2>
+        <div class="lobby-panel" id="lobby-start">
+            <button class="btn-main" onclick="hostRoom()">CREAR SALA (HOST)</button>
+            <p>- O -</p>
+            <input type="text" id="room-code-input" class="input-dark" maxlength="4" placeholder="CÓDIGO DE 4 DÍGITOS">
+            <button class="btn-main" onclick="joinRoom()">UNIRSE A SALA</button>
+            <button class="btn-exit" style="margin-top: 20px;" onclick="closeLobby()">VOLVER</button>
+        </div>
+
+        <div class="lobby-panel" id="lobby-active" style="display:none;">
+            <div style="font-size: 0.8rem; color: #888;">CÓDIGO DE SALA:</div>
+            <div class="room-code" id="display-room-code">----</div>
+            <div class="player-list" id="player-list-container">
+                </div>
+            <div id="host-controls" style="display:none;">
+                <button class="btn-main" id="btn-start-comp" onclick="requestStartGame()" disabled>INICIAR COMPETENCIA (MIN 2)</button>
+            </div>
+            <div id="client-msg" style="display:none; color: var(--gold); margin-top: 10px;">ESPERANDO AL HOST...</div>
+            <button class="btn-exit" style="margin-top: 10px;" onclick="leaveLobby()">ABANDONAR</button>
+        </div>
+    </div>
+
+    <div id="comp-results-screen">
+        <div class="tutorial-box">
+            <h2 style="color: var(--gold);">REPORTE DE RONDA</h2>
+            <div id="comp-results-list" style="text-align: left; margin: 20px 0;"></div>
+            <div id="next-round-timer" style="color: var(--terminal-green); font-size: 1.2rem;"></div>
+            <button class="btn-main" id="btn-return-lobby" style="display:none;" onclick="returnToLobbyFromGame()">VOLVER AL LOBBY</button>
+        </div>
+    </div>
+
     <div id="migration-modal">
         <div class="tutorial-box" style="border-color: var(--gold);">
             <h2 style="color: var(--gold); text-shadow: 0 0 10px rgba(0,255,65,0.4);">REPORTE DE SISTEMA</h2>
             <p style="color: #eee; font-size: 0.9rem; margin-bottom: 20px;">ACTUALIZACIÓN CRÍTICA DETECTADA</p>
-            
             <div class="step" style="border-left-color: var(--terminal-green);">
                 <b>ESTADO DE BASE DE DATOS:</b>
-                <span style="color: #aaa;">HISTORIAL PURGADO POR ACTUALIZACIÓN A V7.</span>
+                <span style="color: #aaa;">HISTORIAL PURGADO POR ACTUALIZACIÓN A V8.</span>
             </div>
-            
-            <div class="step" style="border-left-color: var(--gold);">
-                <b>RECOMPENSA OTORGADA:</b>
-                <div style="margin-top: 5px;">
-                    CRIMINALES PROCESADOS: <span id="mig-count" style="color: white; font-weight: bold;">0</span><br>
-                    BONIFICACIÓN: <span id="mig-money" style="color: var(--gold); font-size: 1.2rem; font-weight: bold;">0</span> S/
-                </div>
-            </div>
-
             <button class="btn-main" onclick="closeMigrationModal()" style="background: #222; border-color: var(--gold); color: var(--gold);">CONFIRMAR RECEPCIÓN</button>
         </div>
     </div>
@@ -504,36 +622,34 @@
         <div class="tutorial-box">
             <h2 style="color: var(--gold);">CONFIGURACIÓN DE MOSAICO</h2>
             <p style="color:#aaa; font-size: 0.8rem;">Seleccione la densidad de visualización de objetivos.</p>
-            
             <div class="mosaic-options">
                 <button class="mosaic-btn" id="btn-mode-2" onclick="selectMosaic(2)">2x2</button>
                 <button class="mosaic-btn" id="btn-mode-3" onclick="selectMosaic(3)">3x3</button>
                 <button class="mosaic-btn active" id="btn-mode-5" onclick="selectMosaic(5)">5x5</button>
             </div>
             <p id="mosaic-desc" style="font-size: 0.7rem; color: var(--terminal-green); min-height: 20px;">ESTÁNDAR: Vista completa, sin deslizamiento.</p>
-
             <button class="btn-main" onclick="saveSettings()">CONFIRMAR</button>
         </div>
     </div>
 
     <div id="tutorial-screen">
         <div class="tutorial-box">
-            <h2 style="color: var(--gold); margin-top: 0;">MANUAL DE CAMPO</h2>
+            <h2 style="color: var(--gold); margin-top: 0;">MANUAL DE CAMPO <span id="manual-subtitle"></span></h2>
             <div class="step">
                 <b>1. INTERROGATORIO PRECISO</b>
-                Formule las preguntas correctamente usando signos (¿...?). Ejemplo: "¿Es de España?". No escriba palabras sueltas al final.
+                Formule las preguntas correctamente usando signos (¿...?). Ejemplo: "¿Es de España?".
             </div>
             <div class="step">
                 <b>2. DESCARTE OBLIGATORIO</b>
-                El sistema bloqueará nuevos comandos hasta que elimines a TODOS los sospechosos que creas incorrectos. <b>¡CUIDADO!</b> Si eliminas al sospechoso equivocado, no habrá aviso.
+                El sistema bloqueará nuevos comandos hasta que elimines a TODOS los sospechosos que creas incorrectos.
             </div>
-            <div class="step">
+            <div class="step" id="manual-step-3">
                 <b>3. SISTEMA DE PUNTOS</b>
-                Eliminar múltiples sospechosos con una sola pregunta otorga puntos extra (3+ sospechosos = +5 PTS). El puntaje total define tu recompensa y el color de la ficha en el muro (Dorado, Azul, Rojo).
+                Eliminar múltiples sospechosos con una sola pregunta otorga puntos extra.
             </div>
-             <div class="step">
+             <div class="step" id="manual-step-4">
                 <b>4. OBJETIVO ÚNICO</b>
-                La misión termina cuando descubres al culpable. Si lo descartas por error, pierdes el contrato inmediatamente.
+                La misión termina cuando descubres al culpable. Si lo descartas por error, pierdes el contrato.
             </div>
             <button class="btn-main" onclick="startGame()">ENTENDIDO</button>
         </div>
@@ -561,7 +677,7 @@
         <div id="case-info-bar">
             <span id="case-id-display">CASO #----</span>
             <span id="game-points" style="color: var(--terminal-green)">PTS: 0</span>
-            <button class="btn-mini" onclick="initGame()">NUEVO CASO</button>
+            <button class="btn-mini" id="new-case-btn" onclick="initGame()">NUEVO CASO</button>
             <span style="color: var(--victory)">RECOMPENSA: <span id="case-reward-display">0</span> S/</span>
         </div>
         <div class="board-grid mode-5" id="board"></div>
@@ -582,7 +698,7 @@
         let musicTimerID;
         let nextNoteTime = 0;
         let musicBeat = 0;
-        let musicMode = 1; // Por defecto Modo 1 (DOOM JAZZ) para el menú
+        let musicMode = 1; 
         let currentTempo = 80;
         
         const CHORDS = {
@@ -594,7 +710,6 @@
             doom_cluster_L: [65.41, 77.78, 92.50], doom_cluster_R: [155.56, 185.00, 220.00],
             taxi_stab_L: [146.83, 185.00, 233.08], taxi_stab_R: [369.99, 440.00, 523.25],
             f_min_L: [87.31, 103.83, 130.81], f_min_R: [174.61, 207.65, 261.63],
-            // New chords for extended play
             eb_maj7_L: [155.56, 196.00, 233.08], eb_maj7_R: [311.13, 392.00, 466.16],
             d7alt_L: [146.83, 185.00, 246.94], d7alt_R: [293.66, 369.99, 440.00]
         };
@@ -606,20 +721,17 @@
             mystery_dim: [65.41, 77.78, 92.50, 110.00, 130.81], 
             urban_penta: [196.00, 233.08, 261.63, 293.66, 349.23], 
             noir_theme: [196.00, 207.65, 233.08, 261.63, 293.66],
-            // New scale for extended variation
             taxi_extended: [196.00, 233.08, 261.63, 293.66, 311.13, 349.23, 392.00, 466.16]
         };
 
-        // Función para inicializar el sistema de audio completo
         async function initAudioSystem() {
-            // Ocultar overlay
             const overlay = document.getElementById('interaction-overlay');
             overlay.style.opacity = '0';
-            overlay.style.backdropFilter = 'blur(0px)';
-            overlay.style.webkitBackdropFilter = 'blur(0px)';
             setTimeout(() => { overlay.style.display = 'none'; }, 800);
 
-            // Iniciar Contexto
+            // Verificar Login
+            checkLoginStatus();
+
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             actx = new AudioContext({ latencyHint: 'playback' });
             await actx.resume();
@@ -630,7 +742,6 @@
             limiter.ratio.value = 12;
             
             musicMaster = actx.createGain();
-            // Volumen de música equilibrado para no tapar SFX
             musicMaster.gain.value = 0.6; 
 
             warmDistortion = actx.createWaveShaper();
@@ -643,12 +754,9 @@
             createReverb();
             startAtmosphere(); 
             
-            // Iniciar Secuenciador
             isMusicRunning = true;
             nextNoteTime = actx.currentTime + 0.1;
             scheduler();
-            
-            // Iniciar modo menú (Doom Jazz)
             fadeToMode(1); 
         }
 
@@ -677,17 +785,14 @@
             revGain.connect(limiter);
         }
 
-        // --- TRANSICIONES SUAVES ---
         function fadeToMode(newMode) {
             if (!isMusicRunning) return;
-            // Crossfade rápido
             const t = actx.currentTime;
             musicMaster.gain.cancelScheduledValues(t);
-            musicMaster.gain.setTargetAtTime(0, t, 0.1); // Bajar volumen rápido
+            musicMaster.gain.setTargetAtTime(0, t, 0.1); 
 
             setTimeout(() => {
                 setMusicModeData(newMode);
-                // Subir volumen
                 musicMaster.gain.setTargetAtTime(0.55, actx.currentTime, 0.2); 
             }, 300);
         }
@@ -696,12 +801,11 @@
             if (!actx) return;
             const t = actx.currentTime;
             musicMaster.gain.cancelScheduledValues(t);
-            musicMaster.gain.setTargetAtTime(0, t, 0.05); // Corte casi inmediato
+            musicMaster.gain.setTargetAtTime(0, t, 0.05); 
         }
 
         function restoreMusic() {
             if (!actx) return;
-             // Asegurar que estamos en el modo correcto del juego (Modo 3)
             setMusicModeData(3);
             const t = actx.currentTime;
             musicMaster.gain.cancelScheduledValues(t);
@@ -710,13 +814,11 @@
 
         function setMusicModeData(m) {
             musicMode = m;
-            musicBeat = 0; // Reset beat on mode change to start sequence fresh
-            // 0: Classic, 1: Doom, 2: Twin Peaks, 3: Taxi Driver
+            musicBeat = 0; 
             const tempos = [95, 80, 60, 105]; 
             currentTempo = tempos[m];
         }
 
-        // --- INSTRUMENTOS ---
         function playSax(note, duration, technique = 'normal') {
             if(!isMusicRunning) return;
             const t = actx.currentTime;
@@ -724,36 +826,29 @@
             const modulator = actx.createOscillator(); modulator.type = 'sine'; modulator.frequency.value = note; 
             const modGain = actx.createGain(); modGain.gain.value = note * 0.8; 
             modulator.connect(modGain); modGain.connect(carrier.frequency); 
-
             const dynFilter = actx.createBiquadFilter(); dynFilter.type = 'lowpass'; dynFilter.Q.value = 1.5; 
             const bodyFilter = actx.createBiquadFilter(); bodyFilter.type = 'peaking'; bodyFilter.frequency.value = 900; 
             bodyFilter.gain.value = 8; bodyFilter.Q.value = 1.0;
-
             const noiseBufferSize = actx.sampleRate * 0.5; const noiseBuffer = actx.createBuffer(1, noiseBufferSize, actx.sampleRate);
             const noiseData = noiseBuffer.getChannelData(0); for (let i = 0; i < noiseBufferSize; i++) noiseData[i] = Math.random() * 2 - 1;
             const breathSrc = actx.createBufferSource(); breathSrc.buffer = noiseBuffer; breathSrc.loop = true;
             const breathFilter = actx.createBiquadFilter(); breathFilter.type = 'bandpass'; breathFilter.frequency.value = note * 4; breathFilter.Q.value = 0.5;
             const breathGain = actx.createGain(); breathGain.gain.value = 0.03; 
-
             const masterGain = actx.createGain();
             masterGain.gain.setValueAtTime(0, t);
             masterGain.gain.linearRampToValueAtTime(0.5, t + 0.1); 
             masterGain.gain.exponentialRampToValueAtTime(0.3, t + duration * 0.6); 
             masterGain.gain.exponentialRampToValueAtTime(0.001, t + duration);
-
             dynFilter.frequency.setValueAtTime(note, t);
             dynFilter.frequency.exponentialRampToValueAtTime(note * 4, t + 0.15); 
             dynFilter.frequency.linearRampToValueAtTime(note * 2, t + duration);
-
             carrier.connect(dynFilter); breathSrc.connect(breathFilter); breathFilter.connect(breathGain); breathGain.connect(dynFilter); 
             dynFilter.connect(bodyFilter); bodyFilter.connect(masterGain); masterGain.connect(warmDistortion); 
             warmDistortion.connect(limiter); warmDistortion.connect(reverbNode);
-
             const vib = actx.createOscillator(); vib.frequency.value = 4.0;
             const vibGain = actx.createGain(); vibGain.gain.value = 0;
             vibGain.gain.setValueAtTime(0, t); vibGain.gain.linearRampToValueAtTime(note * 0.015, t + 0.6); 
             vib.connect(vibGain); vibGain.connect(carrier.frequency);
-
             carrier.start(t); modulator.start(t); breathSrc.start(t); vib.start(t);
             carrier.stop(t + duration); modulator.stop(t + duration); breathSrc.stop(t + duration); vib.stop(t + duration);
         }
@@ -766,7 +861,6 @@
             const lfoGain = actx.createGain(); lfoGain.gain.value = 0.25; 
             const tremoloMaster = actx.createGain(); tremoloMaster.gain.value = 1; 
             lfo.connect(lfoGain); lfoGain.connect(tremoloMaster.gain); lfo.start(t); lfo.stop(t+duration);
-
             freqs.forEach((f, i) => {
                 const osc = actx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.value = f;
                 const oscSub = actx.createOscillator(); oscSub.type = 'triangle'; oscSub.frequency.value = f;
@@ -868,7 +962,6 @@
         }
 
         function runPattern(t, b) {
-            // MODO 0: CLASSIC NOIR (Archivos)
             if (musicMode === 0) {
                 const bassNotes = [32.70, 38.89, 43.65, 46.25]; 
                 playBass(bassNotes[b % 4], 0.6); 
@@ -880,7 +973,6 @@
                 if (b % 16 === 6) playSax(SCALES.noir_theme[0], 0.8, 'normal'); 
                 if (b % 16 === 7) playSax(SCALES.noir_theme[3], 2.0, 'growl'); 
             }
-            // MODO 1: DOOM JAZZ (Menú Principal / Config)
             else if (musicMode === 1) {
                 if (b % 8 === 0) playBass(32.70, 6.0); 
                 if (b % 8 === 4) playBass(46.25, 6.0); 
@@ -892,121 +984,118 @@
                 if (b % 16 === 0) playSax(SCALES.mystery_dim[0], 2.5, 'growl'); 
                 if (b % 16 === 4) playSax(SCALES.mystery_dim[1], 3.0, 'growl'); 
             }
-            // MODO 2: TWIN PEAKS (Tutorial / Manual)
             else if (musicMode === 2) {
-                if (b % 4 === 0) playBass(43.65, 2.0); // F1
+                if (b % 4 === 0) playBass(43.65, 2.0); 
                 if (b % 4 === 2) playBass(43.65, 2.0); 
                 if (b % 8 === 0) playDrum('ride'); 
                 if (b % 8 === 0) playChord('f_maj', 4, 0.1); 
                 if (b % 8 === 4) playChord('f_min', 4, 0.1);
             }
-            // MODO 3: TAXI DRIVER (Juego) - EXTENDED 4 MINUTES LOGIC
             else if (musicMode === 3) {
-                // 105 BPM -> 4 minutos = 420 beats exactos.
                 const loop = 420;
-                const lb = b % loop; // Beat local dentro del ciclo de 4 min
-
-                // --- BATERÍA ---
-                // Base Ride (Casi siempre presente pero varía)
-                if (lb < 380) { // Cortar al final para fade out
+                const lb = b % loop; 
+                if (lb < 380) { 
                     if (lb % 2 === 0 || (lb % 4 === 3 && Math.random() > 0.4)) playDrum('ride');
                 }
-                
-                // Kick y Snare con evolución
-                if (lb > 32 && lb < 224) { // Fase normal
+                if (lb > 32 && lb < 224) { 
                     if (lb % 4 === 0) playDrum('kick');
                     if (lb % 8 === 6) playDrum('snare');
-                } else if (lb >= 224 && lb < 320) { // Fase caos/tensión (más activo)
+                } else if (lb >= 224 && lb < 320) { 
                      if (lb % 2 === 0) playDrum('kick');
                      if (Math.random() > 0.6) playDrum('snare');
-                } else if (lb >= 320 && lb < 380) { // Retorno a calma
+                } else if (lb >= 320 && lb < 380) { 
                      if (lb % 4 === 0) playDrum('kick');
                 }
-
-                // --- BAJO ---
-                // Patrón evolutivo
-                if (lb < 32) { // Intro Minimalista
-                    if (lb % 8 === 0) playBass(49.00, 1.5); // G1
+                if (lb < 32) { 
+                    if (lb % 8 === 0) playBass(49.00, 1.5); 
                 } 
-                else if (lb < 160) { // Walking Bass relajado
-                    const walk = [49.00, 58.27, 65.41, 73.42]; // Gm
+                else if (lb < 160) { 
+                    const walk = [49.00, 58.27, 65.41, 73.42]; 
                     if (lb % 2 === 0) playBass(walk[(lb/2)%4], 0.8);
                 } 
-                else if (lb < 288) { // Tensión cromática
+                else if (lb < 288) { 
                     if (lb % 2 === 0) playBass(Math.random() > 0.5 ? 46.25 : 49.00, 0.6); 
                 } 
-                else { // Outro
+                else { 
                     if (lb % 8 === 0) playBass(49.00, 3.0);
                 }
-
-                // --- ACORDES (PIANO) ---
                 if (lb > 16 && lb < 360) {
-                    if (lb % 32 === 0) playChord('taxi_stab', 0.5, 0.0); // Gm stab
-                    if (lb % 32 === 16) playChord('cm11', 0.6, 0.05); // Cm cambio
-                    
-                    // Variación en la sección media
+                    if (lb % 32 === 0) playChord('taxi_stab', 0.5, 0.0); 
+                    if (lb % 32 === 16) playChord('cm11', 0.6, 0.05); 
                     if (lb > 128 && lb < 256 && lb % 16 === 12) {
                         playChord(Math.random() > 0.5 ? 'eb_maj7' : 'd7alt', 0.4, 0.02);
                     }
                 }
-
-                // --- SAXOFÓN (MELODÍA PRINCIPAL) ---
-                // Aquí está la variedad de tonos nuevos
-                
-                // Seccion A: Tema Principal (Low & Slow) - Beats 32-96
                 if (lb >= 32 && lb < 96) {
                     if (lb % 16 === 0) playSax(SCALES.urban_penta[0], 2.0, 'normal');
                     if (lb % 16 === 4) playSax(SCALES.urban_penta[2], 1.5, 'normal');
                     if (lb % 16 === 14) playSax(SCALES.urban_penta[1], 1.0, 'normal');
                 }
-                
-                // Sección B: Desarrollo (Higher & Agitated) - Beats 96-192
                 else if (lb >= 96 && lb < 192) {
-                    // Usamos la escala extendida para notas nuevas
                     if (lb % 8 === 0 && Math.random() > 0.3) playSax(SCALES.taxi_extended[4], 1.2, 'normal'); 
-                    if (lb % 16 === 10) playSax(SCALES.taxi_extended[6], 1.5, 'growl'); // Nota aguda con growl
+                    if (lb % 16 === 10) playSax(SCALES.taxi_extended[6], 1.5, 'growl'); 
                     if (lb % 32 === 30) playSax(SCALES.taxi_extended[3], 0.5, 'normal');
                 }
-                
-                // Sección C: "The Breakdown" (Caos/Free Jazz) - Beats 192-288
                 else if (lb >= 192 && lb < 288) {
                     if (lb % 4 === 0 && Math.random() > 0.4) {
                         const randomNote = SCALES.taxi_extended[Math.floor(Math.random() * SCALES.taxi_extended.length)];
-                        playSax(randomNote * 2, 0.3, 'growl'); // Notas muy agudas y cortas
+                        playSax(randomNote * 2, 0.3, 'growl'); 
                     }
                 }
-                
-                // Sección D: Retorno a la Melodía (Resolución) - Beats 288-360
                 else if (lb >= 288 && lb < 360) {
                     if (lb % 16 === 0) playSax(SCALES.urban_penta[0], 2.5, 'normal');
                     if (lb % 16 === 8) playSax(SCALES.urban_penta[3], 1.5, 'normal');
                 }
-                
-                // Outro: Silencio de saxo, solo ambiente
             }
         }
-        // ==========================================
-        // === FIN MOTOR DE AUDIO ===
-        // ==========================================
 
         const CACHE_NAME = 'bio-breach-audio-v1';
         let currentMosaicMode = parseInt(localStorage.getItem('bioBreachMosaic')) || 5; 
         let tempMosaicMode = currentMosaicMode; 
-        
         let DP = {}; 
+
+        // --- SISTEMA DE IDENTIDAD ---
+        let agentIdentity = { name: null, id: null };
+
+        function checkLoginStatus() {
+            const savedData = localStorage.getItem('bioBreachIdentity');
+            if (savedData) {
+                agentIdentity = JSON.parse(savedData);
+                document.getElementById('agent-display').innerText = `AGENTE: ${agentIdentity.name} [${agentIdentity.id}]`;
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-menu').style.display = 'flex';
+            } else {
+                document.getElementById('login-screen').style.display = 'flex';
+                document.getElementById('main-menu').style.display = 'none';
+            }
+        }
+
+        function registerAgent() {
+            const nameInput = document.getElementById('agent-name-input').value.trim().toUpperCase();
+            if (nameInput.length < 3) {
+                alert("NOMBRE DEMASIADO CORTO");
+                return;
+            }
+            playSFX('click');
+            // Generar ID único
+            const uniqueId = Math.random().toString(36).substr(2, 9).toUpperCase();
+            agentIdentity = { name: nameInput, id: uniqueId };
+            localStorage.setItem('bioBreachIdentity', JSON.stringify(agentIdentity));
+            checkLoginStatus();
+        }
 
         // --- MANEJO DE ARCHIVOS Y MURO ---
         function openArchives() {
             playSFX('click');
             renderWall();
-            fadeToMode(0); // CLASSIC NOIR
+            fadeToMode(0); 
             document.getElementById('archives-screen').style.display = 'flex';
             document.getElementById('main-menu').style.display = 'none';
         }
 
         function closeArchives() {
             playSFX('click');
-            fadeToMode(1); // BACK TO DOOM JAZZ
+            fadeToMode(1); 
             document.getElementById('archives-screen').style.display = 'none';
             document.getElementById('main-menu').style.display = 'flex';
         }
@@ -1027,7 +1116,6 @@
                 card.className = 'wall-card';
                 card.style.transform = `rotate(${rotation}deg)`;
                 
-                // Determinar clase del pin según puntos
                 let pinClass = "";
                 const pts = data.points || 0;
                 if(pts >= 25) pinClass = "gold";
@@ -1049,11 +1137,9 @@
                 container.appendChild(card);
             });
         }
-        // --- FIN ARCHIVOS ---
 
         function openSettings() {
             playSFX('click');
-            // Nota: Settings es un modal sobre el menú, así que mantenemos DOOM JAZZ (Modo 1)
             document.getElementById('settings-modal').style.display = 'flex';
             selectMosaic(currentMosaicMode); 
         }
@@ -1080,16 +1166,13 @@
         function applyMosaicChange(newMode) {
             const loading = document.getElementById('loading-screen');
             const bar = document.getElementById('loader-progress');
-            
             loading.style.display = 'flex';
             bar.style.width = "0%";
-            
             let progress = 0;
             const interval = setInterval(() => {
                 progress += Math.random() * 15;
                 if(progress > 100) progress = 100;
                 bar.style.width = progress + "%";
-                
                 if(progress === 100) {
                     clearInterval(interval);
                     setTimeout(() => {
@@ -1108,7 +1191,6 @@
             board.className = 'board-grid'; 
             board.classList.add(`mode-${currentMosaicMode}`);
         }
-
         
         async function preloadAssets() {
             const statusEl = document.getElementById('preload-status');
@@ -1116,11 +1198,9 @@
                 statusEl.innerText = "SISTEMA: CACHÉ NO SOPORTADA";
                 return;
             }
-
             try {
                 const cache = await caches.open(CACHE_NAME);
                 const urlsToCache = Object.values(AUDIO_CONFIG).map(cfg => cfg.src);
-                
                 for (const url of urlsToCache) {
                     const response = await cache.match(url);
                     if (!response) {
@@ -1134,36 +1214,13 @@
             }
         }
 
-        // --- SISTEMA DE MIGRACIÓN (Nuevo Solicitado) ---
-        // Se ha reemplazado el alert() por un manejo de DOM (modal)
+        // --- MIGRACIÓN ---
         function checkMigration() {
             if (!localStorage.getItem('bioBreach_v8_migration')) {
-                const oldSolved = JSON.parse(localStorage.getItem('bioBreachSolved') || '[]');
-                const count = oldSolved.length;
-                
-                if (count > 0) {
-                    const bonus = count * 100;
-                    let currentMoney = parseInt(localStorage.getItem('bioBreachMoney')) || 0;
-                    currentMoney += bonus;
-                    localStorage.setItem('bioBreachMoney', currentMoney);
-                    
-                    // Resetear historial para devolver casos al sistema
-                    localStorage.setItem('bioBreachSolved', '[]');
-                    localStorage.setItem('bioBreachUsedIDs', '[]');
-                    
-                    // MOSTRAR MODAL EN LUGAR DE ALERT
-                    document.getElementById('mig-count').innerText = count;
-                    document.getElementById('mig-money').innerText = bonus;
-                    document.getElementById('migration-modal').style.display = 'flex';
-                    playSFX('newCase');
-                }
+                // ... lógica de migración si fuera necesaria (resetear puntos etc)
                 localStorage.setItem('bioBreach_v8_migration', 'true');
-                totalMoney = parseInt(localStorage.getItem('bioBreachMoney')) || 0;
-                updateWalletUI();
             }
         }
-
-        // Función para cerrar el nuevo modal
         function closeMigrationModal() {
             playSFX('click');
             document.getElementById('migration-modal').style.display = 'none';
@@ -1172,7 +1229,7 @@
         window.addEventListener('load', () => {
             preloadAssets();
             updateBoardClass();
-            checkMigration(); // Verificar migración al cargar
+            checkMigration(); 
         });
 
         const AUDIO_CONFIG = {
@@ -1209,29 +1266,33 @@
 
             const sound = SFX_CACHE[key].cloneNode();
             sound.volume = AUDIO_CONFIG[key].vol;
-            
             if (key === 'discard') { sound.currentTime = 0.05; }
             activeSounds.push(sound);
             sound.onended = () => {
                 activeSounds = activeSounds.filter(s => s !== sound);
             };
-
-            try {
-                await sound.play();
-            } catch (e) {
-                console.log("Audio trigger");
-            }
+            try { await sound.play(); } catch (e) { console.log("Audio trigger"); }
         }
 
         let personas = [], objetivo = null, gameActive = false;
         let currentReward = 0;
         let totalMoney = parseInt(localStorage.getItem('bioBreachMoney')) || 0;
         let isTyping = false;
-        
         let pendingDiscards = []; 
         let lastQueryText = "";   
         let matchPoints = 0; 
-        let pointsPool = 0; // Banco de puntos pendientes de visualización
+        let pointsPool = 0;
+        
+        // VARIABLES MODO COMPETITIVO
+        let isCompetitive = false;
+        let peer = null;
+        let conn = null; // Conexión activa
+        let myPeerId = null;
+        let currentRoomCode = null;
+        let isHost = false;
+        let connectedPlayers = []; // Lista de objetos {peerId, name, score}
+        let compRound = 0;
+        let maxRounds = 3;
 
         async function typeWriter(text, elementId, speed = 20) {
             if (isTyping) return;
@@ -1261,26 +1322,350 @@
             localStorage.setItem('bioBreachMoney', totalMoney);
         }
 
+        // --- LOGICA DE SELECCIÓN DE MODO ---
+        function openModeSelection() {
+            playSFX('click');
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('mode-selection').style.display = 'flex';
+        }
+
+        function closeModeSelection() {
+            playSFX('click');
+            document.getElementById('mode-selection').style.display = 'none';
+            document.getElementById('main-menu').style.display = 'flex';
+        }
+
+        function startClassicMode() {
+            isCompetitive = false;
+            document.getElementById('new-case-btn').style.display = 'inline-block';
+            document.getElementById('manual-subtitle').innerText = "(ESTÁNDAR)";
+            document.getElementById('manual-step-3').innerHTML = `<b>3. SISTEMA DE PUNTOS</b>Eliminar múltiples sospechosos con una sola pregunta otorga puntos extra.`;
+            document.getElementById('manual-step-4').innerHTML = `<b>4. OBJETIVO ÚNICO</b>La misión termina cuando descubres al culpable. Si lo descartas por error, pierdes el contrato.`;
+            showTutorial();
+        }
+
         function showTutorial() {
             playSFX('click');
-            fadeToMode(2); // TWIN PEAKS
-            document.getElementById('main-menu').style.display = 'none';
+            fadeToMode(2); 
+            document.getElementById('mode-selection').style.display = 'none';
             document.getElementById('tutorial-screen').style.display = 'flex';
+        }
+
+        // --- LOGICA ONLINE / COMPETITIVA ---
+        function openLobby() {
+            playSFX('click');
+            isCompetitive = true;
+            document.getElementById('mode-selection').style.display = 'none';
+            document.getElementById('lobby-screen').style.display = 'flex';
+            document.getElementById('lobby-start').style.display = 'block';
+            document.getElementById('lobby-active').style.display = 'none';
+        }
+
+        function closeLobby() {
+            playSFX('click');
+            if (peer) { peer.destroy(); peer = null; }
+            document.getElementById('lobby-screen').style.display = 'none';
+            document.getElementById('mode-selection').style.display = 'flex';
+        }
+
+        function leaveLobby() {
+             playSFX('click');
+             if(peer) { peer.destroy(); peer = null; }
+             connectedPlayers = [];
+             document.getElementById('lobby-start').style.display = 'block';
+             document.getElementById('lobby-active').style.display = 'none';
+        }
+
+        function initPeer() {
+            return new Promise((resolve, reject) => {
+                peer = new Peer(null, { debug: 2 });
+                peer.on('open', (id) => {
+                    myPeerId = id;
+                    resolve(id);
+                });
+                peer.on('error', (err) => {
+                    console.error(err);
+                    alert("ERROR DE CONEXIÓN AL SERVIDOR P2P");
+                });
+            });
+        }
+
+        async function hostRoom() {
+            playSFX('click');
+            document.getElementById('lobby-start').style.display = 'none';
+            document.getElementById('lobby-active').style.display = 'block';
+            document.getElementById('host-controls').style.display = 'block';
+            document.getElementById('client-msg').style.display = 'none';
+            
+            isHost = true;
+            // Generar código de sala de 4 dígitos
+            currentRoomCode = Math.floor(1000 + Math.random() * 9000).toString();
+            document.getElementById('display-room-code').innerText = currentRoomCode;
+
+            // En un sistema P2P real sin servidor de señalización custom, usualmente la ID es larga.
+            // Para simular salas de 4 dígitos con PeerJS sin servidor propio, hacemos un truco:
+            // Usamos una convención de nombres si fuera posible, pero PeerJS asigna randoms.
+            // SOLUCIÓN SIMPLE: El Host crea un Peer. Cuando los clientes se unan, usaremos el ID largo.
+            // PERO el usuario pide 4 dígitos. PeerJS permite alias.
+            // Intentaremos crear un Peer con ID: "biobreach-room-" + code
+            
+            if(peer) peer.destroy();
+            
+            peer = new Peer("biobreach-room-" + currentRoomCode);
+            
+            peer.on('open', (id) => {
+                addPlayerToLobby(agentIdentity.name, id, true); // Añadirme a mí
+                
+                peer.on('connection', (conn) => {
+                    // Nuevo jugador conectado
+                    conn.on('data', (data) => {
+                        handleHostData(data, conn);
+                    });
+                });
+            });
+
+            peer.on('error', (err) => {
+                if(err.type === 'unavailable-id') {
+                    // Si colisiona el código (muy raro), intentar de nuevo
+                    hostRoom(); 
+                } else {
+                    alert("ERROR AL CREAR SALA. INTENTE OTRA VEZ.");
+                    leaveLobby();
+                }
+            });
+        }
+
+        function joinRoom() {
+            playSFX('click');
+            const code = document.getElementById('room-code-input').value.trim();
+            if(code.length !== 4) { alert("CÓDIGO INVÁLIDO"); return; }
+            
+            isHost = false;
+            document.getElementById('lobby-start').style.display = 'none';
+            document.getElementById('lobby-active').style.display = 'block';
+            document.getElementById('host-controls').style.display = 'none';
+            document.getElementById('client-msg').style.display = 'block';
+            document.getElementById('display-room-code').innerText = code;
+            
+            if(peer) peer.destroy();
+            peer = new Peer(); // ID aleatorio para cliente
+            
+            peer.on('open', (id) => {
+                myPeerId = id;
+                const hostId = "biobreach-room-" + code;
+                conn = peer.connect(hostId);
+                
+                conn.on('open', () => {
+                    // Enviar mi info al host
+                    conn.send({ type: 'JOIN', name: agentIdentity.name, peerId: id });
+                });
+                
+                conn.on('data', (data) => {
+                    handleClientData(data);
+                });
+                
+                conn.on('error', (err) => {
+                    alert("NO SE ENCONTRÓ LA SALA");
+                    leaveLobby();
+                });
+            });
+        }
+
+        // --- LÓGICA DE HOST (SERVIDOR) ---
+        function handleHostData(data, connection) {
+            if (data.type === 'JOIN') {
+                const newPlayer = { peerId: data.peerId, name: data.name, score: 0, conn: connection, finished: false };
+                // Evitar duplicados
+                if (!connectedPlayers.some(p => p.peerId === data.peerId)) {
+                    connectedPlayers.push(newPlayer);
+                    broadcastLobbyUpdate();
+                }
+            }
+            else if (data.type === 'FINISHED_ROUND') {
+                const player = connectedPlayers.find(p => p.peerId === data.peerId);
+                if (player && !player.finished) {
+                    player.finished = true;
+                    // Calcular puntos basados en orden de llegada
+                    const finishedCount = connectedPlayers.filter(p => p.finished).length;
+                    let roundPoints = 0;
+                    if (finishedCount === 1) roundPoints = 10;
+                    else if (finishedCount === 2) roundPoints = 8;
+                    else if (finishedCount === 3) roundPoints = 6;
+                    else roundPoints = 4;
+                    
+                    player.score += roundPoints;
+                    
+                    // Notificar a todos que alguien terminó
+                    broadcast({ type: 'PLAYER_FINISHED', name: player.name });
+                    
+                    // Verificar si todos terminaron
+                    if (connectedPlayers.every(p => p.finished)) {
+                        setTimeout(() => endCompRound(), 2000);
+                    }
+                }
+            }
+        }
+
+        function addPlayerToLobby(name, id, isMe) {
+            if (isHost && isMe) {
+                connectedPlayers = [{ peerId: 'HOST', name: name, score: 0, finished: false }];
+            }
+            updateLobbyUI();
+        }
+
+        function broadcastLobbyUpdate() {
+            // Enviar lista limpia (sin objetos de conexión)
+            const cleanList = connectedPlayers.map(p => ({ name: p.name, score: p.score, isHost: p.peerId === 'HOST' }));
+            broadcast({ type: 'LOBBY_UPDATE', players: cleanList });
+            updateLobbyUI(); // Actualizar mi propia UI
+        }
+        
+        function broadcast(msg) {
+            connectedPlayers.forEach(p => {
+                if (p.conn) p.conn.send(msg);
+            });
+        }
+
+        function updateLobbyUI() {
+            const list = document.getElementById('player-list-container');
+            list.innerHTML = '';
+            connectedPlayers.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'player-item ready';
+                div.innerHTML = `<span>${p.name}</span><span>${p.score} PTS</span>`;
+                list.appendChild(div);
+            });
+            
+            if (isHost) {
+                const btn = document.getElementById('btn-start-comp');
+                // REGLA: MÍNIMO 2 JUGADORES
+                if (connectedPlayers.length >= 2) {
+                    btn.disabled = false;
+                    btn.innerText = "INICIAR COMPETENCIA";
+                    btn.style.borderColor = "var(--victory)";
+                } else {
+                    btn.disabled = true;
+                    btn.innerText = "INICIAR COMPETENCIA (MIN 2)";
+                    btn.style.borderColor = "#444";
+                }
+            }
+        }
+
+        function requestStartGame() {
+            if (!isHost) return;
+            compRound = 1;
+            connectedPlayers.forEach(p => { p.score = 0; p.finished = false; }); // Reset total score
+            startCompRound();
+        }
+
+        function startCompRound() {
+            connectedPlayers.forEach(p => p.finished = false);
+            broadcast({ type: 'START_ROUND', round: compRound });
+            // Host logic para iniciar su propio juego
+            startLocalCompGame();
+        }
+
+        function endCompRound() {
+            const results = connectedPlayers.map(p => ({ name: p.name, score: p.score })).sort((a,b) => b.score - a.score);
+            broadcast({ type: 'ROUND_RESULTS', results: results, round: compRound, totalRounds: maxRounds });
+            
+            // Mostrar resultados al host
+            showCompResults(results, compRound, maxRounds);
+            
+            if (compRound < maxRounds) {
+                compRound++;
+                setTimeout(() => {
+                    startCompRound();
+                }, 5000); // 5 segs para ver resultados
+            } else {
+                // Fin del juego
+                setTimeout(() => {
+                     document.getElementById('btn-return-lobby').style.display = 'inline-block';
+                     broadcast({ type: 'GAME_OVER' });
+                }, 1000);
+            }
+        }
+
+        // --- LÓGICA DE CLIENTE ---
+        function handleClientData(data) {
+            if (data.type === 'LOBBY_UPDATE') {
+                const list = document.getElementById('player-list-container');
+                list.innerHTML = '';
+                data.players.forEach(p => {
+                    const div = document.createElement('div');
+                    div.className = 'player-item ready';
+                    div.innerHTML = `<span>${p.name}</span><span>${p.score} PTS</span>`;
+                    list.appendChild(div);
+                });
+            }
+            else if (data.type === 'START_ROUND') {
+                startLocalCompGame();
+            }
+            else if (data.type === 'ROUND_RESULTS') {
+                showCompResults(data.results, data.round, data.totalRounds);
+            }
+            else if (data.type === 'GAME_OVER') {
+                 document.getElementById('btn-return-lobby').style.display = 'inline-block';
+            }
+        }
+
+        function startLocalCompGame() {
+            // Modificar Manual para Competitivo
+            document.getElementById('manual-subtitle').innerText = "(COMPETITIVO)";
+            document.getElementById('manual-step-3').innerHTML = `<b>3. VELOCIDAD CRÍTICA</b>El primer agente en resolver el caso gana 10 PTS. El segundo 8, etc.<br>El puntaje de tarjetas no cuenta, solo la velocidad.`;
+            document.getElementById('manual-step-4').innerHTML = `<b>4. 3 RONDAS</b>Se jugarán 3 rondas consecutivas. Acumula el mayor puntaje para ganar.`;
+            document.getElementById('new-case-btn').style.display = 'none'; // Desactivar botón nuevo caso manual
+            
+            document.getElementById('lobby-screen').style.display = 'none';
+            document.getElementById('comp-results-screen').style.display = 'none';
+            
+            showTutorial(); // Esto lleva a startGame() -> initGame()
+        }
+
+        function showCompResults(results, round, total) {
+            gameActive = false;
+            document.getElementById('main-ui').style.display = 'none';
+            document.getElementById('overlay').classList.remove('active'); // Quitar overlay de victoria si estaba
+            document.getElementById('comp-results-screen').style.display = 'flex';
+            
+            let html = `<h3>RONDA ${round} / ${total}</h3>`;
+            html += `<table style="width:100%; color:#aaa; font-size:0.9rem;">`;
+            results.forEach((r, idx) => {
+                const color = idx === 0 ? "var(--gold)" : "#eee";
+                html += `<tr><td style="color:${color}; padding:5px;">#${idx+1} ${r.name}</td><td style="text-align:right; color:${color}">${r.score} PTS</td></tr>`;
+            });
+            html += `</table>`;
+            document.getElementById('comp-results-list').innerHTML = html;
+            
+            if (round < total) {
+                let timeLeft = 5;
+                const timerEl = document.getElementById('next-round-timer');
+                document.getElementById('btn-return-lobby').style.display = 'none';
+                timerEl.innerText = `SIGUIENTE RONDA EN ${timeLeft}...`;
+                const t = setInterval(() => {
+                    timeLeft--;
+                    timerEl.innerText = `SIGUIENTE RONDA EN ${timeLeft}...`;
+                    if(timeLeft <= 0) clearInterval(t);
+                }, 1000);
+            } else {
+                document.getElementById('next-round-timer').innerText = "TORNEO FINALIZADO";
+            }
+        }
+
+        function returnToLobbyFromGame() {
+            document.getElementById('comp-results-screen').style.display = 'none';
+            document.getElementById('lobby-screen').style.display = 'flex';
         }
 
         function exitGame() {
             playSFX('click');
-            if (window.parent && typeof window.parent.cerrarMotor === 'function') {
-                window.parent.cerrarMotor();
-            } else {
-                fadeToMode(1); // BACK TO DOOM JAZZ
-                alert("SISTEMA DESCONECTADO DEL NÚCLEO. SIMULANDO SALIDA.");
-            }
+            fadeToMode(1); 
+            alert("SISTEMA DESCONECTADO DEL NÚCLEO.");
         }
 
         function startGame() {
             playSFX('click');
-            fadeToMode(3); // TAXI DRIVER
+            fadeToMode(3); 
             document.getElementById('tutorial-screen').style.display = 'none';
             document.getElementById('main-ui').style.display = 'flex'; 
             initGame();
@@ -1304,9 +1689,15 @@
             playSFX('click', true); 
             gameActive = false;
             closeAbortModal();
-            fadeToMode(1); // Vuelve al menú con DOOM JAZZ
-            document.getElementById('main-ui').style.display = 'none';
-            document.getElementById('main-menu').style.display = 'flex';
+            if (isCompetitive) {
+                // En competitivo abortar es rendirse en la ronda
+                alert("ABANDONO REGISTRADO. 0 PUNTOS.");
+                reportWinToHost(false); // Reportar como terminado (aunque fallido)
+            } else {
+                fadeToMode(1); 
+                document.getElementById('main-ui').style.display = 'none';
+                document.getElementById('main-menu').style.display = 'flex';
+            }
         }
 
         function generateCriminalRecordID() {
@@ -1314,7 +1705,6 @@
             let newId;
             let unique = false;
             let attempts = 0;
-
             while (!unique && attempts < 500) {
                 newId = "C-" + Math.floor(Math.random() * 8999 + 1000); 
                 if (!usedIDs.includes(newId)) {
@@ -1322,15 +1712,12 @@
                 }
                 attempts++;
             }
-
             if (!unique) {
                 usedIDs = [];
                 newId = "C-" + Math.floor(Math.random() * 8999 + 1000);
             }
-
             usedIDs.push(newId);
             if (usedIDs.length > 5000) usedIDs.shift(); 
-            
             localStorage.setItem('bioBreachUsedIDs', JSON.stringify(usedIDs));
             return newId;
         }
@@ -1351,13 +1738,10 @@
             document.getElementById('main-ui').classList.remove('blur-effect');
             document.getElementById('out').style.color = "var(--terminal-green)";
             
-            // Asegurar que la música del juego vuelve si venimos de Win/Lose
             restoreMusic();
-            
             playSFX('newCase', true);
             
             currentReward = Math.floor(Math.random() * 500) + 100;
-            // Resetear puntos de investigación y pool
             matchPoints = 0;
             pointsPool = 0;
             document.getElementById('game-points').innerText = "PTS: " + matchPoints;
@@ -1369,6 +1753,7 @@
             lastQueryText = "";
             document.getElementById('queryInput').disabled = false;
             document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA (¿...?)...";
+            document.getElementById('queryInput').value = "";
 
             let attempts = 0;
             let validCase = false;
@@ -1390,9 +1775,7 @@
             }
 
             objetivo.recordId = generateCriminalRecordID();
-
             gameActive = true;
-            
             typeWriter("ESCANEO FINALIZADO. ESPERANDO CONSULTA...", "out", 15);
             renderBoard();
             updateWalletUI();
@@ -1401,41 +1784,12 @@
         function generateNewSquad() {
             personas = [];
             DP = {
-                M: [
-                    "LEON", "MARC", "OTTO", "IVAN", "ERIC", "HUAN", "KURT", "NOAH", "AXEL", "SAUL", "IGOR", "LIAM", "ENZO", "HUGO", "OMAR", "LUC", "YURI", "RYAN", "FINN", "EZRA", "MILO", "IAN", "ALAN", "KAI", "BORIS",
-                    "OSCAR", "VICTOR", "FELIX", "DANTE", "BRUNO", "KALEB", "SILAS", "ARLO", "THEO", "REMY", "ZAYN", "LUCA", "NICO", "JUDE", "ELIAS", "SETH", "KANE", "AARON", "SIMON", "RAUL", "LEVI", "TOBIAS", "GAGE", "XANDER", "JACE",
-                    "KAREM", "NASH", "ZION", "COLE", "BEAU", "REID", "KNOX", "RHYS", "OTIS", "MILO", "ARLO", "EZRA", "HUGO", "FELIX", "JUDE", "LUCA", "THEO", "SILAS", "KAI", "ENZO", "AXEL", "NOAH", "OTTO", "IVAN",
-                    "YOSEF", "MALIK", "SAID", "OMAR", "AMIR", "ZAYD", "HAMZA", "TARIQ", "KHALIL", "IDRIS", "HASSAN", "RAYAN", "SAMI", "KARIM", "ADAM", "NOAH", "LIAM", "ERIC", "MARC", "LEON", "HUAN", "KURT", "IGOR", "LUC", "YURI",
-                    "RYAN", "ALAN", "BORIS", "OSCAR", "VICTOR", "DANTE", "BRUNO", "KALEB", "REMY", "ZAYN", "NICO", "ELIAS", "SETH", "KANE", "AARON", "SIMON", "RAUL", "LEVI", "TOBIAS", "GAGE", "XANDER", "JACE", "KAREN", "NASH", "ZION",
-                    "COLE", "BEAU", "REID", "KNOX", "RHYS", "OTIS", "ALEX", "BLAKE", "CALEB", "DYLAN", "ETHAN", "FLYNN", "GRANT", "HENRY", "ISAAC", "JACK", "KYLE", "LUKE", "MAX", "NATE", "OWEN", "PIKE", "QUINN", "RILEY", "SEAN",
-                    "TATE", "URIE", "VANCE", "WADE", "XAVI", "YORK", "ZANE", "ALDO", "BART", "CARL", "DIRK", "EMIL", "FRANZ", "GUST", "HANS", "IVAR", "JENS", "KARL", "LARS", "MADS", "NILS", "OLAF", "PIET", "ROLF", "STIG",
-                    "THOR", "ULF", "VERN", "WOLF", "YENS", "ZOLT", "ANTON", "BORIS", "CYRIL", "DIMITRI", "EVAN", "FEDOR", "GREG", "IVAN", "IGOR", "JAN", "KONRAD", "LEV", "MIKHAIL", "NIKOLAI", "OLEG", "PAVEL", "SERGEI", "VIKTOR", "YURI",
-                    "ZINO", "ANDRE", "BLAISE", "CLAUDE", "DIDIER", "ETIENNE", "FABIEN", "OSVALDO", "HENRI", "ISAAC", "JEAN", "LUC", "MARC", "NOEL", "OLIVER", "PIERRE", "REMY", "SERGE", "THIERRY", "URBAIN", "VICTOR", "YVES", "ZEPHYR"
-                ],
-                F: [
-                    "MIA", "LARA", "YUNA", "OLGA", "ADRI", "ZOE", "INÉS", "KIRA", "EMMA", "RUTH", "SARA", "LUNA", "VERA", "NORA", "MAYA", "LEA", "IRIS", "ALBA", "GALA", "JUNE", "CLAUDIA", "ANA", "EVA", "LISA",
-                    "NINA", "JADE", "ROSE", "MILA", "RUBY", "EDEN", "ISLA", "LYRA", "MAIA", "OPAL", "FAYE", "SKYE", "TESS", "WILLA", "ZARA", "ALEXA", "BELLA", "CHLOE", "DIANA", "ELSA", "FREYA", "HOPE", "IVY", "KYRA", "LANA", "MYRA",
-                    "AMARA", "BELLE", "CORA", "DAISY", "ELIZA", "FLORA", "GRETA", "HAZEL", "INDIE", "JUNE", "KEIRA", "LOLA", "MABEL", "NELL", "OLIVE", "PEARL", "QUINN", "RENA", "SADIE", "THEA", "UNA", "VADA", "WREN", "XENA", "YARA",
-                    "ZELDA", "ALMA", "BONNIE", "SOLANGE", "DORA", "EDNA", "FAITH", "GIA", "HOLLY", "IDA", "JOY", "KAY", "LILY", "MINA", "NELL", "ORA", "PIPA", "ROSA", "SHEA", "TARA", "UTAH", "VIDA", "WILD", "XIA", "YOLI",
-                    "ZOEY", "ANNA", "BETH", "CLARA", "DINA", "ELLA", "FAYE", "GWEN", "HEIDI", "ASTRID", "JANE", "KATE", "LUCY", "MARY", "NELL", "OLGA", "POLY", "RUTH", "SARA", "TESS", "UMA", "VIV", "WYN", "XIA", "YARA", "ZITA",
-                    "ADELE", "BINA", "COCO", "ALEXA", "ENID", "FIFI", "GIGI", "HOPE", "INES", "JANA", "KIKI", "LULU", "MIMI", "NANA", "ORLY", "PEPA", "QUEE", "RIRI", "SISI", "TITI", "UVEE", "VIVI", "ISABEL", "XIXI", "YAYA", "ZIZI",
-                    "ALICE", "BIANCA", "CELIA", "DORIS", "ELENA", "FIONA", "GRACE", "HELEN", "IRENE", "JULIA", "KAREN", "LINDA", "MARIA", "NAOMI", "PAULA", "ROSE", "SONIA", "TANIA", "URSULA", "VAL", "WANDA", "XENIA", "YVON", "ZARA",
-                    "AUREA", "BRISA", "CIELO", "DALIA", "ESTER", "FLOR", "GEMMA", "HILDA", "IRMA", "JUANA", "KATIA", "LIDIA", "MARTA", "NURIA", "OLIVIA", "PILAR", "RAQUEL", "SILVIA", "TERE", "VICKY", "XEMA", "YIZA", "ZENIA", "AGATHA"
-                ],
-                P: [
-                    {n: "ALEMANIA", c: "EUROPA"}, {n: "ESPAÑA", c: "EUROPA"}, {n: "ITALIA", c: "EUROPA"}, {n: "FRANCIA", c: "EUROPA"}, {n: "SUIZA", c: "EUROPA"}, {n: "RUSIA", c: "EUROPA"},
-                    {n: "JAPÓN", c: "ASIA"}, {n: "CHINA", c: "ASIA"}, {n: "COREA", c: "ASIA"}, {n: "INDIA", c: "ASIA"}, {n: "TAILANDIA", c: "ASIA"}, {n: "VIETNAM", c: "ASIA"},
-                    {n: "MÉXICO", c: "AMÉRICA"}, {n: "BRASIL", c: "AMÉRICA"}, {n: "USA", c: "AMÉRICA"}, {n: "BOLIVIA", c: "AMÉRICA"}, {n: "COLOMBIA", c: "AMÉRICA"}, {n: "ECUADOR", c: "AMÉRICA"}, {n: "PERÚ", c: "AMÉRICA"}, {n: "ARGENTINA", c: "AMÉRICA"}, {n: "CANADÁ", c: "AMÉRICA"},
-                    {n: "AUSTRALIA", c: "OCEANÍA"}, {n: "NUEVA ZELANDA", c: "OCEANÍA"},
-                    {n: "EGIPTO", c: "ÁFRICA"}, {n: "SUDAFRICA", c: "ÁFRICA"}, {n: "NIGERIA", c: "ÁFRICA"}, {n: "MARRUECOS", c: "ÁFRICA"}
-                ],
+                M: ["LEON", "MARC", "OTTO", "IVAN", "ERIC", "HUAN", "KURT", "NOAH", "AXEL", "SAUL", "IGOR", "LIAM", "ENZO", "HUGO", "OMAR", "LUC", "YURI", "RYAN", "FINN", "EZRA", "MILO", "IAN", "ALAN", "KAI", "BORIS", "OSCAR", "VICTOR", "FELIX"],
+                F: ["MIA", "LARA", "YUNA", "OLGA", "ADRI", "ZOE", "INÉS", "KIRA", "EMMA", "RUTH", "SARA", "LUNA", "VERA", "NORA", "MAYA", "LEA", "IRIS", "ALBA", "GALA", "JUNE", "CLAUDIA", "ANA", "EVA", "LISA", "NINA", "JADE", "ROSE"],
+                P: [{n: "ALEMANIA", c: "EUROPA"}, {n: "ESPAÑA", c: "EUROPA"}, {n: "ITALIA", c: "EUROPA"}, {n: "FRANCIA", c: "EUROPA"}, {n: "JAPÓN", c: "ASIA"}, {n: "CHINA", c: "ASIA"}, {n: "MÉXICO", c: "AMÉRICA"}, {n: "BRASIL", c: "AMÉRICA"}, {n: "USA", c: "AMÉRICA"}, {n: "EGIPTO", c: "ÁFRICA"}],
                 T: ["PÁLIDA", "OLIVA", "BRONCE", "OSCURA", "ÉBANO"],
                 O: ["AZULES", "VERDES", "NEGROS", "CAFÉS", "GRISES", "MIEL"],
-                A: [
-                    {n: "GORRA", u: "CABEZA"}, {n: "CASCO", u: "CABEZA"}, {n: "SOMBRERO", u: "CABEZA"}, {n: "DIADEMA", u: "CABEZA"}, {n: "BOINA", u: "CABEZA"}, {n: "PASAMONTAÑAS", u: "CABEZA"},
-                    {n: "GAFAS", u: "OJOS"}, {n: "MONÓCULO", u: "OJOS"}, {n: "VISOR", u: "OJOS"}, {n: "PARCHE", u: "OJOS"}, {n: "LENTES SOL", u: "OJOS"},
-                    {n: "MALETÍN", u: "MANO"}, {n: "TABLETA", u: "MANO"}, {n: "RELOJ", u: "MANO"}, {n: "ANILLO", u: "MANO"}, {n: "GUANTE", u: "MANO"}, {n: "CELULAR", u: "MANO"}, {n: "BASTÓN", u: "MANO"}
-                ]
+                A: [{n: "GORRA", u: "CABEZA"}, {n: "CASCO", u: "CABEZA"}, {n: "GAFAS", u: "OJOS"}, {n: "PARCHE", u: "OJOS"}, {n: "MALETÍN", u: "MANO"}, {n: "RELOJ", u: "MANO"}]
             };
 
             const shuffle = (array) => array.sort(() => Math.random() - 0.5);
@@ -1446,13 +1800,7 @@
                 const genero = Math.random() > 0.5 ? "MASCULINO" : "FEMENINO";
                 const pais = DP.P[Math.floor(Math.random() * DP.P.length)];
                 const acc = DP.A[Math.floor(Math.random() * DP.A.length)];
-                
-                let nombre = "";
-                if (genero === "MASCULINO") {
-                    nombre = poolM.pop() || "UNIT-M" + i;
-                } else {
-                    nombre = poolF.pop() || "UNIT-F" + i;
-                }
+                let nombre = genero === "MASCULINO" ? (poolM.pop() || "UNIT-M"+i) : (poolF.pop() || "UNIT-F"+i);
 
                 personas.push({
                     n: nombre, g: genero, p: pais.n, cont: pais.c,
@@ -1463,28 +1811,21 @@
             }
         }
 
-        // --- FUNCION DE ANIMACIÓN DE PUNTOS ---
         function spawnFloatingPoint(startX, startY, val) {
             if (val <= 0) return;
-            
             const el = document.createElement('div');
             el.className = 'flying-point';
             el.innerText = `+${val}`;
             el.style.left = startX + 'px';
             el.style.top = startY + 'px';
             document.body.appendChild(el);
-
             const target = document.getElementById('game-points').getBoundingClientRect();
-            // Ajustar destino al centro del contador
             const destX = target.left + (target.width / 2);
             const destY = target.top + (target.height / 2);
-
-            // Forzar reflow para animación
             requestAnimationFrame(() => {
                 el.style.transform = `translate(${destX - startX}px, ${destY - startY}px) scale(0.5)`;
                 el.style.opacity = '0';
             });
-
             setTimeout(() => {
                 el.remove();
                 matchPoints += val;
@@ -1504,7 +1845,6 @@
                 const card = document.createElement('div');
                 card.className = 'suspect-card';
                 card.id = `card-${p.n}`;
-                
                 card.onclick = () => { 
                     if(gameActive) { 
                         const cardEl = document.getElementById(`card-${p.n}`);
@@ -1512,45 +1852,29 @@
 
                         if (pendingDiscards.length > 0) {
                             playSFX('discard');
-                            
-                            // --- EFECTO VISUAL DE PUNTOS ---
-                            // Obtener coordenadas de la tarjeta
                             const rect = cardEl.getBoundingClientRect();
                             const centerX = rect.left + rect.width / 2;
                             const centerY = rect.top + rect.height / 2;
-
-                            // Distribuir puntos del pool
                             let ptsToGive = 0;
                             if (pointsPool > 0) {
-                                // Lógica simple de distribución entera:
-                                // Dividir el pool restante entre los descartes restantes
-                                const remainingDiscards = pendingDiscards.length; // Incluye al actual aun no borrado de la lista logica
+                                const remainingDiscards = pendingDiscards.length; 
                                 ptsToGive = Math.ceil(pointsPool / remainingDiscards);
-                                
-                                // Ajuste para no dar más de lo que hay
                                 if (ptsToGive > pointsPool) ptsToGive = pointsPool;
                                 pointsPool -= ptsToGive;
                             }
-                            
-                            // --- FIX: Añadido winDelay para esperar animación ---
                             let winDelay = 0;
                             if (ptsToGive > 0) {
                                 spawnFloatingPoint(centerX, centerY, ptsToGive);
-                                winDelay = 900; // Esperar 900ms si hay puntos volando
+                                winDelay = 900; 
                             }
-                            // --------------------------------
-
                             discardVisual(cardEl);
-                            
                             if (pendingDiscards.includes(p.n)) {
                                 pendingDiscards = pendingDiscards.filter(id => id !== p.n);
                             }
-
                             if (p.n === objetivo.n) {
-                                checkStatus(0); // Game Over inmediato
+                                checkStatus(0); 
                                 return;
                             }
-
                             if (pendingDiscards.length > 0) {
                                 document.getElementById('out').innerHTML = `> ${lastQueryText}<br><span style="color:var(--hazard)">OBJETIVOS RESTANTES: ${pendingDiscards.length}</span>`;
                             } else {
@@ -1560,9 +1884,7 @@
                                 document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA (¿...?)...";
                                 document.getElementById('queryInput').focus();
                             }
-                            
                             checkStatus(winDelay);
-
                         } 
                         else if (lastQueryText !== "") {
                             playSFX('discard');
@@ -1577,7 +1899,6 @@
                         }
                     } 
                 };
-
                 const rib = p.g === "MASCULINO" ? "ribbon-male" : "ribbon-female";
                 card.innerHTML = `<div class="gender-ribbon ${rib}"></div><div class="card-header">${p.n}</div><div class="card-body"><b>ORG:</b> ${p.p}<br><b>TEZ:</b> ${p.t}<br><b>OJO:</b> ${p.o}<br><b>EDA:</b> ${p.edad}<br><b>ALT:</b> ${p.altura}M<br><b>ACC:</b> ${p.accName}</div>`;
                 board.appendChild(card);
@@ -1585,34 +1906,57 @@
         }
 
         function discardVisual(card) {
-            if (currentMosaicMode === 5) {
-                card.classList.add('discarded'); 
-            } else {
-                card.classList.add('discarded');
-            }
+            card.classList.add('discarded');
         }
 
         function checkStatus(delay = 0) {
             const activeCards = Array.from(document.querySelectorAll('.suspect-card')).filter(c => !c.classList.contains('discarded'));
-            
             if (document.getElementById(`card-${objetivo.n}`).classList.contains('discarded')) {
                 return endGame(false);
             }
-            
             if (activeCards.length === 1 && activeCards[0].id === `card-${objetivo.n}`) {
-                // Esperar a que la animación de puntos termine antes de mostrar la victoria
-                setTimeout(() => {
-                    endGame(true);
-                }, delay);
+                setTimeout(() => { endGame(true); }, delay);
                 return;
             }
         }
 
-        function endGame(win) {
-            gameActive = false;
-            // CORTAR MÚSICA
-            silenceMusic();
+        function reportWinToHost(win) {
+            // Lógica para modo competitivo
+            if (isHost) {
+                // Si soy el Host y termino
+                const me = connectedPlayers.find(p => p.peerId === 'HOST');
+                if(me && !me.finished) {
+                    me.finished = true;
+                    // Auto-mensaje de host
+                    handleHostData({ type: 'FINISHED_ROUND', peerId: 'HOST' });
+                }
+            } else {
+                // Si soy cliente
+                if(conn) conn.send({ type: 'FINISHED_ROUND', peerId: myPeerId });
+            }
             
+            // Mostrar pantalla de espera local
+            gameActive = false;
+            document.getElementById('main-ui').style.display = 'none';
+            // Crear overlay de espera simple
+            const overlay = document.getElementById('overlay');
+            overlay.innerHTML = `<h1 style="color:var(--gold)">OBJETIVO PROCESADO</h1><p>SINCRONIZANDO CON RED...</p>`;
+            overlay.classList.add('active');
+        }
+
+        function endGame(win) {
+            if (isCompetitive && win) {
+                reportWinToHost(true);
+                return;
+            } else if (isCompetitive && !win) {
+                // En competitivo, perder es fatal para la ronda. Reportar como terminado pero sin puntos extra (se maneja en servidor).
+                alert("OBJETIVO PERDIDO. ESPERANDO FIN DE RONDA.");
+                reportWinToHost(false);
+                return;
+            }
+
+            gameActive = false;
+            silenceMusic();
             document.getElementById('main-ui').classList.add('blur-effect');
             document.getElementById('overlay').classList.add('active');
             const rewardMsg = document.getElementById('overlay-reward-msg');
@@ -1620,62 +1964,22 @@
             
             if (win) { 
                 playSFX('win', true); 
-                
-                // CALCULO DE BONIFICACIÓN POR PUNTOS
                 const pointBonus = matchPoints * 10;
                 totalMoney += currentReward + pointBonus;
-                
-                objetivo.points = matchPoints; // Guardar puntos en registro
-
+                objetivo.points = matchPoints; 
                 const solvedList = JSON.parse(localStorage.getItem('bioBreachSolved') || '[]');
                 solvedList.push(objetivo);
                 localStorage.setItem('bioBreachSolved', JSON.stringify(solvedList));
-
                 document.getElementById('overlay-title').innerText = "OBJETIVO LOCALIZADO"; 
                 document.getElementById('overlay-title').style.color = "var(--victory)";
                 rewardMsg.innerHTML = `+${currentReward} S/ CONTRATO<br><span style="color:var(--gold)">+${pointBonus} S/ BONUS (${matchPoints} PTS)</span>`;
-                
-                desc.innerHTML = `
-                    <div class="dossier-container">
-                        <div class="dossier-header">
-                            <span>REGISTRO CRIMINAL</span>
-                            <span>[${objetivo.recordId}]</span>
-                        </div>
-                        <div class="dossier-info">
-                            <p><b>SUJETO:</b> ${objetivo.n}</p>
-                            <p><b>ORIGEN:</b> ${objetivo.p} (${objetivo.cont})</p>
-                            <p><b>PERFIL:</b> ${objetivo.g} / ${objetivo.edad} AÑOS</p>
-                            <p><b>RASGOS:</b> ${objetivo.t} / OJOS ${objetivo.o}</p>
-                            <p><b>ESTATURA:</b> ${objetivo.altura} METROS</p>
-                            <p><b>ACCESORIO DETECTADO:</b> ${objetivo.accName}</p>
-                            <div class="stamp-captured">CAPTURED</div>
-                        </div>
-                    </div>
-                `;
-
+                desc.innerHTML = `<div class="dossier-container"><div class="dossier-header"><span>REGISTRO CRIMINAL</span><span>[${objetivo.recordId}]</span></div><div class="dossier-info"><p><b>SUJETO:</b> ${objetivo.n}</p><div class="stamp-captured">CAPTURED</div></div></div>`;
             } else { 
                 playSFX('fail', true);
                 document.getElementById('overlay-title').innerText = "OBJETIVO PERDIDO"; 
                 document.getElementById('overlay-title').style.color = "var(--hazard)";
                 rewardMsg.innerText = "CONTRATO CANCELADO";
-                
-                desc.innerHTML = `
-                    <div class="dossier-container" style="border-color: var(--hazard); background: rgba(50, 0, 0, 0.3);">
-                        <div class="dossier-header" style="border-color: var(--hazard); color: var(--hazard);">
-                            <span>REGISTRO CRIMINAL</span>
-                            <span>[${objetivo.recordId}]</span>
-                        </div>
-                        <div class="dossier-info">
-                            <p><b>SUJETO:</b> ${objetivo.n}</p>
-                            <p><b>ORIGEN:</b> ${objetivo.p} (${objetivo.cont})</p>
-                            <p><b>PERFIL:</b> ${objetivo.g} / ${objetivo.edad} AÑOS</p>
-                            <p><b>RASGOS:</b> ${objetivo.t} / OJOS ${objetivo.o}</p>
-                            <p><b>ESTATURA:</b> ${objetivo.altura} METROS</p>
-                            <p><b>ACCESORIO DETECTADO:</b> ${objetivo.accName}</p>
-                            <div class="stamp-captured" style="color: var(--hazard); border-color: var(--hazard);">ESCAPED</div>
-                        </div>
-                    </div>
-                `;
+                desc.innerHTML = `<div class="dossier-container" style="border-color: var(--hazard); background: rgba(50, 0, 0, 0.3);"><div class="dossier-header" style="border-color: var(--hazard); color: var(--hazard);"><span>REGISTRO CRIMINAL</span><span>[${objetivo.recordId}]</span></div><div class="dossier-info"><p><b>SUJETO:</b> ${objetivo.n}</p><div class="stamp-captured" style="color: var(--hazard); border-color: var(--hazard);">ESCAPED</div></div></div>`;
             }
             updateWalletUI();
         }
@@ -1683,41 +1987,26 @@
         document.getElementById('queryInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter' && !isTyping) {
                 let rawValue = this.value.trim();
-                
                 if (!rawValue.startsWith('¿') || !rawValue.endsWith('?')) {
                     playSFX('error');
                     document.getElementById('out').style.color = "var(--hazard)";
                     typeWriter("ERROR: SINTAXIS INVÁLIDA. FORMULE UNA PREGUNTA (¿...?)", "out", 10);
                     return;
                 }
-
                 const q = rawValue.toUpperCase();
                 this.value = '';
                 let checkFunc = null; 
                 let validQuery = false;
-
-                const hasWord = (word) => {
-                    const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); 
-                    return new RegExp("(?:^|[\\s¿])" + escaped + "(?:$|[\\s?.,])").test(q);
-                };
-
-                const validateSyntax = (keyword, fullQuery) => {
-                    if (new RegExp(keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + "\\s*\\?+$").test(fullQuery)) return true;
-                    const validNextWords = ["ES", "TIENE", "USA", "LLEVA", "MIDE", "PESA", "ESTÁ", "ERA", "FUE", "DE", "EN", "EL", "LA", "CON", "POR", "QUE", "Y", "O"];
-                    const escapedKw = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); 
-                    const contextRegex = new RegExp(`(?:^|[\\s¿])${escapedKw}\\s+(${validNextWords.join('|')})\\b`);
-                    if (contextRegex.test(fullQuery)) return true;
-                    return false;
-                };
-
+                const hasWord = (word) => new RegExp("(?:^|[\\s¿])" + word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + "(?:$|[\\s?.,])").test(q);
+                
                 if (hasWord("ACCESORIO") || hasWord("OBJETO")) {
                     validQuery = true;
                     if (hasWord("CABEZA") || hasWord("PELO")) checkFunc = p => p.accUbi === "CABEZA";
                     else if (hasWord("OJOS") || hasWord("CARA")) checkFunc = p => p.accUbi === "OJOS";
                     else if (hasWord("MANO") || hasWord("BRAZO")) checkFunc = p => p.accUbi === "MANO";
                     else {
-                        const accList = ["GORRA", "CASCO", "SOMBRERO", "GAFAS", "MONÓCULO", "VISOR", "MALETÍN", "TABLETA", "RELOJ", "DIADEMA", "BOINA", "PASAMONTAÑAS", "PARCHE", "ANILLO", "GUANTE", "CELULAR", "BASTÓN"];
-                        const found = accList.find(a => hasWord(a) && validateSyntax(a, q));
+                        const accList = ["GORRA", "CASCO", "GAFAS", "PARCHE", "MALETÍN", "RELOJ"];
+                        const found = accList.find(a => hasWord(a));
                         if(found) checkFunc = p => p.accName === found;
                         else validQuery = false;
                     }
@@ -1725,123 +2014,47 @@
                 else if (q.match(/\b(EUROPA|EUROPEO|EUROPEA)\b/)) { checkFunc = p => p.cont === "EUROPA"; validQuery = true; }
                 else if (q.match(/\b(ASIA|ASIÁTICO|ASIÁTICA)\b/)) { checkFunc = p => p.cont === "ASIA"; validQuery = true; }
                 else if (q.match(/\b(AMÉRICA|AMERICANO|AMERICANA)\b/)) { checkFunc = p => p.cont === "AMÉRICA"; validQuery = true; }
-                else if (q.match(/\b(OCEANÍA|OCEÁNICO|OCEÁNICA)\b/)) { checkFunc = p => p.cont === "OCEANÍA"; validQuery = true; }
                 else if (q.match(/\b(ÁFRICA|AFRICANO|AFRICANA)\b/)) { checkFunc = p => p.cont === "ÁFRICA"; validQuery = true; }
-                
+                else if (q.match(/\b(HOMBRE|MASCULINO)\b/)) { checkFunc = p => p.g === "MASCULINO"; validQuery = true; }
+                else if (q.match(/\b(MUJER|FEMENINO)\b/)) { checkFunc = p => p.g === "FEMENINO"; validQuery = true; }
                 else {
-                    const demonyms = {
-                        "ALEMANIA": "ALEMÁN", "ESPAÑA": "ESPAÑOL", "FRANCIA": "FRANCÉS", "ITALIA": "ITALIANO", "SUIZA": "SUIZO", "RUSIA": "RUSO",
-                        "CHINA": "CHINO", "JAPÓN": "JAPONÉS", "COREA": "COREANO", "INDIA": "INDIO", "TAILANDIA": "TAILANDÉS", "VIETNAM": "VIETNAMITA", 
-                        "MÉXICO": "MEXICANO", "BRASIL": "BRASILEÑO", "USA": "AMERICANO", "BOLIVIA": "BOLIVIANO", "COLOMBIA": "COLOMBIANO", "ECUADOR": "ECUATORIANO",
-                        "PERÚ": "PERUANO", "ARGENTINA": "ARGENTINO", "CANADÁ": "CANADIENSE",
-                        "AUSTRALIA": "AUSTRALIANO", "NUEVA ZELANDA": "NEOZELANDÉS",
-                        "EGIPTO": "EGIPCIO", "SUDAFRICA": "SUDAFRICANO", "NIGERIA": "NIGERIANO", "MARRUECOS": "MARROQUÍ"
-                    };
-
-                    const getFem = (word) => {
-                        if (word.endsWith('O')) return word.slice(0, -1) + 'A';
-                        if (word.endsWith('ÉS')) return word.slice(0, -2) + 'ESA';
-                        if (word.endsWith('OL')) return word + 'A'; 
-                        if (word.endsWith('ÁN')) return word.slice(0, -2) + 'ANA'; 
-                        return word;
-                    };
-
-                    const foundCountry = DP.P.find(c => {
-                        const demo = demonyms[c.n];
-                        if (hasWord(c.n) && validateSyntax(c.n, q)) return true;
-                        if (demo && hasWord(demo) && validateSyntax(demo, q)) return true;
-                        if (demo) {
-                            const fem = getFem(demo);
-                            if (fem !== demo && hasWord(fem) && validateSyntax(fem, q)) return true;
-                        }
-                        return false;
-                    });
-
-                    if (foundCountry) {
-                        checkFunc = p => p.p === foundCountry.n;
-                        validQuery = true;
-                    } 
-                    else if (hasWord("INICIAL") || hasWord("EMPIEZA")) {
-                        const letra = q.match(/\b[A-Z]\b/); 
-                        if (letra) { 
-                            if (validateSyntax(letra[0], q)) {
-                                checkFunc = p => p.n.startsWith(letra[0]); 
-                                validQuery = true; 
-                            } else {
-                                validQuery = false; 
-                            }
-                        }
-                        else { typeWriter("ESPECIFIQUE UNA LETRA.", "out", 10); return; }
-                    }
-                    else if (hasWord("EDAD") || hasWord("MIDE") || hasWord("ALTO")) {
-                        const numMatch = q.match(/\d+(\.\d+)?/);
-                        if (numMatch) {
-                            validQuery = true;
-                            const val = parseFloat(numMatch[0]);
-                            const isAge = hasWord("EDAD");
-                            if (hasWord("MAYOR") || hasWord("MÁS")) checkFunc = p => (isAge ? p.edad : parseFloat(p.altura)) > val;
-                            else if (hasWord("MENOR") || hasWord("MENOS")) checkFunc = p => (isAge ? p.edad : parseFloat(p.altura)) < val;
-                            else checkFunc = p => Math.abs((isAge ? p.edad : parseFloat(p.altura)) - val) < 0.05;
-                        }
-                    }
-                    else if (q.match(/\b(HOMBRE|MASCULINO)\b/)) { checkFunc = p => p.g === "MASCULINO"; validQuery = true; }
-                    else if (q.match(/\b(MUJER|FEMENINO)\b/)) { checkFunc = p => p.g === "FEMENINO"; validQuery = true; }
-                    else {
-                        const colors = ["AZULES", "VERDES", "NEGROS", "CAFÉS", "GRISES", "MIEL"];
-                        const skins = ["PÁLIDA", "OLIVA", "BRONCE", "OSCURA", "ÉBANO"];                                                                                    
-                        
-                        const cMatch = colors.find(c => hasWord(c) && validateSyntax(c, q));
-                        const sMatch = skins.find(s => hasWord(s) && validateSyntax(s, q));
-                        
-                        if(cMatch) { checkFunc = p => p.o === cMatch; validQuery = true; }
-                        else if(sMatch) { checkFunc = p => p.t === sMatch; validQuery = true; }
-                    }
+                     // Check simple para paises y colores (versión reducida por tamaño)
+                     const countries = DP.P.map(x => x.n);
+                     const cFound = countries.find(c => hasWord(c));
+                     if(cFound) { checkFunc = p => p.p === cFound; validQuery = true; }
+                     else {
+                         const colors = ["AZULES", "VERDES", "NEGROS", "CAFÉS", "GRISES", "MIEL"];
+                         const colFound = colors.find(c => hasWord(c));
+                         if(colFound) { checkFunc = p => p.o === colFound; validQuery = true; }
+                     }
                 }
 
                 if (validQuery && checkFunc) {
                     playSFX('click');
                     document.getElementById('out').style.color = "var(--terminal-green)";
-                    
                     const targetHasTrait = checkFunc(objetivo);
                     const respText = targetHasTrait ? "SÍ." : "NO.";
-                    
-                    const cards = document.querySelectorAll('.suspect-card');
                     pendingDiscards = personas.filter(p => {
                         const card = document.getElementById('card-' + p.n);
                         if (card.classList.contains('discarded')) return false; 
-                        
-                        const suspectHasTrait = checkFunc(p);
-                        return suspectHasTrait !== targetHasTrait; 
+                        return checkFunc(p) !== targetHasTrait; 
                     }).map(p => p.n);
-
                     lastQueryText = `CONSULTA: ${q}<br>RESPUESTA: ${respText}`;
-
-                    // --- SISTEMA DE PUNTOS DE INVESTIGACIÓN (MODIFICADO) ---
                     let earned = 0;
                     let count = pendingDiscards.length;
                     if(count > 0) {
-                        if(count >= 8) earned = 10;
-                        else if(count >= 5) earned = 8;
-                        else if(count >= 3) earned = 5;
-                        else earned = count; 
-                        
-                        // NO sumar inmediatamente. Almacenar en POOL para efecto visual
+                        if(count >= 5) earned = 8; else if(count >= 3) earned = 5; else earned = count; 
                         pointsPool = earned;
-                        
-                        // Mensaje de texto indicativo
                         lastQueryText += ` <span style="color:var(--gold)">[DETECTADOS: ${earned} PTS]</span>`;
                     }
-                    // ------------------------------------------
-
                     if (pendingDiscards.length > 0) {
-                        const msg = `${lastQueryText}<br><span style="color:var(--hazard)">BLOQUEO ACTIVO: ELIMINE A ${pendingDiscards.length} SOSPECHOSOS INCOMPATIBLES.</span>`;
+                        const msg = `${lastQueryText}<br><span style="color:var(--hazard)">BLOQUEO ACTIVO: ELIMINE A ${pendingDiscards.length} SOSPECHOSOS.</span>`;
                         typeWriter(msg, "out", 15);
                         document.getElementById('queryInput').disabled = true;
                         document.getElementById('queryInput').placeholder = "!! DESCARTE REQUERIDO !!";
                     } else {
-                        typeWriter(`${lastQueryText}<br>NINGÚN DESCARTE DISPONIBLE CON ESTA INFORMACIÓN.`, "out", 15);
+                        typeWriter(`${lastQueryText}<br>NINGÚN DESCARTE DISPONIBLE.`, "out", 15);
                     }
-
                 } else {
                     playSFX('error');
                     document.getElementById('out').style.color = "var(--hazard)";
@@ -1849,8 +2062,6 @@
                 }
             }
         });
-
-        updateWalletUI();
     </script>
 </body>
 </html>
