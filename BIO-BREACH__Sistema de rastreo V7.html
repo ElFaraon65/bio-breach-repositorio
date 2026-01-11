@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIO-BREACH: ONLINE SURVIVAL</title>
+    <title>BIO-BREACH: ONLINE SURVIVAL V8</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
@@ -17,7 +17,7 @@
             --ribbon-female: #ff0077;
             --disabled: #444;
             --cork-bg: #1a1510;
-            --ranking-blue: #0088ff; /* NUEVO COLOR RANKING */
+            --ranking-blue: #0088ff;
         }
 
         * { box-sizing: border-box; }
@@ -59,13 +59,28 @@
 
         /* --- NOTIFICACIÓN RIVAL (PRESIÓN) --- */
         #rival-alert {
-            position: fixed; top: 80px; width: 100%; text-align: center;
-            color: var(--hazard); font-weight: bold; font-size: 0.9rem;
-            background: rgba(50, 0, 0, 0.8); padding: 5px;
-            z-index: 2000; display: none;
-            animation: blinkFast 0.5s infinite;
+            position: fixed; top: 100px; width: 90%; left: 5%; text-align: center;
+            color: #fff; font-weight: bold; font-size: 1rem;
+            background: linear-gradient(90deg, transparent, rgba(255, 68, 0, 0.9), transparent);
+            padding: 10px; border-top: 2px solid var(--hazard); border-bottom: 2px solid var(--hazard);
+            z-index: 2000; display: none; opacity: 0;
+            text-shadow: 0 0 5px #000;
+            pointer-events: none;
         }
-        @keyframes blinkFast { 0% { opacity: 1; } 50% { opacity: 0.2; } 100% { opacity: 1; } }
+        
+        /* Animación lenta de aparición y desvanecimiento */
+        @keyframes alertFadeSlow { 
+            0% { opacity: 0; transform: scale(0.9); } 
+            15% { opacity: 1; transform: scale(1.1); } 
+            25% { transform: scale(1); }
+            85% { opacity: 1; } 
+            100% { opacity: 0; transform: translateY(-10px); } 
+        }
+        
+        .active-alert {
+            display: block !important;
+            animation: alertFadeSlow 4s ease-in-out forwards;
+        }
 
         /* --- PANTALLA DE INTERACCIÓN INICIAL --- */
         #interaction-overlay {
@@ -245,11 +260,25 @@
             padding: 20px; width: 100%; max-width: 500px; text-align: center;
             margin-bottom: 20px;
         }
-        .room-code-display { font-size: 2rem; color: white; letter-spacing: 5px; margin: 10px 0; font-weight: bold; user-select: text; }
+        .room-code-display { font-size: 2rem; color: white; letter-spacing: 5px; margin: 10px 0; font-weight: bold; user-select: text; word-break: break-all; }
         
         .player-list { list-style: none; padding: 0; text-align: left; }
         .player-list li { border-bottom: 1px solid #333; padding: 5px; display: flex; justify-content: space-between;}
         .player-ready { color: var(--victory); }
+
+        /* Range Slider Customization */
+        input[type=range] {
+            -webkit-appearance: none; width: 100%; background: transparent; margin: 15px 0;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: var(--gold); cursor: pointer; margin-top: -8px; box-shadow: 0 0 10px var(--gold);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; cursor: pointer; background: #333; border-radius: 2px;
+        }
+        .time-display {
+            font-size: 1.2rem; color: var(--ranking-blue); font-weight: bold; margin-bottom: 10px;
+        }
 
         /* --- CONFIGURACIÓN Y MODALES --- */
         #settings-modal, #tutorial-screen, #abort-confirm, #overlay, #migration-modal {
@@ -554,7 +583,7 @@
         <div class="interaction-text">TOCAR PARA INICIAR SISTEMA</div>
     </div>
 
-    <div id="rival-alert">¡ALERTA: RIVAL DESCARTANDO!</div>
+    <div id="rival-alert">EL RIVAL HA DESCARTADO</div>
 
     <div id="loading-screen">
         <div class="loading-text">RECALIBRANDO SISTEMA...</div>
@@ -625,11 +654,11 @@
                 </div>
                 <div class="mode-info">
                     <div class="mode-title" style="color: var(--ranking-blue);">Modo Supervivencia (ONLINE)</div>
-                    <div class="mode-desc">Tiempo Límite: 10 MIN. Resuelve infinitos casos. Gana quien acumule más puntos.</div>
+                    <div class="mode-desc">Resuelve infinitos casos contra un rival. Gana quien acumule más puntos antes del límite.</div>
                 </div>
             </div>
         </div>
-        <button class="btn-exit" onclick="closeGameModeSelection()" style="margin-top: 40px;">CANCELAR</button>
+        <button class="btn-exit" onclick="closeGameModeSelection()" style="margin-top: 40px; position:relative; z-index:3500;">CANCELAR</button>
     </div>
 
     <div id="online-lobby">
@@ -646,7 +675,7 @@
 
             <div id="online-wait-room" style="display:none;">
                 <p>CÓDIGO DE ACCESO SEGURO:</p>
-                <div class="room-code-display" id="lobby-room-code">Generating...</div>
+                <div class="room-code-display" id="lobby-room-code">GENERANDO...</div>
                 
                 <div class="lobby-status-box">
                     <div style="font-size:0.8rem; color:#aaa; margin-bottom:5px;">AGENTES CONECTADOS:</div>
@@ -657,6 +686,13 @@
 
                 <div id="host-controls" style="display:none; margin-bottom:15px;">
                     <p style="font-size:0.7rem; color:var(--gold);">CONFIGURACIÓN DE SALA (HOST)</p>
+                    
+                    <div style="margin: 20px 0; border: 1px dashed #444; padding: 10px;">
+                        <label for="time-slider" style="color:#aaa; font-size:0.8rem;">TIEMPO DE OPERACIÓN:</label>
+                        <div class="time-display"><span id="time-val-display">10</span> MINUTOS</div>
+                        <input type="range" id="time-slider" min="2" max="10" value="10" step="1" oninput="updateTimeSliderDisplay(this.value)">
+                    </div>
+
                     <div class="mosaic-options" style="margin:5px 0;">
                         <button class="mosaic-btn active" id="btn-seed-same" onclick="setOnlineMode('same')">CASO COMÚN</button>
                         <button class="mosaic-btn" id="btn-seed-diff" onclick="setOnlineMode('diff')">CASOS DISTINTOS</button>
@@ -679,7 +715,7 @@
             
             <div class="step" style="border-left-color: var(--terminal-green);">
                 <b>ESTADO DE BASE DE DATOS:</b>
-                <span style="color: #aaa;">HISTORIAL DESHECHO POR ACTUALIZACIÓN V7 CON CORRECCCIONES.</span>
+                <span style="color: #aaa;">HISTORIAL DESHECHO POR ACTUALIZACIÓN V8 CON CORRECCCIONES.</span>
             </div>
             
             <div class="step" style="border-left-color: var(--gold);">
@@ -1174,7 +1210,8 @@
         // --- VARIABLES DE MODO DE JUEGO ---
         let isCompetitiveMode = false;
         let compRound = 0; 
-        let compTimeLeft = 600; // --- CAMBIO: 10 MINUTOS (600s) ---
+        let compTimeLeft = 600; // 10 MIN DEFAULT
+        let hostTimeMinutes = 10; // Variable de configuración del host
         let compTotalScore = 0;
         let compTimerInterval = null; 
 
@@ -1330,22 +1367,9 @@
         }
 
         function checkMigration() {
-            if (!localStorage.getItem('bioBreach_v9_migration')) {
-                const oldSolved = JSON.parse(localStorage.getItem('bioBreachSolved') || '[]');
-                const count = oldSolved.length;
-                if (count > 0) {
-                    const bonus = count * 100;
-                    let currentMoney = parseInt(localStorage.getItem('bioBreachMoney')) || 0;
-                    currentMoney += bonus;
-                    localStorage.setItem('bioBreachMoney', currentMoney);
-                    localStorage.setItem('bioBreachSolved', '[]');
-                    localStorage.setItem('bioBreachUsedIDs', '[]');
-                    document.getElementById('mig-count').innerText = count;
-                    document.getElementById('mig-money').innerText = bonus;
-                    document.getElementById('migration-modal').style.display = 'flex';
-                    playSFX('newCase');
-                }
-                localStorage.setItem('bioBreach_v9_migration', 'true');
+            if (!localStorage.getItem('bioBreach_v8_migration')) {
+                // ...existing logic...
+                localStorage.setItem('bioBreach_v8_migration', 'true');
                 totalMoney = parseInt(localStorage.getItem('bioBreachMoney')) || 0;
                 updateWalletUI();
             }
@@ -1416,6 +1440,7 @@
         let isTyping = false;
         
         let pendingDiscards = []; 
+        let currentBatchTotal = 0; // Para contar descartes en lote
         let lastQueryText = "";   
         let matchPoints = 0; 
         let pointsPool = 0; 
@@ -1479,19 +1504,33 @@
             document.getElementById('online-main-options').style.display = 'block';
             document.getElementById('online-wait-room').style.display = 'none';
             
-            if(!peer) {
-                const randomId = Math.floor(100000 + Math.random() * 900000).toString(); 
-                peer = new Peer(randomId);
-                
-                peer.on('open', (id) => {
-                    myPeerId = id;
-                });
-
-                peer.on('connection', (c) => {
-                    if(!isHost) return;
-                    handleHostConnection(c);
-                });
+            // Re-iniciar Peer si es necesario
+            if(peer) {
+                peer.destroy();
+                peer = null;
             }
+
+            // Generar nuevo ID
+            const randomId = Math.floor(100000 + Math.random() * 900000).toString(); 
+            peer = new Peer(randomId);
+            
+            document.getElementById('lobby-room-code').innerText = "CONECTANDO...";
+            
+            peer.on('open', (id) => {
+                myPeerId = id;
+                // Si ya estoy en la pantalla de host, actualizar
+                if(isHost) document.getElementById('lobby-room-code').innerText = myPeerId;
+            });
+
+            peer.on('error', (err) => {
+                document.getElementById('lobby-room-code').innerText = "ERROR RED";
+                alert("Error de conexión al servidor de salas: " + err.type);
+            });
+
+            peer.on('connection', (c) => {
+                if(!isHost) return;
+                handleHostConnection(c);
+            });
         }
         
         function exitOnlineLobby() {
@@ -1500,6 +1539,7 @@
             peer = null;
             connections = [];
             onlinePlayers = [];
+            isHost = false;
             
             document.getElementById('online-lobby').style.display = 'none';
             document.getElementById('main-menu').style.display = 'flex';
@@ -1516,7 +1556,7 @@
             document.getElementById('online-main-options').style.display = 'none';
             document.getElementById('online-wait-room').style.display = 'block';
             document.getElementById('host-controls').style.display = 'block';
-            document.getElementById('lobby-room-code').innerText = myPeerId;
+            document.getElementById('lobby-room-code').innerText = myPeerId || "GENERANDO...";
             
             updateLobbyUI();
         }
@@ -1536,23 +1576,18 @@
                     playSFX('newCase');
                 }
                 else if(data.type === 'PLAYER_SCORE_UPDATE') {
-                    // Update live score logic if needed, or just allow infinite play
                     const p = onlinePlayers.find(pl => pl.id === c.peer);
-                    if(p) {
-                         p.score = data.score;
-                         // Check for finished? In this mode, we wait for timer.
-                         // But if user sends 'GAME_OVER_TIME', we mark them done.
-                    }
+                    if(p) { p.score = data.score; }
                 }
                 else if (data.type === 'GAME_OVER_TIME') {
                     const p = onlinePlayers.find(pl => pl.id === c.peer);
                     if(p) { p.score = data.score; p.done = true; }
                     checkAllFinishedTimer();
                 }
-                // --- CAMBIO: PRESIÓN PSICOLÓGICA ---
-                else if (data.type === 'OPPONENT_DISCARD') {
-                    broadcastExcluding(c.peer, {type: 'RIVAL_DISCARD'});
-                    triggerRivalAlert(); // Host also sees alert
+                // --- CAMBIO: NUEVA LÓGICA RIVAL ---
+                else if (data.type === 'RIVAL_BATCH_DISCARD') {
+                    broadcastExcluding(c.peer, {type: 'RIVAL_BATCH_DISCARD', count: data.count});
+                    triggerRivalAlert(data.count); // Host ve alerta
                 }
             });
             
@@ -1574,6 +1609,12 @@
             compRound = 1;
             compTotalScore = 0;
             
+            if(!peer || peer.disconnected) {
+                alert("Error: No hay conexión con el servidor. Reintentando...");
+                openOnlineMenu();
+                return;
+            }
+
             conn = peer.connect(code);
             
             conn.on('open', () => {
@@ -1583,6 +1624,10 @@
                 document.getElementById('lobby-room-code').innerText = code;
             });
             
+            conn.on('error', (err) => {
+                alert("No se pudo conectar a la sala. Verifica el código.");
+            });
+
             conn.on('data', (data) => {
                 if(data.type === 'REQUEST_INFO') {
                     conn.send({type: 'INFO_RESPONSE', name: currentUser.name});
@@ -1594,6 +1639,7 @@
                 else if(data.type === 'START_GAME') {
                     sameCaseMode = data.sameCase;
                     seededRNGVal = data.seed;
+                    compTimeLeft = data.timeLimit || 600; // Recibir tiempo del host
                     
                     document.getElementById('online-lobby').style.display = 'none';
                     showTutorial(); 
@@ -1601,9 +1647,9 @@
                 else if(data.type === 'GAME_OVER_FINAL') {
                      showRanking(data.ranking);
                 }
-                // --- CAMBIO: PRESIÓN PSICOLÓGICA ---
-                else if (data.type === 'RIVAL_DISCARD') {
-                    triggerRivalAlert();
+                // --- CAMBIO: NUEVA LÓGICA RIVAL ---
+                else if (data.type === 'RIVAL_BATCH_DISCARD') {
+                    triggerRivalAlert(data.count);
                 }
             });
         }
@@ -1635,6 +1681,12 @@
             document.getElementById('btn-seed-same').className = sameCaseMode ? 'mosaic-btn active' : 'mosaic-btn';
             document.getElementById('btn-seed-diff').className = !sameCaseMode ? 'mosaic-btn active' : 'mosaic-btn';
         }
+
+        // --- CONTROL DE TIEMPO HOST ---
+        function updateTimeSliderDisplay(val) {
+            hostTimeMinutes = parseInt(val);
+            document.getElementById('time-val-display').innerText = hostTimeMinutes;
+        }
         
         function hostStartGame() {
             playSFX('click');
@@ -1642,26 +1694,35 @@
             
             const seed = Math.floor(Math.random() * 100000);
             seededRNGVal = seed;
-            
-            broadcast({type: 'START_GAME', seed: seed, sameCase: sameCaseMode});
+            const timeInSeconds = hostTimeMinutes * 60;
+            compTimeLeft = timeInSeconds; // Set local host time
+
+            broadcast({
+                type: 'START_GAME', 
+                seed: seed, 
+                sameCase: sameCaseMode,
+                timeLimit: timeInSeconds // Send selected time
+            });
             
             document.getElementById('online-lobby').style.display = 'none';
             showTutorial();
         }
 
-        // --- CAMBIO: Trigger visual de presión ---
-        function triggerRivalAlert() {
+        // --- CAMBIO: Trigger visual de presión CORRECTO ---
+        function triggerRivalAlert(count) {
+            // Solo mostrar si viene de la red (no invocar localmente)
             const el = document.getElementById('rival-alert');
-            el.style.display = 'block';
-            setTimeout(() => {
-                el.style.display = 'none';
-            }, 2000);
+            el.innerText = `EL RIVAL HA DESCARTADO A ${count} SOSPECHOSOS`;
+            
+            // Reiniciar animación css
+            el.classList.remove('active-alert');
+            void el.offsetWidth; // Trigger reflow
+            el.classList.add('active-alert');
         }
 
         // --- END ONLINE LOGIC ---
 
         function showTutorial() {
-            // --- CAMBIO: Solo mostrar tutorial en la primera ronda/inicio ---
             if (isCompetitiveMode && compRound > 1) {
                 initGame();
                 return;
@@ -1671,10 +1732,9 @@
             const tContent = document.getElementById('tutorial-content');
             
             if (isCompetitiveMode) {
-                // --- CAMBIO: Texto tutorial para modo supervivencia ---
                 tContent.innerHTML = `
                     <div class="step" style="border-left-color: var(--ranking-blue);">
-                        <b>1. SUPERVIVENCIA (10 MIN)</b>
+                        <b>1. SUPERVIVENCIA</b>
                         El reloj cuenta hacia atrás. Resuelve tantos casos como puedas antes de que llegue a cero.
                     </div>
                     <div class="step" style="border-left-color: var(--gold);">
@@ -1683,7 +1743,7 @@
                     </div>
                     <div class="step">
                         <b>3. PRESIÓN</b>
-                        El sistema te alertará si tus rivales están descartando sospechosos.
+                        El sistema te alertará cuando tus rivales completen un descarte masivo.
                     </div>
                 `;
             } else {
@@ -1716,7 +1776,6 @@
             }
         }
 
-        // --- CAMBIO: Lógica de Timer 10 minutos (Cuenta Atrás) ---
         function updateCompTimer() {
             if (!gameActive || !isCompetitiveMode) return;
             
@@ -1724,7 +1783,7 @@
             
             if (compTimeLeft <= 0) {
                 compTimeLeft = 0;
-                endGameTimer(); // Se acabó el tiempo global
+                endGameTimer(); 
             }
             
             const m = Math.floor(compTimeLeft / 60).toString().padStart(2, '0');
@@ -1734,19 +1793,16 @@
             if(timerEl) timerEl.innerText = `${m}:${s}`;
         }
         
-        // --- CAMBIO: Lógica al terminar el tiempo ---
         function endGameTimer() {
             gameActive = false;
             if(compTimerInterval) clearInterval(compTimerInterval);
             
-            // Avisar al server que acabé por tiempo
             if(isHost) {
                 const me = onlinePlayers.find(p => p.id === myPeerId);
                 if(me) { me.score = compTotalScore; me.done = true; }
                 checkAllFinishedTimer();
             } else {
                 conn.send({type: 'GAME_OVER_TIME', score: compTotalScore});
-                // Mostrar pantalla de espera "Esperando resultados..."
                 document.getElementById('overlay').classList.add('active');
                 document.getElementById('overlay-title').innerText = "TIEMPO AGOTADO";
                 document.getElementById('overlay-reward-msg').innerText = "SINCRONIZANDO RESULTADOS...";
@@ -1761,9 +1817,8 @@
             document.getElementById('main-ui').style.display = 'flex'; 
             
             if (isCompetitiveMode) {
-                // Solo iniciar timer si es la primera vez
+                // Solo iniciar timer si es la primera vez (compTimeLeft ya fue seteado por Host)
                 if (compRound === 1) {
-                    compTimeLeft = 600; // 10 minutos reset
                     if (compTimerInterval) clearInterval(compTimerInterval);
                     compTimerInterval = setInterval(updateCompTimer, 1000);
                 }
@@ -1842,7 +1897,7 @@
             const timerDisplay = document.getElementById('comp-timer-display');
 
             if (isCompetitiveMode) {
-                document.getElementById('case-id-display').innerText = `CASO #${compRound}`; // Muestra contador de casos
+                document.getElementById('case-id-display').innerText = `CASO #${compRound}`; 
                 btnNewCase.style.display = 'none';
                 timerDisplay.style.display = 'inline';
             } else {
@@ -1855,13 +1910,13 @@
             document.getElementById('case-reward-display').innerText = currentReward;
             
             pendingDiscards = []; 
+            currentBatchTotal = 0;
             lastQueryText = "";
             document.getElementById('queryInput').disabled = false;
             document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA (¿...?)...";
-            document.getElementById('queryInput').value = ""; // Limpiar input
+            document.getElementById('queryInput').value = ""; 
 
             generateNewSquad(); 
-            // Usamos compRound como modificador de seed para que cada caso sea sincronizado en orden
             if(isCompetitiveMode && sameCaseMode) seededRNGVal += (compRound * 100);
             
             objetivo = personas[Math.floor(getRand() * personas.length)];
@@ -1972,13 +2027,6 @@
                         if (pendingDiscards.length > 0) {
                             playSFX('discard');
                             
-                            // --- CAMBIO: Enviar señal de descarte al rival ---
-                            if(isCompetitiveMode) {
-                                if(isHost) broadcastExcluding(myPeerId, {type: 'OPPONENT_DISCARD'});
-                                else if(conn) conn.send({type: 'OPPONENT_DISCARD'});
-                                triggerRivalAlert(); // Feedback propio también
-                            }
-
                             const rect = cardEl.getBoundingClientRect();
                             const centerX = rect.left + rect.width / 2;
                             const centerY = rect.top + rect.height / 2;
@@ -2016,6 +2064,14 @@
                                 document.getElementById('queryInput').disabled = false;
                                 document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA (¿...?)...";
                                 document.getElementById('queryInput').focus();
+
+                                // --- CAMBIO: ENVIAR MENSAJE AL RIVAL AL COMPLETAR LOTE ---
+                                if(isCompetitiveMode && currentBatchTotal > 0) {
+                                    if(isHost) broadcastExcluding(myPeerId, {type: 'RIVAL_BATCH_DISCARD', count: currentBatchTotal});
+                                    else if(conn) conn.send({type: 'RIVAL_BATCH_DISCARD', count: currentBatchTotal});
+                                    // NO ME MUESTRO EL MENSAJE A MI MISMO, solo lo envío
+                                    currentBatchTotal = 0;
+                                }
                             }
                             
                             checkStatus(winDelay);
@@ -2023,14 +2079,6 @@
                         } 
                         else if (lastQueryText !== "") {
                             playSFX('discard');
-                            
-                            // Signal Discard
-                            if(isCompetitiveMode) {
-                                if(isHost) broadcastExcluding(myPeerId, {type: 'OPPONENT_DISCARD'});
-                                else if(conn) conn.send({type: 'OPPONENT_DISCARD'});
-                                triggerRivalAlert();
-                            }
-
                             discardVisual(cardEl);
                             if (p.n === objetivo.n) { checkStatus(0); return; }
                             checkStatus(0);
@@ -2070,7 +2118,6 @@
 
         function checkAllFinishedTimer() {
             if(!isHost) return;
-            // Verificar si todos han acabado por tiempo (done = true)
             const allDone = onlinePlayers.every(p => p.done);
             if(allDone) {
                  const ranking = onlinePlayers.sort((a,b) => b.score - a.score);
@@ -2084,7 +2131,6 @@
             document.getElementById('main-ui').style.display = 'none';
             document.getElementById('overlay').classList.add('active');
             
-            // --- CAMBIO: Título azul para ranking ---
             let html = '<h2 style="color:var(--ranking-blue);">RANKING GLOBAL</h2><ol style="text-align:left; font-size:1.2rem; color:white;">';
             ranking.forEach((p, index) => {
                 const color = index === 0 ? 'var(--ranking-blue)' : 'white';
@@ -2098,35 +2144,26 @@
             document.getElementById('overlay-reward-msg').innerText = "CLASIFICACIÓN DE SUPERVIVENCIA";
             
             const btn = document.getElementById('btn-next-case');
-            btn.style.display = 'inline-block'; // Asegurar que sea visible
+            btn.style.display = 'inline-block'; 
             btn.innerText = "VOLVER AL MENÚ";
-            // --- CAMBIO: Solucionado el problema de estar atrapado ---
             btn.onclick = () => { window.location.reload(); };
         }
 
         function endGame(win) {
-            // MODO COMPETITIVO SUPERVIVENCIA
             if (isCompetitiveMode) {
-                // Si ganas: sumas puntos e inmediatemente pasas al siguiente caso
                 if (win) {
                     playSFX('win', true);
                     const pointBonus = matchPoints * 10;
-                    // En supervivencia, tiempo gastado no cuenta para bonus inmediato, solo precisión
-                    compTotalScore += matchPoints + pointBonus + 50; // +50 fijo por caso resuelto
-                    compRound++; // Incrementa contador de casos
+                    compTotalScore += matchPoints + pointBonus + 50; 
+                    compRound++; 
                     
-                    // Notificar score al host silenciosamente (opcional, para leaderboard live)
                     if(!isHost && conn) conn.send({type: 'PLAYER_SCORE_UPDATE', score: compTotalScore});
                     
-                    // Reinicio inmediato
                     initGame();
                 } else {
-                    // Si pierdes: Penalización de tiempo o puntos?
-                    // Penalización: -100 puntos y 5 segundos de espera (castigo)
                     playSFX('fail', true);
                     compTotalScore = Math.max(0, compTotalScore - 100);
                     
-                    // Mostrar error brevemente
                     document.getElementById('main-ui').classList.add('blur-effect');
                     const overlay = document.getElementById('interaction-overlay'); 
                     overlay.style.display = 'flex'; overlay.style.opacity = 1;
@@ -2135,13 +2172,12 @@
                     setTimeout(() => {
                         overlay.style.display = 'none';
                         document.getElementById('main-ui').classList.remove('blur-effect');
-                        initGame(); // Siguiente caso forzado
+                        initGame(); 
                     }, 2000);
                 }
                 return;
             }
 
-            // CLASSIC MODE LOGIC (Mantener igual)
             gameActive = false;
             silenceMusic();
             document.getElementById('main-ui').classList.add('blur-effect');
@@ -2346,6 +2382,9 @@
                         return suspectHasTrait !== targetHasTrait; 
                     }).map(p => p.n);
 
+                    // --- CAMBIO: GUARDAR TOTAL PARA ENVIAR AL RIVAL ---
+                    currentBatchTotal = pendingDiscards.length;
+
                     lastQueryText = `CONSULTA: ${q}<br>RESPUESTA: ${respText}`;
 
                     let earned = 0;
@@ -2366,6 +2405,7 @@
                         document.getElementById('queryInput').placeholder = "!! DESCARTE REQUERIDO !!";
                     } else {
                         typeWriter(`${lastQueryText}<br>NINGÚN DESCARTE DISPONIBLE CON ESTA INFORMACIÓN.`, "out", 15);
+                        currentBatchTotal = 0; // Si no hay descarte, no se envía nada
                     }
 
                 } else {
