@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIO-BREACH: ONLINE OPERATIONS</title>
+    <title>BIO-BREACH: ONLINE SURVIVAL</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
@@ -17,6 +17,7 @@
             --ribbon-female: #ff0077;
             --disabled: #444;
             --cork-bg: #1a1510;
+            --ranking-blue: #0088ff; /* NUEVO COLOR RANKING */
         }
 
         * { box-sizing: border-box; }
@@ -55,6 +56,16 @@
             50% { transform: scale(1.5); }
             100% { transform: scale(1); }
         }
+
+        /* --- NOTIFICACIÓN RIVAL (PRESIÓN) --- */
+        #rival-alert {
+            position: fixed; top: 80px; width: 100%; text-align: center;
+            color: var(--hazard); font-weight: bold; font-size: 0.9rem;
+            background: rgba(50, 0, 0, 0.8); padding: 5px;
+            z-index: 2000; display: none;
+            animation: blinkFast 0.5s infinite;
+        }
+        @keyframes blinkFast { 0% { opacity: 1; } 50% { opacity: 0.2; } 100% { opacity: 1; } }
 
         /* --- PANTALLA DE INTERACCIÓN INICIAL --- */
         #interaction-overlay {
@@ -543,6 +554,8 @@
         <div class="interaction-text">TOCAR PARA INICIAR SISTEMA</div>
     </div>
 
+    <div id="rival-alert">¡ALERTA: RIVAL DESCARTANDO!</div>
+
     <div id="loading-screen">
         <div class="loading-text">RECALIBRANDO SISTEMA...</div>
         <div class="loader-bar-container">
@@ -606,13 +619,13 @@
                 </div>
             </div>
 
-            <div class="mode-card" style="border-color: var(--victory);" onclick="openOnlineMenu()">
-                <div class="mode-img-placeholder" style="color: var(--victory);">
+            <div class="mode-card" style="border-color: var(--ranking-blue);" onclick="openOnlineMenu()">
+                <div class="mode-img-placeholder" style="color: var(--ranking-blue);">
                     <span>⚡</span>
                 </div>
                 <div class="mode-info">
-                    <div class="mode-title" style="color: var(--victory);">Modo Competitivo (ONLINE)</div>
-                    <div class="mode-desc">Protocolo Multijugador. Salas privadas. Ranking en tiempo real.</div>
+                    <div class="mode-title" style="color: var(--ranking-blue);">Modo Supervivencia (ONLINE)</div>
+                    <div class="mode-desc">Tiempo Límite: 10 MIN. Resuelve infinitos casos. Gana quien acumule más puntos.</div>
                 </div>
             </div>
         </div>
@@ -620,8 +633,8 @@
     </div>
 
     <div id="online-lobby">
-        <div class="tutorial-box" style="width:100%; max-width:600px; border-color: var(--victory);">
-            <h2 style="color: var(--victory);">RED PRIVADA ENCRIPTADA</h2>
+        <div class="tutorial-box" style="width:100%; max-width:600px; border-color: var(--ranking-blue);">
+            <h2 style="color: var(--ranking-blue);">RED PRIVADA ENCRIPTADA</h2>
             
             <div id="online-main-options">
                 <button class="btn-main" style="margin-bottom:10px;" onclick="createRoom()">CREAR SALA NUEVA (HOST)</button>
@@ -648,7 +661,7 @@
                         <button class="mosaic-btn active" id="btn-seed-same" onclick="setOnlineMode('same')">CASO COMÚN</button>
                         <button class="mosaic-btn" id="btn-seed-diff" onclick="setOnlineMode('diff')">CASOS DISTINTOS</button>
                     </div>
-                    <button class="btn-main" style="background:var(--victory); color:black;" onclick="hostStartGame()">INICIAR OPERACIÓN</button>
+                    <button class="btn-main" style="background:var(--ranking-blue); color:black;" onclick="hostStartGame()">INICIAR OPERACIÓN</button>
                 </div>
                 <div id="client-wait-msg" style="display:none; color:var(--terminal-green);">
                     > ESPERANDO A QUE EL LÍDER INICIE LA MISIÓN...
@@ -666,7 +679,7 @@
             
             <div class="step" style="border-left-color: var(--terminal-green);">
                 <b>ESTADO DE BASE DE DATOS:</b>
-                <span style="color: #aaa;">HISTORIAL PURGADO POR ACTUALIZACIÓN A V8.</span>
+                <span style="color: #aaa;">HISTORIAL DESHECHO POR ACTUALIZACIÓN V7 CON CORRECCCIONES.</span>
             </div>
             
             <div class="step" style="border-left-color: var(--gold);">
@@ -728,7 +741,7 @@
         <div id="case-info-bar">
             <span id="case-id-display">CASO #----</span>
             <span id="game-points" style="color: var(--terminal-green)">PTS: 0</span>
-            <span id="comp-timer-display" style="display:none; color: var(--victory); font-weight: bold;">00:00</span>
+            <span id="comp-timer-display" style="display:none; color: var(--ranking-blue); font-weight: bold;">10:00</span>
             <button id="btn-new-case" class="btn-mini" onclick="initGame()">NUEVO CASO</button>
             
             <span style="color: var(--victory)">RECOMPENSA: <span id="case-reward-display">0</span> S/</span>
@@ -744,7 +757,7 @@
 
     <script>
         // ==========================================
-        // === MOTOR DE AUDIO: JAZZ NOIR INTEGRADO ===
+        // === MOTOR DE AUDIO (MANTENIDO) ===
         // ==========================================
         let actx, musicMaster, limiter, reverbNode, warmDistortion;
         let isMusicRunning = false;
@@ -1160,9 +1173,8 @@
         
         // --- VARIABLES DE MODO DE JUEGO ---
         let isCompetitiveMode = false;
-        let compRound = 0;
-        let compMaxRounds = 3;
-        let compStartTime = 0;
+        let compRound = 0; 
+        let compTimeLeft = 600; // --- CAMBIO: 10 MINUTOS (600s) ---
         let compTotalScore = 0;
         let compTimerInterval = null; 
 
@@ -1318,7 +1330,7 @@
         }
 
         function checkMigration() {
-            if (!localStorage.getItem('bioBreach_v8_migration')) {
+            if (!localStorage.getItem('bioBreach_v9_migration')) {
                 const oldSolved = JSON.parse(localStorage.getItem('bioBreachSolved') || '[]');
                 const count = oldSolved.length;
                 if (count > 0) {
@@ -1333,7 +1345,7 @@
                     document.getElementById('migration-modal').style.display = 'flex';
                     playSFX('newCase');
                 }
-                localStorage.setItem('bioBreach_v8_migration', 'true');
+                localStorage.setItem('bioBreach_v9_migration', 'true');
                 totalMoney = parseInt(localStorage.getItem('bioBreachMoney')) || 0;
                 updateWalletUI();
             }
@@ -1452,7 +1464,6 @@
             playSFX('click');
             isCompetitiveMode = false;
             if (mode === 'competitive') { 
-                // Legacy check, now button redirects to openOnlineMenu
                 isCompetitiveMode = true; 
             }
             document.getElementById('gamemode-screen').style.display = 'none';
@@ -1468,9 +1479,8 @@
             document.getElementById('online-main-options').style.display = 'block';
             document.getElementById('online-wait-room').style.display = 'none';
             
-            // Inicializar Peer si no existe
             if(!peer) {
-                const randomId = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digitos
+                const randomId = Math.floor(100000 + Math.random() * 900000).toString(); 
                 peer = new Peer(randomId);
                 
                 peer.on('open', (id) => {
@@ -1486,7 +1496,6 @@
         
         function exitOnlineLobby() {
             playSFX('click');
-            // Clean peer connections
             if(peer) peer.destroy();
             peer = null;
             connections = [];
@@ -1516,7 +1525,6 @@
             connections.push(c);
             
             c.on('open', () => {
-                // Pedir nombre
                 c.send({type: 'REQUEST_INFO'});
             });
 
@@ -1527,13 +1535,24 @@
                     updateLobbyUI();
                     playSFX('newCase');
                 }
-                else if(data.type === 'ROUND_FINISHED') {
+                else if(data.type === 'PLAYER_SCORE_UPDATE') {
+                    // Update live score logic if needed, or just allow infinite play
                     const p = onlinePlayers.find(pl => pl.id === c.peer);
                     if(p) {
-                        p.score += data.score;
-                        p.done = true;
+                         p.score = data.score;
+                         // Check for finished? In this mode, we wait for timer.
+                         // But if user sends 'GAME_OVER_TIME', we mark them done.
                     }
-                    checkAllFinished();
+                }
+                else if (data.type === 'GAME_OVER_TIME') {
+                    const p = onlinePlayers.find(pl => pl.id === c.peer);
+                    if(p) { p.score = data.score; p.done = true; }
+                    checkAllFinishedTimer();
+                }
+                // --- CAMBIO: PRESIÓN PSICOLÓGICA ---
+                else if (data.type === 'OPPONENT_DISCARD') {
+                    broadcastExcluding(c.peer, {type: 'RIVAL_DISCARD'});
+                    triggerRivalAlert(); // Host also sees alert
                 }
             });
             
@@ -1575,13 +1594,16 @@
                 else if(data.type === 'START_GAME') {
                     sameCaseMode = data.sameCase;
                     seededRNGVal = data.seed;
-                    compRound = data.round;
                     
                     document.getElementById('online-lobby').style.display = 'none';
-                    showTutorial(); // Will trigger startGame -> initGame logic
+                    showTutorial(); 
                 }
                 else if(data.type === 'GAME_OVER_FINAL') {
                      showRanking(data.ranking);
+                }
+                // --- CAMBIO: PRESIÓN PSICOLÓGICA ---
+                else if (data.type === 'RIVAL_DISCARD') {
+                    triggerRivalAlert();
                 }
             });
         }
@@ -1600,6 +1622,12 @@
         function broadcast(msg) {
             connections.forEach(c => c.send(msg));
         }
+
+        function broadcastExcluding(peerId, msg) {
+            connections.forEach(c => {
+                if(c.peer !== peerId) c.send(msg);
+            });
+        }
         
         function setOnlineMode(mode) {
             playSFX('click');
@@ -1610,38 +1638,52 @@
         
         function hostStartGame() {
             playSFX('click');
-            // Reset "Done" status
             onlinePlayers.forEach(p => p.done = false);
             
-            // Seed para la ronda 1
             const seed = Math.floor(Math.random() * 100000);
             seededRNGVal = seed;
             
-            broadcast({type: 'START_GAME', seed: seed, sameCase: sameCaseMode, round: compRound});
+            broadcast({type: 'START_GAME', seed: seed, sameCase: sameCaseMode});
             
             document.getElementById('online-lobby').style.display = 'none';
             showTutorial();
         }
 
+        // --- CAMBIO: Trigger visual de presión ---
+        function triggerRivalAlert() {
+            const el = document.getElementById('rival-alert');
+            el.style.display = 'block';
+            setTimeout(() => {
+                el.style.display = 'none';
+            }, 2000);
+        }
+
         // --- END ONLINE LOGIC ---
 
         function showTutorial() {
+            // --- CAMBIO: Solo mostrar tutorial en la primera ronda/inicio ---
+            if (isCompetitiveMode && compRound > 1) {
+                initGame();
+                return;
+            }
+
             fadeToMode(2); 
             const tContent = document.getElementById('tutorial-content');
             
             if (isCompetitiveMode) {
+                // --- CAMBIO: Texto tutorial para modo supervivencia ---
                 tContent.innerHTML = `
-                    <div class="step" style="border-left-color: var(--victory);">
-                        <b>1. PROTOCOLO ONLINE</b>
-                        Compite contra otros agentes. 3 rondas. ${sameCaseMode ? 'TODOS TIENEN EL MISMO CASO.' : 'CASOS DISTINTOS PARA CADA AGENTE.'}
+                    <div class="step" style="border-left-color: var(--ranking-blue);">
+                        <b>1. SUPERVIVENCIA (10 MIN)</b>
+                        El reloj cuenta hacia atrás. Resuelve tantos casos como puedas antes de que llegue a cero.
                     </div>
                     <div class="step" style="border-left-color: var(--gold);">
-                        <b>2. PUNTUACIÓN</b>
-                        La velocidad es clave. Acabar antes que los demás otorga bonus masivos.
+                        <b>2. SIN LÍMITE</b>
+                        No hay rondas fijas. Al terminar un caso, carga el siguiente de inmediato.
                     </div>
                     <div class="step">
-                        <b>3. SIN PAUSAS</b>
-                        Al terminar una ronda, esperarás a que el resto finalice para ver los resultados.
+                        <b>3. PRESIÓN</b>
+                        El sistema te alertará si tus rivales están descartando sospechosos.
                     </div>
                 `;
             } else {
@@ -1674,16 +1716,42 @@
             }
         }
 
+        // --- CAMBIO: Lógica de Timer 10 minutos (Cuenta Atrás) ---
         function updateCompTimer() {
             if (!gameActive || !isCompetitiveMode) return;
-            const now = Date.now();
-            const diff = Math.floor((now - compStartTime) / 1000);
             
-            const m = Math.floor(diff / 60).toString().padStart(2, '0');
-            const s = (diff % 60).toString().padStart(2, '0');
+            compTimeLeft--;
+            
+            if (compTimeLeft <= 0) {
+                compTimeLeft = 0;
+                endGameTimer(); // Se acabó el tiempo global
+            }
+            
+            const m = Math.floor(compTimeLeft / 60).toString().padStart(2, '0');
+            const s = (compTimeLeft % 60).toString().padStart(2, '0');
             
             const timerEl = document.getElementById('comp-timer-display');
             if(timerEl) timerEl.innerText = `${m}:${s}`;
+        }
+        
+        // --- CAMBIO: Lógica al terminar el tiempo ---
+        function endGameTimer() {
+            gameActive = false;
+            if(compTimerInterval) clearInterval(compTimerInterval);
+            
+            // Avisar al server que acabé por tiempo
+            if(isHost) {
+                const me = onlinePlayers.find(p => p.id === myPeerId);
+                if(me) { me.score = compTotalScore; me.done = true; }
+                checkAllFinishedTimer();
+            } else {
+                conn.send({type: 'GAME_OVER_TIME', score: compTotalScore});
+                // Mostrar pantalla de espera "Esperando resultados..."
+                document.getElementById('overlay').classList.add('active');
+                document.getElementById('overlay-title').innerText = "TIEMPO AGOTADO";
+                document.getElementById('overlay-reward-msg').innerText = "SINCRONIZANDO RESULTADOS...";
+                document.getElementById('btn-next-case').style.display = 'none';
+            }
         }
 
         function startGame() {
@@ -1693,9 +1761,12 @@
             document.getElementById('main-ui').style.display = 'flex'; 
             
             if (isCompetitiveMode) {
-                compStartTime = Date.now();
-                if (compTimerInterval) clearInterval(compTimerInterval);
-                compTimerInterval = setInterval(updateCompTimer, 1000);
+                // Solo iniciar timer si es la primera vez
+                if (compRound === 1) {
+                    compTimeLeft = 600; // 10 minutos reset
+                    if (compTimerInterval) clearInterval(compTimerInterval);
+                    compTimerInterval = setInterval(updateCompTimer, 1000);
+                }
             }
 
             initGame();
@@ -1720,12 +1791,7 @@
             gameActive = false;
             
             if(compTimerInterval) clearInterval(compTimerInterval);
-            
-            // Abort online logic
-            if(isHost && peer) {
-                // Host aborting kills the room usually, but simplified here
-                 peer.destroy(); peer = null;
-            }
+            if(isHost && peer) { peer.destroy(); peer = null; }
             if(conn) { conn.close(); conn = null; }
 
             closeAbortModal();
@@ -1751,7 +1817,7 @@
                 usedIDs = [];
                 newId = "C-" + Math.floor(getRand() * 8999 + 1000);
             }
-            if (!isCompetitiveMode) { // Solo guardar IDs en modo local normal
+            if (!isCompetitiveMode) { 
                 usedIDs.push(newId);
                 if (usedIDs.length > 5000) usedIDs.shift(); 
                 localStorage.setItem('bioBreachUsedIDs', JSON.stringify(usedIDs));
@@ -1776,7 +1842,7 @@
             const timerDisplay = document.getElementById('comp-timer-display');
 
             if (isCompetitiveMode) {
-                document.getElementById('case-id-display').innerText = `RONDA ${compRound}/${compMaxRounds}`;
+                document.getElementById('case-id-display').innerText = `CASO #${compRound}`; // Muestra contador de casos
                 btnNewCase.style.display = 'none';
                 timerDisplay.style.display = 'inline';
             } else {
@@ -1792,9 +1858,12 @@
             lastQueryText = "";
             document.getElementById('queryInput').disabled = false;
             document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA (¿...?)...";
+            document.getElementById('queryInput').value = ""; // Limpiar input
 
             generateNewSquad(); 
-            // En modo competitivo Same Case, el RNG es seed, así que todos tendrán el mismo objetivo en el mismo índice si el squad se genera igual.
+            // Usamos compRound como modificador de seed para que cada caso sea sincronizado en orden
+            if(isCompetitiveMode && sameCaseMode) seededRNGVal += (compRound * 100);
+            
             objetivo = personas[Math.floor(getRand() * personas.length)];
             objetivo.recordId = generateCriminalRecordID();
 
@@ -1825,7 +1894,6 @@
                 ]
             };
 
-            // Custom shuffle using seeded random if needed
             const customShuffle = (array) => {
                 for (let i = array.length - 1; i > 0; i--) {
                     const j = Math.floor(getRand() * (i + 1));
@@ -1903,6 +1971,14 @@
 
                         if (pendingDiscards.length > 0) {
                             playSFX('discard');
+                            
+                            // --- CAMBIO: Enviar señal de descarte al rival ---
+                            if(isCompetitiveMode) {
+                                if(isHost) broadcastExcluding(myPeerId, {type: 'OPPONENT_DISCARD'});
+                                else if(conn) conn.send({type: 'OPPONENT_DISCARD'});
+                                triggerRivalAlert(); // Feedback propio también
+                            }
+
                             const rect = cardEl.getBoundingClientRect();
                             const centerX = rect.left + rect.width / 2;
                             const centerY = rect.top + rect.height / 2;
@@ -1947,6 +2023,14 @@
                         } 
                         else if (lastQueryText !== "") {
                             playSFX('discard');
+                            
+                            // Signal Discard
+                            if(isCompetitiveMode) {
+                                if(isHost) broadcastExcluding(myPeerId, {type: 'OPPONENT_DISCARD'});
+                                else if(conn) conn.send({type: 'OPPONENT_DISCARD'});
+                                triggerRivalAlert();
+                            }
+
                             discardVisual(cardEl);
                             if (p.n === objetivo.n) { checkStatus(0); return; }
                             checkStatus(0);
@@ -1984,32 +2068,14 @@
             }
         }
 
-        function checkAllFinished() {
+        function checkAllFinishedTimer() {
             if(!isHost) return;
+            // Verificar si todos han acabado por tiempo (done = true)
             const allDone = onlinePlayers.every(p => p.done);
             if(allDone) {
-                 if(compRound < compMaxRounds) {
-                     // Next Round
-                     setTimeout(() => {
-                         compRound++;
-                         const seed = Math.floor(Math.random() * 100000);
-                         broadcast({type: 'START_GAME', seed: seed, sameCase: sameCaseMode, round: compRound});
-                         
-                         // Host also starts
-                         seededRNGVal = seed;
-                         onlinePlayers.forEach(p => p.done = false);
-                         
-                         document.getElementById('overlay').classList.remove('active');
-                         document.getElementById('main-ui').classList.remove('blur-effect');
-                         showTutorial(); 
-                     }, 3000);
-                 } else {
-                     // End Tournament
-                     // Sort rankings
-                     const ranking = onlinePlayers.sort((a,b) => b.score - a.score);
-                     broadcast({type: 'GAME_OVER_FINAL', ranking: ranking});
-                     showRanking(ranking);
-                 }
+                 const ranking = onlinePlayers.sort((a,b) => b.score - a.score);
+                 broadcast({type: 'GAME_OVER_FINAL', ranking: ranking});
+                 showRanking(ranking);
             }
         }
 
@@ -2018,59 +2084,65 @@
             document.getElementById('main-ui').style.display = 'none';
             document.getElementById('overlay').classList.add('active');
             
-            let html = '<h2 style="color:var(--gold);">RANKING FINAL</h2><ol style="text-align:left; font-size:1.2rem; color:white;">';
+            // --- CAMBIO: Título azul para ranking ---
+            let html = '<h2 style="color:var(--ranking-blue);">RANKING GLOBAL</h2><ol style="text-align:left; font-size:1.2rem; color:white;">';
             ranking.forEach((p, index) => {
-                const color = index === 0 ? 'var(--victory)' : 'white';
+                const color = index === 0 ? 'var(--ranking-blue)' : 'white';
                 html += `<li style="color:${color}; margin-bottom:10px;">#${index+1} ${p.name} - ${p.score} PTS</li>`;
             });
             html += '</ol>';
             
             document.getElementById('overlay-desc').innerHTML = html;
-            document.getElementById('overlay-title').innerText = "OPERACIÓN COMPLETADA";
-            document.getElementById('overlay-reward-msg').innerText = "CLASIFICACIÓN GLOBAL";
+            document.getElementById('overlay-title').innerText = "TIEMPO FINALIZADO";
+            document.getElementById('overlay-title').style.color = "var(--ranking-blue)";
+            document.getElementById('overlay-reward-msg').innerText = "CLASIFICACIÓN DE SUPERVIVENCIA";
             
             const btn = document.getElementById('btn-next-case');
+            btn.style.display = 'inline-block'; // Asegurar que sea visible
             btn.innerText = "VOLVER AL MENÚ";
-            btn.onclick = () => { location.reload(); };
+            // --- CAMBIO: Solucionado el problema de estar atrapado ---
+            btn.onclick = () => { window.location.reload(); };
         }
 
         function endGame(win) {
-            gameActive = false;
-            
-            if(compTimerInterval) clearInterval(compTimerInterval);
-            
+            // MODO COMPETITIVO SUPERVIVENCIA
             if (isCompetitiveMode) {
-                // Calculation
-                const pointBonus = win ? matchPoints * 10 : 0;
-                let finalRoundPoints = win ? matchPoints : 0;
-                const timeTaken = (Date.now() - compStartTime) / 1000;
-                const speedBonus = win ? Math.max(0, Math.floor((120 - timeTaken) * 2)) : 0; 
-                finalRoundPoints += speedBonus + pointBonus;
-                
-                compTotalScore += finalRoundPoints;
-                
-                document.getElementById('main-ui').classList.add('blur-effect');
-                document.getElementById('overlay').classList.add('active');
-                
-                document.getElementById('overlay-title').innerText = win ? "OBJETIVO LOCALIZADO" : "OBJETIVO PERDIDO";
-                document.getElementById('overlay-title').style.color = win ? "var(--victory)" : "var(--hazard)";
-                document.getElementById('overlay-reward-msg').innerHTML = `<span style="color:white">PUNTOS RONDA: ${finalRoundPoints}</span><br>ESPERANDO A OTROS AGENTES...`;
-                
-                document.getElementById('btn-next-case').style.display = 'none'; // Hide button, wait for server
-                
-                // Send score to host
-                if(isHost) {
-                    const me = onlinePlayers.find(p => p.id === myPeerId);
-                    me.score += finalRoundPoints;
-                    me.done = true;
-                    checkAllFinished();
+                // Si ganas: sumas puntos e inmediatemente pasas al siguiente caso
+                if (win) {
+                    playSFX('win', true);
+                    const pointBonus = matchPoints * 10;
+                    // En supervivencia, tiempo gastado no cuenta para bonus inmediato, solo precisión
+                    compTotalScore += matchPoints + pointBonus + 50; // +50 fijo por caso resuelto
+                    compRound++; // Incrementa contador de casos
+                    
+                    // Notificar score al host silenciosamente (opcional, para leaderboard live)
+                    if(!isHost && conn) conn.send({type: 'PLAYER_SCORE_UPDATE', score: compTotalScore});
+                    
+                    // Reinicio inmediato
+                    initGame();
                 } else {
-                    conn.send({type: 'ROUND_FINISHED', score: finalRoundPoints});
+                    // Si pierdes: Penalización de tiempo o puntos?
+                    // Penalización: -100 puntos y 5 segundos de espera (castigo)
+                    playSFX('fail', true);
+                    compTotalScore = Math.max(0, compTotalScore - 100);
+                    
+                    // Mostrar error brevemente
+                    document.getElementById('main-ui').classList.add('blur-effect');
+                    const overlay = document.getElementById('interaction-overlay'); 
+                    overlay.style.display = 'flex'; overlay.style.opacity = 1;
+                    overlay.innerHTML = '<div style="color:var(--hazard); font-size:2rem; font-weight:bold;">OBJETIVO PERDIDO<br><span style="font-size:1rem">RECALIBRANDO...</span></div>';
+                    
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                        document.getElementById('main-ui').classList.remove('blur-effect');
+                        initGame(); // Siguiente caso forzado
+                    }, 2000);
                 }
                 return;
             }
 
-            // CLASSIC MODE LOGIC
+            // CLASSIC MODE LOGIC (Mantener igual)
+            gameActive = false;
             silenceMusic();
             document.getElementById('main-ui').classList.add('blur-effect');
             document.getElementById('overlay').classList.add('active');
