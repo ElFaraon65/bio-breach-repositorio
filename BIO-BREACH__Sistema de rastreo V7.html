@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIO-BREACH: THE LAST TRACE (ONLINE)</title>
-    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <title>BIO-BREACH: THE LAST TRACE</title>
     <style>
         :root {
             --gold: #ffd700;
@@ -17,7 +16,6 @@
             --ribbon-female: #ff0077;
             --disabled: #444;
             --cork-bg: #1a1510;
-            --net-blue: #00e5ff; /* Color para modo Online */
         }
 
         * { box-sizing: border-box; }
@@ -101,11 +99,11 @@
             animation: blink 0.8s infinite;
         }
 
-        /* --- PANTALLA DE LOGIN --- */
+        /* --- PANTALLA DE LOGIN (NUEVO) --- */
         #login-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95);
-            z-index: 7000;
+            z-index: 7000; /* Por encima de todo excepto interaction */
             display: none; flex-direction: column;
             justify-content: center; align-items: center;
             padding: 20px;
@@ -143,7 +141,7 @@
             border-right: 3px solid var(--terminal-green); padding: 5px 15px;
             background: rgba(0, 255, 65, 0.05);
             text-align: left;
-            display: none;
+            display: none; /* Se muestra tras login */
         }
         
         .currency { color: var(--gold); font-size: 1.2rem; font-weight: bold; }
@@ -188,77 +186,7 @@
         }
         .btn-exit:hover { background: #333; color: white; border-color: #666; }
 
-        /* --- MULTIPLAYER LOBBY STYLES --- */
-        #lobby-screen, #net-mode-select {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(5, 10, 20, 0.98);
-            z-index: 3300;
-            display: none; flex-direction: column;
-            justify-content: center; align-items: center;
-            padding: 20px;
-        }
-        
-        .lobby-box {
-            width: 100%; max-width: 500px;
-            border: 2px solid var(--net-blue);
-            background: rgba(0, 20, 30, 0.8);
-            padding: 20px; text-align: center;
-            box-shadow: 0 0 25px rgba(0, 229, 255, 0.2);
-        }
-
-        .net-title {
-            color: var(--net-blue); font-size: 1.8rem; letter-spacing: 3px;
-            margin-bottom: 20px; text-shadow: 0 0 10px var(--net-blue);
-        }
-
-        .room-code-display {
-            font-size: 2rem; background: #000; color: #fff;
-            padding: 10px; border: 1px dashed var(--net-blue);
-            margin: 15px 0; letter-spacing: 2px; user-select: text;
-        }
-
-        .player-list {
-            margin: 20px 0; min-height: 100px;
-            border-top: 1px solid #333; border-bottom: 1px solid #333;
-            padding: 10px; max-height: 200px; overflow-y: auto;
-        }
-        .player-item {
-            display: flex; justify-content: space-between;
-            padding: 5px; border-bottom: 1px solid #222;
-            color: #aaa;
-        }
-        .player-item.ready { color: var(--victory); }
-
-        .btn-net {
-            background: rgba(0, 40, 50, 0.8); border: 1px solid var(--net-blue);
-            color: var(--net-blue); padding: 15px 30px; margin: 5px;
-            cursor: pointer; font-family: 'Consolas', monospace;
-            text-transform: uppercase; letter-spacing: 1px;
-            transition: all 0.2s; width: 100%;
-        }
-        .btn-net:hover { background: var(--net-blue); color: #000; box-shadow: 0 0 15px var(--net-blue); }
-
-        .toggle-container {
-            display: flex; align-items: center; justify-content: center;
-            margin: 15px 0; gap: 10px; color: #888; font-size: 0.8rem;
-        }
-        .toggle-switch {
-            position: relative; display: inline-block; width: 50px; height: 24px;
-        }
-        .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #333; transition: .4s;
-        }
-        .slider:before {
-            position: absolute; content: ""; height: 16px; width: 16px;
-            left: 4px; bottom: 4px; background-color: white; transition: .4s;
-        }
-        input:checked + .slider { background-color: var(--net-blue); }
-        input:checked + .slider:before { transform: translateX(26px); }
-
-
-        /* --- SELECCIÓN DE MODO DE JUEGO --- */
+        /* --- SELECCIÓN DE MODO DE JUEGO (NUEVO) --- */
         #gamemode-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.98);
@@ -389,6 +317,7 @@
             box-shadow: 1px 2px 4px rgba(0,0,0,0.5);
             z-index: 10;
         }
+        /* Variaciones de Pin por Puntaje */
         .pin.gold { background: var(--gold); border-color: #886600; box-shadow: 0 0 5px var(--gold); }
         .pin.blue { background: #0088ff; border-color: #003366; box-shadow: 0 0 5px #0088ff; }
 
@@ -548,14 +477,6 @@
             position: fixed; bottom: 10px; left: 10px;
             font-size: 0.6rem; color: #444;
         }
-        
-        /* Floating HUD for Online */
-        #opponent-status {
-            position: absolute; top: 40px; right: 20px; width: 150px;
-            background: rgba(0,0,0,0.5); border: 1px solid var(--net-blue);
-            color: var(--net-blue); font-size: 0.6rem; padding: 5px;
-            display: none; z-index: 50;
-        }
 
         @keyframes blink { 0% { opacity: 0.2; } 50% { opacity: 1; } 100% { opacity: 0.2; } }
 
@@ -674,61 +595,17 @@
                 </div>
             </div>
 
-            <div class="mode-card" style="border-color: var(--victory);" onclick="openNetModeSelect()">
+            <div class="mode-card" style="border-color: var(--victory);" onclick="selectMode('competitive')">
                 <div class="mode-img-placeholder" style="color: var(--victory);">
                     <span>⚡</span>
                 </div>
                 <div class="mode-info">
                     <div class="mode-title" style="color: var(--victory);">Modo Competitivo</div>
-                    <div class="mode-desc">Protocolo de velocidad. Compite contra otros agentes en 3 rondas.</div>
+                    <div class="mode-desc">Protocolo de velocidad. 3 Rondas consecutivas. Gana puntos por tiempo y precisión.</div>
                 </div>
             </div>
         </div>
         <button class="btn-exit" onclick="closeGameModeSelection()" style="margin-top: 40px;">CANCELAR</button>
-    </div>
-
-    <div id="net-mode-select">
-        <div class="lobby-box">
-            <h2 class="net-title">CONEXIÓN DE RED</h2>
-            <button class="btn-net" onclick="startOfflineCompetition()">JUGAR SOLO (OFFLINE)</button>
-            <button class="btn-net" onclick="setupMultiplayer('host')">CREAR SALA (HOST)</button>
-            <button class="btn-net" onclick="setupMultiplayer('join')">UNIRSE A SALA</button>
-            <button class="btn-exit" style="margin-top:20px; width:100%;" onclick="closeNetModeSelect()">VOLVER</button>
-        </div>
-    </div>
-
-    <div id="lobby-screen">
-        <div class="lobby-box">
-            <h2 class="net-title" id="lobby-title">SALA DE ESPERA</h2>
-            
-            <div id="host-controls" style="display:none;">
-                <p style="color:#aaa; font-size:0.8rem;">COMPARTE ESTE CÓDIGO CON OTROS AGENTES:</p>
-                <div class="room-code-display" id="my-room-code">GENERANDO...</div>
-                
-                <div class="toggle-container">
-                    <span>CASOS ALEATORIOS</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="sync-case-toggle" checked>
-                        <span class="slider"></span>
-                    </label>
-                    <span style="color:var(--net-blue)">CASOS SINCRONIZADOS</span>
-                </div>
-            </div>
-
-            <div id="join-controls" style="display:none;">
-                <p>INGRESA EL CÓDIGO DE SALA:</p>
-                <input type="text" id="join-code-input" class="login-input" placeholder="CÓDIGO DE SALA" style="border-color:var(--net-blue); color:var(--net-blue);">
-                <button class="btn-net" onclick="connectToHost()">CONECTAR</button>
-            </div>
-
-            <div class="player-list" id="lobby-player-list">
-                </div>
-            
-            <div id="lobby-status" style="color: var(--terminal-green); margin:10px; font-size:0.8rem;">ESPERANDO CONEXIÓN...</div>
-
-            <button id="btn-start-net" class="btn-net" style="display:none; background:var(--dark-red); color:#fff;" onclick="NetManager.startMatch()">INICIAR OPERACIÓN</button>
-            <button class="btn-exit" onclick="NetManager.disconnect()" style="margin-top:20px;">ABORTAR</button>
-        </div>
     </div>
 
     <div id="migration-modal">
@@ -794,13 +671,9 @@
         <div id="overlay-desc" style="width: 100%; display: flex; justify-content: center;"></div>
         <p id="overlay-reward-msg"></p>
         <button class="btn-main" id="btn-next-case" style="width: 250px;" onclick="initGame()">SIGUIENTE CASO</button>
-        <div id="waiting-msg" style="display:none; color:var(--net-blue); margin-top:10px; animation: blink 1s infinite;">ESPERANDO A OTROS AGENTES...</div>
     </div>
 
     <div class="machine-body" id="main-ui">
-        <div id="opponent-status">
-            </div>
-
         <div id="case-info-bar">
             <span id="case-id-display">CASO #----</span>
             <span id="game-points" style="color: var(--terminal-green)">PTS: 0</span>
@@ -839,6 +712,7 @@
             doom_cluster_L: [65.41, 77.78, 92.50], doom_cluster_R: [155.56, 185.00, 220.00],
             taxi_stab_L: [146.83, 185.00, 233.08], taxi_stab_R: [369.99, 440.00, 523.25],
             f_min_L: [87.31, 103.83, 130.81], f_min_R: [174.61, 207.65, 261.63],
+            // New chords for extended play
             eb_maj7_L: [155.56, 196.00, 233.08], eb_maj7_R: [311.13, 392.00, 466.16],
             d7alt_L: [146.83, 185.00, 246.94], d7alt_R: [293.66, 369.99, 440.00]
         };
@@ -850,6 +724,7 @@
             mystery_dim: [65.41, 77.78, 92.50, 110.00, 130.81], 
             urban_penta: [196.00, 233.08, 261.63, 293.66, 349.23], 
             noir_theme: [196.00, 207.65, 233.08, 261.63, 293.66],
+            // New scale for extended variation
             taxi_extended: [196.00, 233.08, 261.63, 293.66, 311.13, 349.23, 392.00, 466.16]
         };
 
@@ -895,7 +770,7 @@
             checkUserProfile();
         }
 
-        // --- SISTEMA DE IDENTIFICACIÓN ---
+        // --- SISTEMA DE IDENTIFICACIÓN (NUEVO) ---
         let currentUser = null;
 
         function checkUserProfile() {
@@ -905,6 +780,7 @@
                 updateProfileUI();
                 fadeToMode(1); // Iniciar música de menú
             } else {
+                // Si no hay perfil, mostrar pantalla de login y silenciar música por ahora o dejarla en ambient
                 fadeToMode(1);
                 document.getElementById('login-screen').style.display = 'flex';
                 document.getElementById('agent-name-input').focus();
@@ -923,6 +799,7 @@
 
             playSFX('click');
             
+            // Generar ID única: "U-" + Timestamp base 36 + Random Hex
             const uniqueId = "U-" + Date.now().toString(36).toUpperCase().slice(-4) + Math.floor(Math.random()*1000);
             
             currentUser = {
@@ -933,9 +810,11 @@
 
             localStorage.setItem('bioBreachProfile', JSON.stringify(currentUser));
             
+            // Ocultar login
             document.getElementById('login-screen').style.display = 'none';
             updateProfileUI();
-            playSFX('win'); 
+            
+            playSFX('win'); // Sonido de confirmación
         }
 
         function updateProfileUI() {
@@ -974,12 +853,14 @@
         // --- TRANSICIONES SUAVES ---
         function fadeToMode(newMode) {
             if (!isMusicRunning) return;
+            // Crossfade rápido
             const t = actx.currentTime;
             musicMaster.gain.cancelScheduledValues(t);
-            musicMaster.gain.setTargetAtTime(0, t, 0.1); 
+            musicMaster.gain.setTargetAtTime(0, t, 0.1); // Bajar volumen rápido
 
             setTimeout(() => {
                 setMusicModeData(newMode);
+                // Subir volumen
                 musicMaster.gain.setTargetAtTime(0.55, actx.currentTime, 0.2); 
             }, 300);
         }
@@ -988,11 +869,12 @@
             if (!actx) return;
             const t = actx.currentTime;
             musicMaster.gain.cancelScheduledValues(t);
-            musicMaster.gain.setTargetAtTime(0, t, 0.05); 
+            musicMaster.gain.setTargetAtTime(0, t, 0.05); // Corte casi inmediato
         }
 
         function restoreMusic() {
             if (!actx) return;
+             // Asegurar que estamos en el modo correcto del juego (Modo 3)
             setMusicModeData(3);
             const t = actx.currentTime;
             musicMaster.gain.cancelScheduledValues(t);
@@ -1001,7 +883,8 @@
 
         function setMusicModeData(m) {
             musicMode = m;
-            musicBeat = 0; 
+            musicBeat = 0; // Reset beat on mode change to start sequence fresh
+            // 0: Classic, 1: Doom, 2: Twin Peaks, 3: Taxi Driver
             const tempos = [95, 80, 60, 105]; 
             currentTempo = tempos[m];
         }
@@ -1190,62 +1073,89 @@
                 if (b % 8 === 0) playChord('f_maj', 4, 0.1); 
                 if (b % 8 === 4) playChord('f_min', 4, 0.1);
             }
-            // MODO 3: TAXI DRIVER (Juego)
+            // MODO 3: TAXI DRIVER (Juego) - EXTENDED 4 MINUTES LOGIC
             else if (musicMode === 3) {
+                // 105 BPM -> 4 minutos = 420 beats exactos.
                 const loop = 420;
-                const lb = b % loop; 
-                if (lb < 380) { 
+                const lb = b % loop; // Beat local dentro del ciclo de 4 min
+
+                // --- BATERÍA ---
+                // Base Ride (Casi siempre presente pero varía)
+                if (lb < 380) { // Cortar al final para fade out
                     if (lb % 2 === 0 || (lb % 4 === 3 && Math.random() > 0.4)) playDrum('ride');
                 }
-                if (lb > 32 && lb < 224) { 
+                
+                // Kick y Snare con evolución
+                if (lb > 32 && lb < 224) { // Fase normal
                     if (lb % 4 === 0) playDrum('kick');
                     if (lb % 8 === 6) playDrum('snare');
-                } else if (lb >= 224 && lb < 320) { 
+                } else if (lb >= 224 && lb < 320) { // Fase caos/tensión (más activo)
                      if (lb % 2 === 0) playDrum('kick');
                      if (Math.random() > 0.6) playDrum('snare');
-                } else if (lb >= 320 && lb < 380) { 
+                } else if (lb >= 320 && lb < 380) { // Retorno a calma
                      if (lb % 4 === 0) playDrum('kick');
                 }
-                if (lb < 32) { 
-                    if (lb % 8 === 0) playBass(49.00, 1.5); 
+
+                // --- BAJO ---
+                // Patrón evolutivo
+                if (lb < 32) { // Intro Minimalista
+                    if (lb % 8 === 0) playBass(49.00, 1.5); // G1
                 } 
-                else if (lb < 160) { 
-                    const walk = [49.00, 58.27, 65.41, 73.42]; 
+                else if (lb < 160) { // Walking Bass relajado
+                    const walk = [49.00, 58.27, 65.41, 73.42]; // Gm
                     if (lb % 2 === 0) playBass(walk[(lb/2)%4], 0.8);
                 } 
-                else if (lb < 288) { 
+                else if (lb < 288) { // Tensión cromática
                     if (lb % 2 === 0) playBass(Math.random() > 0.5 ? 46.25 : 49.00, 0.6); 
                 } 
-                else { 
+                else { // Outro
                     if (lb % 8 === 0) playBass(49.00, 3.0);
                 }
+
+                // --- ACORDES (PIANO) ---
                 if (lb > 16 && lb < 360) {
-                    if (lb % 32 === 0) playChord('taxi_stab', 0.5, 0.0); 
-                    if (lb % 32 === 16) playChord('cm11', 0.6, 0.05); 
+                    if (lb % 32 === 0) playChord('taxi_stab', 0.5, 0.0); // Gm stab
+                    if (lb % 32 === 16) playChord('cm11', 0.6, 0.05); // Cm cambio
+                    
+                    // Variación en la sección media
                     if (lb > 128 && lb < 256 && lb % 16 === 12) {
                         playChord(Math.random() > 0.5 ? 'eb_maj7' : 'd7alt', 0.4, 0.02);
                     }
                 }
+
+                // --- SAXOFÓN (MELODÍA PRINCIPAL) ---
+                // Aquí está la variedad de tonos nuevos
+                
+                // Seccion A: Tema Principal (Low & Slow) - Beats 32-96
                 if (lb >= 32 && lb < 96) {
                     if (lb % 16 === 0) playSax(SCALES.urban_penta[0], 2.0, 'normal');
                     if (lb % 16 === 4) playSax(SCALES.urban_penta[2], 1.5, 'normal');
                     if (lb % 16 === 14) playSax(SCALES.urban_penta[1], 1.0, 'normal');
                 }
+                
+                // Sección B: Desarrollo (Higher & Agitated) - Beats 96-192
                 else if (lb >= 96 && lb < 192) {
+                    // Usamos la escala extendida para notas nuevas
                     if (lb % 8 === 0 && Math.random() > 0.3) playSax(SCALES.taxi_extended[4], 1.2, 'normal'); 
-                    if (lb % 16 === 10) playSax(SCALES.taxi_extended[6], 1.5, 'growl'); 
+                    if (lb % 16 === 10) playSax(SCALES.taxi_extended[6], 1.5, 'growl'); // Nota aguda con growl
                     if (lb % 32 === 30) playSax(SCALES.taxi_extended[3], 0.5, 'normal');
                 }
+                
+                // Sección C: "The Breakdown" (Caos/Free Jazz) - Beats 192-288
                 else if (lb >= 192 && lb < 288) {
                     if (lb % 4 === 0 && Math.random() > 0.4) {
                         const randomNote = SCALES.taxi_extended[Math.floor(Math.random() * SCALES.taxi_extended.length)];
-                        playSax(randomNote * 2, 0.3, 'growl'); 
+                        playSax(randomNote * 2, 0.3, 'growl'); // Notas muy agudas y cortas
                     }
                 }
+                
+                // Sección D: Retorno a la Melodía (Resolución) - Beats 288-360
                 else if (lb >= 288 && lb < 360) {
                     if (lb % 16 === 0) playSax(SCALES.urban_penta[0], 2.5, 'normal');
                     if (lb % 16 === 8) playSax(SCALES.urban_penta[3], 1.5, 'normal');
                 }
+                
+                // Outro: Silencio de saxo, solo ambiente
             }
         }
         // ==========================================
@@ -1264,312 +1174,7 @@
         let compMaxRounds = 3;
         let compStartTime = 0;
         let compTotalScore = 0;
-        let compTimerInterval = null; 
-
-        // --- VARIABLES DE RED (NUEVO) ---
-        const NetManager = {
-            peer: null,
-            conn: null, // Para cliente
-            connections: [], // Para host
-            isHost: false,
-            isMultiplayer: false,
-            syncCases: true,
-            myId: null,
-            players: [], // {id, name, score, finished}
-            
-            init: function(mode) {
-                this.isMultiplayer = true;
-                this.isHost = (mode === 'host');
-                this.players = [];
-                this.connections = [];
-                
-                // Inicializar PeerJS
-                this.peer = new Peer(null, { debug: 1 });
-                
-                this.peer.on('open', (id) => {
-                    this.myId = id;
-                    // Auto-añadirse a la lista
-                    this.players.push({
-                        id: id,
-                        name: currentUser ? currentUser.name : "AGENTE",
-                        score: 0,
-                        finished: false
-                    });
-                    this.updateLobbyUI();
-
-                    if (this.isHost) {
-                        document.getElementById('my-room-code').innerText = id;
-                        document.getElementById('lobby-status').innerText = "SALA CREADA. ESPERANDO AGENTES...";
-                        document.getElementById('btn-start-net').style.display = 'block';
-                    }
-                });
-
-                this.peer.on('connection', (c) => {
-                    if (this.isHost) {
-                        this.handleHostConnection(c);
-                    } else {
-                        // Cliente recibe conexión de vuelta (raro en peerjs standard, pero posible)
-                    }
-                });
-                
-                this.peer.on('error', (err) => {
-                   alert("ERROR DE RED: " + err.type);
-                });
-            },
-
-            // Lógica HOST
-            handleHostConnection: function(c) {
-                c.on('open', () => {
-                    this.connections.push(c);
-                    
-                    // Pedir nombre
-                    c.send({ type: 'REQUEST_INFO' });
-                });
-
-                c.on('data', (data) => {
-                    if (data.type === 'PLAYER_INFO') {
-                        this.players.push({
-                            id: c.peer,
-                            name: data.name,
-                            score: 0,
-                            finished: false,
-                            conn: c
-                        });
-                        this.broadcastLobby();
-                        playSFX('click');
-                    }
-                    else if (data.type === 'FINISHED_ROUND') {
-                        const p = this.players.find(pl => pl.id === c.peer);
-                        if (p) {
-                            p.score += data.score;
-                            p.finished = true;
-                            // Calcular posición para bonus extra si se desea
-                            const finishedCount = this.players.filter(pl => pl.finished).length;
-                            // Bonus por posición: 1ro=500, 2do=250, etc.
-                            const rankBonus = 500 / finishedCount;
-                            p.score += Math.floor(rankBonus);
-                            
-                            this.broadcastUpdate();
-                            this.checkRoundEnd();
-                        }
-                    }
-                });
-                
-                c.on('close', () => {
-                   this.players = this.players.filter(p => p.id !== c.peer);
-                   this.broadcastLobby();
-                });
-            },
-
-            broadcastLobby: function() {
-                const cleanList = this.players.map(p => ({ id: p.id, name: p.name, score: p.score }));
-                this.updateLobbyUI();
-                this.connections.forEach(c => c.send({ type: 'LOBBY_UPDATE', players: cleanList }));
-            },
-            
-            broadcastUpdate: function() {
-                const cleanList = this.players.map(p => ({ id: p.id, name: p.name, score: p.score, finished: p.finished }));
-                this.updateOpponentUI(); // Update Host UI
-                this.connections.forEach(c => c.send({ type: 'GAME_UPDATE', players: cleanList }));
-            },
-
-            startMatch: function() {
-                this.syncCases = document.getElementById('sync-case-toggle').checked;
-                // Generar datos iniciales si es sync
-                this.startRound();
-            },
-
-            startRound: function() {
-                // Reset flags
-                this.players.forEach(p => p.finished = false);
-                this.broadcastUpdate();
-                
-                let roundData = null;
-                if (this.syncCases) {
-                    generateNewSquad();
-                    const target = personas[Math.floor(Math.random() * personas.length)];
-                    target.recordId = generateCriminalRecordID();
-                    roundData = { squad: personas, target: target };
-                }
-
-                const msg = { type: 'START_GAME', roundData: roundData };
-                this.connections.forEach(c => c.send(msg));
-                
-                // Iniciar Host
-                this.onStartGameReceived(roundData);
-            },
-            
-            checkRoundEnd: function() {
-                // Si todos terminaron
-                if (this.players.every(p => p.finished)) {
-                    setTimeout(() => {
-                        if (compRound < compMaxRounds) {
-                            // Siguiente ronda
-                            this.startRound(); 
-                        } else {
-                            // Fin de juego
-                            this.connections.forEach(c => c.send({ type: 'GAME_OVER_FINAL', players: this.players }));
-                            // Mostrar scoreboard final host
-                        }
-                    }, 3000);
-                }
-            },
-
-            // Lógica CLIENTE
-            connect: function(hostId) {
-                this.conn = this.peer.connect(hostId);
-                
-                this.conn.on('open', () => {
-                    document.getElementById('lobby-status').innerText = "CONECTADO A HOST. ESPERANDO INICIO...";
-                    this.conn.send({ type: 'PLAYER_INFO', name: currentUser.name });
-                });
-
-                this.conn.on('data', (data) => {
-                    if (data.type === 'LOBBY_UPDATE') {
-                        this.players = data.players;
-                        this.updateLobbyUI();
-                    }
-                    else if (data.type === 'START_GAME') {
-                        this.onStartGameReceived(data.roundData);
-                    }
-                    else if (data.type === 'GAME_UPDATE') {
-                        this.players = data.players;
-                        this.updateOpponentUI();
-                    }
-                    else if (data.type === 'GAME_OVER_FINAL') {
-                        this.players = data.players;
-                        // Forzar pantalla final
-                        gameActive = false;
-                        document.getElementById('overlay').classList.add('active');
-                        document.getElementById('overlay-title').innerText = "TORNEO FINALIZADO";
-                        // Ordenar por puntaje
-                        const sorted = this.players.sort((a,b) => b.score - a.score);
-                        let html = "RANKING FINAL:<br>";
-                        sorted.forEach((p, i) => {
-                             html += `#${i+1} ${p.name}: ${Math.floor(p.score)} PTS<br>`;
-                        });
-                        document.getElementById('overlay-reward-msg').innerHTML = html;
-                        document.getElementById('btn-next-case').innerText = "SALIR";
-                        document.getElementById('btn-next-case').onclick = () => location.reload();
-                    }
-                });
-                
-                this.conn.on('close', () => {
-                    alert("CONEXIÓN CON HOST PERDIDA");
-                    location.reload();
-                });
-            },
-
-            // Común
-            updateLobbyUI: function() {
-                const list = document.getElementById('lobby-player-list');
-                list.innerHTML = "";
-                this.players.forEach(p => {
-                    const div = document.createElement('div');
-                    div.className = "player-item";
-                    div.innerText = p.name + (p.id === this.myId ? " (TÚ)" : "");
-                    list.appendChild(div);
-                });
-            },
-            
-            onStartGameReceived: function(roundData) {
-                document.getElementById('lobby-screen').style.display = 'none';
-                
-                // Inyectar datos si es Sync
-                if (roundData) {
-                    personas = roundData.squad;
-                    objetivo = roundData.target; // Asegurar referencia
-                    // Re-mapear objetivo localmente porque el objeto perdió referencia
-                    objetivo = personas.find(p => p.n === roundData.target.n);
-                    
-                    // Sobrescribir initGame para que no regenere
-                    window.preSeededGame = true;
-                } else {
-                    window.preSeededGame = false;
-                }
-                
-                // Iniciar UI de juego
-                document.getElementById('gamemode-screen').style.display = 'none';
-                selectMode('competitive'); // Esto lanza el tutorial, luego startGame
-            },
-            
-            updateOpponentUI: function() {
-                const div = document.getElementById('opponent-status');
-                div.style.display = 'block';
-                let html = "<b>RED TÁCTICA:</b><br>";
-                this.players.forEach(p => {
-                    if (p.id !== this.myId) {
-                        html += `${p.name}: ${p.finished ? '<span style="color:#0f0">LISTO</span>' : 'BUSCANDO...'}<br>`;
-                    }
-                });
-                div.innerHTML = html;
-            },
-
-            reportFinish: function(score) {
-                if (this.isHost) {
-                    const me = this.players.find(p => p.id === this.myId);
-                    me.score += score;
-                    me.finished = true;
-                    // Bonus host
-                    const finishedCount = this.players.filter(pl => pl.finished).length;
-                    me.score += Math.floor(500 / finishedCount);
-                    
-                    this.broadcastUpdate();
-                    this.checkRoundEnd();
-                } else {
-                    this.conn.send({ type: 'FINISHED_ROUND', score: score });
-                }
-                
-                // Mostrar mensaje de espera
-                document.getElementById('btn-next-case').style.display = 'none';
-                document.getElementById('waiting-msg').style.display = 'block';
-            },
-
-            disconnect: function() {
-                location.reload();
-            }
-        };
-
-        // --- FUNCIONES UI RED ---
-        function openNetModeSelect() {
-            playSFX('click');
-            document.getElementById('gamemode-screen').style.display = 'none';
-            document.getElementById('net-mode-select').style.display = 'flex';
-        }
-
-        function closeNetModeSelect() {
-            playSFX('click');
-            document.getElementById('net-mode-select').style.display = 'none';
-            document.getElementById('gamemode-screen').style.display = 'flex';
-        }
-
-        function startOfflineCompetition() {
-            closeNetModeSelect();
-            selectMode('competitive');
-        }
-
-        function setupMultiplayer(role) {
-            closeNetModeSelect();
-            document.getElementById('lobby-screen').style.display = 'flex';
-            if (role === 'host') {
-                document.getElementById('lobby-title').innerText = "SALA DE MANDO (HOST)";
-                document.getElementById('host-controls').style.display = 'block';
-                NetManager.init('host');
-            } else {
-                document.getElementById('lobby-title').innerText = "ENLACE REMOTO";
-                document.getElementById('join-controls').style.display = 'block';
-                NetManager.init('client');
-            }
-        }
-
-        function connectToHost() {
-            const code = document.getElementById('join-code-input').value.trim();
-            if (code) {
-                NetManager.connect(code);
-            }
-        }
-        // --- FIN RED ---
-
+        let compTimerInterval = null; // VARIABLE PARA EL INTERVALO DEL RELOJ
 
         // --- MANEJO DE ARCHIVOS Y MURO ---
         function openArchives() {
@@ -1629,6 +1234,7 @@
 
         function openSettings() {
             playSFX('click');
+            // Nota: Settings es un modal sobre el menú, así que mantenemos DOOM JAZZ (Modo 1)
             document.getElementById('settings-modal').style.display = 'flex';
             selectMosaic(currentMosaicMode); 
         }
@@ -1709,6 +1315,8 @@
             }
         }
 
+        // --- SISTEMA DE MIGRACIÓN (Nuevo Solicitado) ---
+        // Se ha reemplazado el alert() por un manejo de DOM (modal)
         function checkMigration() {
             if (!localStorage.getItem('bioBreach_v8_migration')) {
                 const oldSolved = JSON.parse(localStorage.getItem('bioBreachSolved') || '[]');
@@ -1720,9 +1328,11 @@
                     currentMoney += bonus;
                     localStorage.setItem('bioBreachMoney', currentMoney);
                     
+                    // Resetear historial para devolver casos al sistema
                     localStorage.setItem('bioBreachSolved', '[]');
                     localStorage.setItem('bioBreachUsedIDs', '[]');
                     
+                    // MOSTRAR MODAL EN LUGAR DE ALERT
                     document.getElementById('mig-count').innerText = count;
                     document.getElementById('mig-money').innerText = bonus;
                     document.getElementById('migration-modal').style.display = 'flex';
@@ -1734,6 +1344,7 @@
             }
         }
 
+        // Función para cerrar el nuevo modal
         function closeMigrationModal() {
             playSFX('click');
             document.getElementById('migration-modal').style.display = 'none';
@@ -1742,7 +1353,7 @@
         window.addEventListener('load', () => {
             preloadAssets();
             updateBoardClass();
-            checkMigration(); 
+            checkMigration(); // Verificar migración al cargar
         });
 
         const AUDIO_CONFIG = {
@@ -1801,7 +1412,7 @@
         let pendingDiscards = []; 
         let lastQueryText = "";   
         let matchPoints = 0; 
-        let pointsPool = 0; 
+        let pointsPool = 0; // Banco de puntos pendientes de visualización
 
         async function typeWriter(text, elementId, speed = 20) {
             if (isTyping) return;
@@ -1831,6 +1442,7 @@
             localStorage.setItem('bioBreachMoney', totalMoney);
         }
 
+        // --- NUEVO: FUNCIONES DE SELECCIÓN DE MODO ---
         function openGameModeSelection() {
             playSFX('click');
             document.getElementById('main-menu').style.display = 'none';
@@ -1847,11 +1459,13 @@
             playSFX('click');
             isCompetitiveMode = (mode === 'competitive');
             
+            // Preparar variables competitivas si aplica
             if (isCompetitiveMode) {
                 compRound = 1;
                 compTotalScore = 0;
             }
 
+            // Ocultar pantalla de selección y mostrar tutorial
             document.getElementById('gamemode-screen').style.display = 'none';
             showTutorial();
         }
@@ -1860,11 +1474,13 @@
             fadeToMode(2); // TWIN PEAKS
             const tContent = document.getElementById('tutorial-content');
             
+            // CAMBIO DINÁMICO DEL MANUAL DE CAMPO
             if (isCompetitiveMode) {
+                // MANUAL COMPETITIVO
                 tContent.innerHTML = `
                     <div class="step" style="border-left-color: var(--victory);">
                         <b>1. PROTOCOLO DE VELOCIDAD</b>
-                        El objetivo es completar 3 rondas. Gana el agente más rápido y preciso.
+                        El objetivo es completar 3 rondas consecutivas en el menor tiempo posible.
                     </div>
                     <div class="step" style="border-left-color: var(--gold);">
                         <b>2. SISTEMA DE PUNTOS</b>
@@ -1872,22 +1488,27 @@
                     </div>
                     <div class="step">
                         <b>3. SIN PAUSAS</b>
-                        Al finalizar un caso, pasarás inmediatamente al siguiente (o esperarás a tus rivales en Modo Online).
+                        Al finalizar un caso, pasarás inmediatamente al siguiente. Mantén el ritmo.
                     </div>
                 `;
             } else {
+                // MANUAL CLÁSICO (Original)
                 tContent.innerHTML = `
                     <div class="step">
                         <b>1. INTERROGATORIO PRECISO</b>
-                        Formule las preguntas correctamente usando signos (¿...?). Ejemplo: "¿Es de España?".
+                        Formule las preguntas correctamente usando signos (¿...?). Ejemplo: "¿Es de España?". No escriba palabras sueltas al final.
                     </div>
                     <div class="step">
                         <b>2. DESCARTE OBLIGATORIO</b>
-                        El sistema bloqueará nuevos comandos hasta que elimines a TODOS los sospechosos incorrectos.
+                        El sistema bloqueará nuevos comandos hasta que elimines a TODOS los sospechosos que creas incorrectos. <b>¡CUIDADO!</b> Si eliminas al sospechoso equivocado, no habrá aviso.
+                    </div>
+                    <div class="step">
+                        <b>3. SISTEMA DE PUNTOS</b>
+                        Eliminar múltiples sospechosos con una sola pregunta otorga puntos extra (3+ sospechosos = +5 PTS).
                     </div>
                      <div class="step">
                         <b>4. OBJETIVO ÚNICO</b>
-                        La misión termina cuando descubres al culpable. Si lo descartas por error, pierdes el contrato.
+                        La misión termina cuando descubres al culpable. Si lo descartas por error, pierdes el contrato inmediatamente.
                     </div>
                 `;
             }
@@ -1900,16 +1521,18 @@
             if (window.parent && typeof window.parent.cerrarMotor === 'function') {
                 window.parent.cerrarMotor();
             } else {
-                fadeToMode(1); 
+                fadeToMode(1); // BACK TO DOOM JAZZ
                 alert("SISTEMA DESCONECTADO DEL NÚCLEO. SIMULANDO SALIDA.");
             }
         }
 
+        // --- FUNCIÓN PARA ACTUALIZAR EL RELOJ COMPETITIVO ---
         function updateCompTimer() {
             if (!gameActive || !isCompetitiveMode) return;
             const now = Date.now();
             const diff = Math.floor((now - compStartTime) / 1000);
             
+            // Formato MM:SS
             const m = Math.floor(diff / 60).toString().padStart(2, '0');
             const s = (diff % 60).toString().padStart(2, '0');
             
@@ -1923,8 +1546,11 @@
             document.getElementById('tutorial-screen').style.display = 'none';
             document.getElementById('main-ui').style.display = 'flex'; 
             
+            // Iniciar tiempo para competitivo
             if (isCompetitiveMode) {
                 compStartTime = Date.now();
+                
+                // Iniciar intervalo del reloj
                 if (compTimerInterval) clearInterval(compTimerInterval);
                 compTimerInterval = setInterval(updateCompTimer, 1000);
             }
@@ -1950,13 +1576,11 @@
             playSFX('click', true); 
             gameActive = false;
             
+            // Detener reloj si existe
             if(compTimerInterval) clearInterval(compTimerInterval);
             
-            // Si es Online, desconectar
-            if (NetManager.isMultiplayer) NetManager.disconnect();
-
             closeAbortModal();
-            fadeToMode(1); 
+            fadeToMode(1); // Vuelve al menú con DOOM JAZZ
             document.getElementById('main-ui').style.display = 'none';
             document.getElementById('main-menu').style.display = 'flex';
         }
@@ -2003,32 +1627,34 @@
             document.getElementById('main-ui').classList.remove('blur-effect');
             document.getElementById('out').style.color = "var(--terminal-green)";
             
-            // Ocultar mensaje de espera
-            document.getElementById('btn-next-case').style.display = 'inline-block';
-            document.getElementById('waiting-msg').style.display = 'none';
-
+            // Asegurar que la música del juego vuelve si venimos de Win/Lose
             restoreMusic();
             
             playSFX('newCase', true);
             
             currentReward = Math.floor(Math.random() * 500) + 100;
+            // Resetear puntos de investigación y pool
             matchPoints = 0;
             pointsPool = 0;
             document.getElementById('game-points').innerText = "PTS: " + matchPoints;
 
+            // --- LÓGICA DE UI SEGÚN MODO ---
             const btnNewCase = document.getElementById('btn-new-case');
             const timerDisplay = document.getElementById('comp-timer-display');
 
             if (isCompetitiveMode) {
+                // MODO COMPETITIVO: Ocultar botón, mostrar reloj
                 document.getElementById('case-id-display').innerText = `RONDA ${compRound}/${compMaxRounds}`;
                 btnNewCase.style.display = 'none';
                 timerDisplay.style.display = 'inline';
                 
             } else {
+                // MODO CLÁSICO: Mostrar botón, ocultar reloj
                 document.getElementById('case-id-display').innerText = `CASO #${Math.floor(Math.random() * 9000) + 1000}`;
                 btnNewCase.style.display = 'inline';
                 timerDisplay.style.display = 'none';
                 
+                // Asegurarse de limpiar intervalo si se coló
                 if(compTimerInterval) clearInterval(compTimerInterval);
             }
 
@@ -2039,30 +1665,26 @@
             document.getElementById('queryInput').disabled = false;
             document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA (¿...?)...";
 
-            // LOGICA MODIFICADA PARA MULTIPLAYER SYNC
-            if (!window.preSeededGame) {
-                let attempts = 0;
-                let validCase = false;
+            let attempts = 0;
+            let validCase = false;
+            
+            while (!validCase && attempts < 100) {
+                generateNewSquad(); 
+                const candidate = personas[Math.floor(Math.random() * personas.length)];
                 
-                while (!validCase && attempts < 100) {
-                    generateNewSquad(); 
-                    const candidate = personas[Math.floor(Math.random() * personas.length)];
-                    
-                    if (!isCriminalCaptured(candidate)) {
-                        objetivo = candidate;
-                        validCase = true;
-                    } else {
-                        attempts++;
-                    }
+                if (!isCriminalCaptured(candidate)) {
+                    objetivo = candidate;
+                    validCase = true;
+                } else {
+                    attempts++;
                 }
-                
-                if (!validCase) {
-                    objetivo = personas[Math.floor(Math.random() * personas.length)];
-                }
-                objetivo.recordId = generateCriminalRecordID();
-            } else {
-                // Ya tenemos personas y objetivo inyectados por red
             }
+            
+            if (!validCase) {
+                objetivo = personas[Math.floor(Math.random() * personas.length)];
+            }
+
+            objetivo.recordId = generateCriminalRecordID();
 
             gameActive = true;
             
@@ -2148,9 +1770,11 @@
             document.body.appendChild(el);
 
             const target = document.getElementById('game-points').getBoundingClientRect();
+            // Ajustar destino al centro del contador
             const destX = target.left + (target.width / 2);
             const destY = target.top + (target.height / 2);
 
+            // Forzar reflow para animación
             requestAnimationFrame(() => {
                 el.style.transform = `translate(${destX - startX}px, ${destY - startY}px) scale(0.5)`;
                 el.style.opacity = '0';
@@ -2184,23 +1808,32 @@
                         if (pendingDiscards.length > 0) {
                             playSFX('discard');
                             
+                            // --- EFECTO VISUAL DE PUNTOS ---
+                            // Obtener coordenadas de la tarjeta
                             const rect = cardEl.getBoundingClientRect();
                             const centerX = rect.left + rect.width / 2;
                             const centerY = rect.top + rect.height / 2;
 
+                            // Distribuir puntos del pool
                             let ptsToGive = 0;
                             if (pointsPool > 0) {
-                                const remainingDiscards = pendingDiscards.length; 
+                                // Lógica simple de distribución entera:
+                                // Dividir el pool restante entre los descartes restantes
+                                const remainingDiscards = pendingDiscards.length; // Incluye al actual aun no borrado de la lista logica
                                 ptsToGive = Math.ceil(pointsPool / remainingDiscards);
+                                
+                                // Ajuste para no dar más de lo que hay
                                 if (ptsToGive > pointsPool) ptsToGive = pointsPool;
                                 pointsPool -= ptsToGive;
                             }
                             
+                            // --- FIX: Añadido winDelay para esperar animación ---
                             let winDelay = 0;
                             if (ptsToGive > 0) {
                                 spawnFloatingPoint(centerX, centerY, ptsToGive);
-                                winDelay = 900; 
+                                winDelay = 900; // Esperar 900ms si hay puntos volando
                             }
+                            // --------------------------------
 
                             discardVisual(cardEl);
                             
@@ -2209,7 +1842,7 @@
                             }
 
                             if (p.n === objetivo.n) {
-                                checkStatus(0); 
+                                checkStatus(0); // Game Over inmediato
                                 return;
                             }
 
@@ -2247,7 +1880,11 @@
         }
 
         function discardVisual(card) {
-            card.classList.add('discarded');
+            if (currentMosaicMode === 5) {
+                card.classList.add('discarded'); 
+            } else {
+                card.classList.add('discarded');
+            }
         }
 
         function checkStatus(delay = 0) {
@@ -2258,6 +1895,7 @@
             }
             
             if (activeCards.length === 1 && activeCards[0].id === `card-${objetivo.n}`) {
+                // Esperar a que la animación de puntos termine antes de mostrar la victoria
                 setTimeout(() => {
                     endGame(true);
                 }, delay);
@@ -2267,8 +1905,10 @@
 
         function endGame(win) {
             gameActive = false;
+            // CORTAR MÚSICA
             silenceMusic();
             
+            // DETENER RELOJ VISUAL SI ESTÁ ACTIVO
             if(compTimerInterval) clearInterval(compTimerInterval);
             
             document.getElementById('main-ui').classList.add('blur-effect');
@@ -2280,35 +1920,35 @@
             if (win) { 
                 playSFX('win', true); 
                 
+                // CALCULO DE BONIFICACIÓN POR PUNTOS
                 const pointBonus = matchPoints * 10;
                 let finalRoundPoints = matchPoints;
                 
+                // LÓGICA COMPETITIVA: BONUS DE TIEMPO
                 if (isCompetitiveMode) {
                     const timeTaken = (Date.now() - compStartTime) / 1000;
-                    const speedBonus = Math.max(0, Math.floor((120 - timeTaken) * 2)); 
+                    const speedBonus = Math.max(0, Math.floor((120 - timeTaken) * 2)); // Bonus si < 2 min
                     finalRoundPoints += speedBonus;
                     compTotalScore += finalRoundPoints;
                     
                     compRound++;
                     
-                    if (NetManager.isMultiplayer) {
-                        NetManager.reportFinish(finalRoundPoints);
-                        document.getElementById('overlay-title').innerText = "ESPERANDO CONFIRMACIÓN";
-                        rewardMsg.innerHTML = `TIEMPO: ${timeTaken.toFixed(1)}s<br>PTS TUYOS: ${finalRoundPoints}<br>Esperando a rivales...`;
-                    } 
-                    else if (compRound > compMaxRounds) {
+                    if (compRound > compMaxRounds) {
+                         // FIN DE TORNEO
                          document.getElementById('overlay-title').innerText = "TORNEO FINALIZADO"; 
                          rewardMsg.innerHTML = `<span style="color:var(--victory)">PUNTUACIÓN TOTAL: ${compTotalScore}</span><br>RONDAS COMPLETADAS`;
                          nextBtn.innerText = "VOLVER AL MENÚ";
-                         nextBtn.onclick = () => { location.reload(); }; 
+                         nextBtn.onclick = () => { location.reload(); }; // Reset simple
                     } else {
+                         // SIGUIENTE RONDA
                          document.getElementById('overlay-title').innerText = `RONDA ${compRound-1} COMPLETADA`;
                          rewardMsg.innerHTML = `TIEMPO: ${timeTaken.toFixed(1)}s<br>PTS RONDA: ${finalRoundPoints}`;
                          nextBtn.innerText = `INICIAR RONDA ${compRound}`;
-                         nextBtn.onclick = () => { initGame(); }; 
+                         nextBtn.onclick = () => { initGame(); }; // Siguiente ronda
                     }
                 } 
                 else {
+                    // MODO CLÁSICO
                     totalMoney += currentReward + pointBonus;
                     document.getElementById('overlay-title').innerText = "OBJETIVO LOCALIZADO"; 
                     rewardMsg.innerHTML = `+${currentReward} S/ CONTRATO<br><span style="color:var(--gold)">+${pointBonus} S/ BONUS (${matchPoints} PTS)</span>`;
@@ -2318,7 +1958,7 @@
 
                 document.getElementById('overlay-title').style.color = "var(--victory)";
                 
-                objetivo.points = matchPoints; 
+                objetivo.points = matchPoints; // Guardar puntos en registro
 
                 const solvedList = JSON.parse(localStorage.getItem('bioBreachSolved') || '[]');
                 solvedList.push(objetivo);
@@ -2336,6 +1976,7 @@
                             <p><b>PERFIL:</b> ${objetivo.g} / ${objetivo.edad} AÑOS</p>
                             <p><b>RASGOS:</b> ${objetivo.t} / OJOS ${objetivo.o}</p>
                             <p><b>ESTATURA:</b> ${objetivo.altura} METROS</p>
+                            <p><b>ACCESORIO DETECTADO:</b> ${objetivo.accName}</p>
                             <div class="stamp-captured">CAPTURED</div>
                         </div>
                     </div>
@@ -2348,12 +1989,8 @@
                 rewardMsg.innerText = "CONTRATO CANCELADO";
                 
                 if (isCompetitiveMode) {
-                    if (NetManager.isMultiplayer) {
-                        NetManager.reportFinish(0); // 0 puntos
-                    } else {
-                        nextBtn.innerText = "VOLVER AL MENÚ";
-                        nextBtn.onclick = () => { location.reload(); };
-                    }
+                    nextBtn.innerText = "VOLVER AL MENÚ";
+                    nextBtn.onclick = () => { location.reload(); };
                 } else {
                     nextBtn.innerText = "INTENTAR OTRO CASO";
                     nextBtn.onclick = () => { initGame(); };
@@ -2367,6 +2004,11 @@
                         </div>
                         <div class="dossier-info">
                             <p><b>SUJETO:</b> ${objetivo.n}</p>
+                            <p><b>ORIGEN:</b> ${objetivo.p} (${objetivo.cont})</p>
+                            <p><b>PERFIL:</b> ${objetivo.g} / ${objetivo.edad} AÑOS</p>
+                            <p><b>RASGOS:</b> ${objetivo.t} / OJOS ${objetivo.o}</p>
+                            <p><b>ESTATURA:</b> ${objetivo.altura} METROS</p>
+                            <p><b>ACCESORIO DETECTADO:</b> ${objetivo.accName}</p>
                             <div class="stamp-captured" style="color: var(--hazard); border-color: var(--hazard);">ESCAPED</div>
                         </div>
                     </div>
@@ -2511,6 +2153,7 @@
 
                     lastQueryText = `CONSULTA: ${q}<br>RESPUESTA: ${respText}`;
 
+                    // --- SISTEMA DE PUNTOS DE INVESTIGACIÓN (MODIFICADO) ---
                     let earned = 0;
                     let count = pendingDiscards.length;
                     if(count > 0) {
@@ -2519,9 +2162,13 @@
                         else if(count >= 3) earned = 5;
                         else earned = count; 
                         
+                        // NO sumar inmediatamente. Almacenar en POOL para efecto visual
                         pointsPool = earned;
+                        
+                        // Mensaje de texto indicativo
                         lastQueryText += ` <span style="color:var(--gold)">[DETECTADOS: ${earned} PTS]</span>`;
                     }
+                    // ------------------------------------------
 
                     if (pendingDiscards.length > 0) {
                         const msg = `${lastQueryText}<br><span style="color:var(--hazard)">BLOQUEO ACTIVO: ELIMINE A ${pendingDiscards.length} SOSPECHOSOS INCOMPATIBLES.</span>`;
