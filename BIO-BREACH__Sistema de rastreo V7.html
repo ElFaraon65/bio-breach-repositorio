@@ -99,13 +99,54 @@
             animation: blink 0.8s infinite;
         }
 
+        /* --- PANTALLA DE LOGIN (NUEVO) --- */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 7000; /* Por encima de todo excepto interaction */
+            display: none; flex-direction: column;
+            justify-content: center; align-items: center;
+            padding: 20px;
+        }
+        
+        .login-input {
+            background: #111; 
+            border: 1px solid var(--gold); 
+            color: var(--gold);
+            padding: 15px; 
+            font-family: 'Consolas', monospace; 
+            font-size: 1.2rem;
+            text-align: center; 
+            text-transform: uppercase; 
+            margin: 20px 0; 
+            outline: none;
+            width: 100%;
+            max-width: 300px;
+            letter-spacing: 2px;
+        }
+        .login-input:focus {
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+            background: #221a00;
+        }
+
         #wallet-display {
             position: absolute; top: 20px; right: 20px;
             border-left: 3px solid var(--gold); padding: 5px 15px;
             background: rgba(255, 215, 0, 0.05);
             text-align: right;
         }
+        
+        #profile-display {
+            position: absolute; top: 20px; left: 20px;
+            border-right: 3px solid var(--terminal-green); padding: 5px 15px;
+            background: rgba(0, 255, 65, 0.05);
+            text-align: left;
+            display: none; /* Se muestra tras login */
+        }
+        
         .currency { color: var(--gold); font-size: 1.2rem; font-weight: bold; }
+        .agent-id { color: var(--terminal-green); font-size: 0.7rem; letter-spacing: 1px;}
+        .agent-name { color: #fff; font-size: 1rem; font-weight: bold; text-transform: uppercase;}
 
         #main-menu {
             position: fixed;
@@ -146,7 +187,6 @@
         .btn-exit:hover { background: #333; color: white; border-color: #666; }
 
         /* --- CONFIGURACIÓN Y MODALES --- */
-        /* Agregado #migration-modal a la lista de modales para heredar estilos */
         #settings-modal, #tutorial-screen, #abort-confirm, #overlay, #migration-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.98);
@@ -156,7 +196,7 @@
         }
         
         #settings-modal { z-index: 3500; }
-        #migration-modal { z-index: 4500; } /* Z-Index alto para asegurar visibilidad sobre todo */
+        #migration-modal { z-index: 4500; } 
         #overlay, #abort-confirm { background: rgba(0, 0, 0, 0.95); z-index: 2000; text-align: center; }
         #overlay.active, #abort-confirm.active { display: flex; opacity: 1; }
 
@@ -403,6 +443,7 @@
              .menu-title { font-size: 2rem; margin-bottom: 20px; }
              .machine-body { padding: 10px; border: none; }
              #wallet-display { top: 5px; right: 5px; }
+             #profile-display { top: 5px; left: 5px; }
         }
 
         @media (max-width: 768px) {
@@ -419,7 +460,10 @@
         @media (max-width: 480px) {
             .menu-title { font-size: 1.8rem; letter-spacing: 2px; }
             #wallet-display { top: 10px; right: 10px; padding: 2px 8px; }
+            #profile-display { top: 10px; left: 10px; padding: 2px 8px; }
             .currency { font-size: 1rem; }
+            .agent-id { font-size: 0.6rem; }
+            .agent-name { font-size: 0.8rem; }
             
             .board-grid.mode-5 { gap: 3px; }
             .board-grid.mode-5 .card-header { font-size: 0.5rem; margin-bottom: 2px; padding-top: 2px; }
@@ -453,6 +497,19 @@
         </div>
     </div>
 
+    <div id="login-screen">
+        <div class="tutorial-box">
+            <h2 style="color: var(--gold); text-shadow: 0 0 10px var(--gold);">IDENTIFICACIÓN</h2>
+            <p style="color: #aaa;">SE REQUIERE ALIAS DE AGENTE PARA ACCEDER A LA RED GLOBAL.</p>
+            
+            <input type="text" id="agent-name-input" class="login-input" placeholder="NOMBRE DE AGENTE..." maxlength="12" autocomplete="off">
+            
+            <p style="font-size: 0.7rem; color: var(--terminal-green);">EL SISTEMA ASIGNARÁ UNA ID ÚNICA AUTOMÁTICAMENTE.</p>
+
+            <button class="btn-main" onclick="registerUser()">CONFIRMAR IDENTIDAD</button>
+        </div>
+    </div>
+
     <div id="archives-screen">
         <div class="wall-header">
             <div class="wall-title-text">CRIMINALES ATRAPADOS</div>
@@ -464,6 +521,10 @@
     </div>
 
     <div id="main-menu">
+        <div id="profile-display">
+            <div class="agent-name" id="display-agent-name">AGENTE</div>
+            <div class="agent-id" id="display-agent-id">ID: ----</div>
+        </div>
         <div id="wallet-display">
             <div style="font-size: 0.6rem; color: #666;">SALDO NETO</div>
             <div class="currency"><span id="total-money">0</span> S/</div>
@@ -648,8 +709,63 @@
             nextNoteTime = actx.currentTime + 0.1;
             scheduler();
             
-            // Iniciar modo menú (Doom Jazz)
-            fadeToMode(1); 
+            // VERIFICAR PERFIL DE USUARIO ANTES DE IR AL MENU
+            checkUserProfile();
+        }
+
+        // --- SISTEMA DE IDENTIFICACIÓN (NUEVO) ---
+        let currentUser = null;
+
+        function checkUserProfile() {
+            const storedProfile = localStorage.getItem('bioBreachProfile');
+            if (storedProfile) {
+                currentUser = JSON.parse(storedProfile);
+                updateProfileUI();
+                fadeToMode(1); // Iniciar música de menú
+            } else {
+                // Si no hay perfil, mostrar pantalla de login y silenciar música por ahora o dejarla en ambient
+                fadeToMode(1);
+                document.getElementById('login-screen').style.display = 'flex';
+                document.getElementById('agent-name-input').focus();
+            }
+        }
+
+        function registerUser() {
+            const nameInput = document.getElementById('agent-name-input');
+            const name = nameInput.value.trim().toUpperCase();
+
+            if (name.length < 2) {
+                playSFX('error');
+                nameInput.style.borderColor = 'var(--hazard)';
+                return;
+            }
+
+            playSFX('click');
+            
+            // Generar ID única: "U-" + Timestamp base 36 + Random Hex
+            const uniqueId = "U-" + Date.now().toString(36).toUpperCase().slice(-4) + Math.floor(Math.random()*1000);
+            
+            currentUser = {
+                name: name,
+                id: uniqueId,
+                created: Date.now()
+            };
+
+            localStorage.setItem('bioBreachProfile', JSON.stringify(currentUser));
+            
+            // Ocultar login
+            document.getElementById('login-screen').style.display = 'none';
+            updateProfileUI();
+            
+            playSFX('win'); // Sonido de confirmación
+        }
+
+        function updateProfileUI() {
+            if(currentUser) {
+                document.getElementById('profile-display').style.display = 'block';
+                document.getElementById('display-agent-name').innerText = currentUser.name;
+                document.getElementById('display-agent-id').innerText = "ID: " + currentUser.id;
+            }
         }
 
         function makeDistortionCurve(amount) {
