@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIO-BREACH: THE LAST TRACE</title>
+    <title>BIO-BREACH: ONLINE OPERATIONS</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
             --gold: #ffd700;
@@ -99,11 +100,11 @@
             animation: blink 0.8s infinite;
         }
 
-        /* --- PANTALLA DE LOGIN (NUEVO) --- */
+        /* --- PANTALLA DE LOGIN --- */
         #login-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95);
-            z-index: 7000; /* Por encima de todo excepto interaction */
+            z-index: 7000;
             display: none; flex-direction: column;
             justify-content: center; align-items: center;
             padding: 20px;
@@ -141,7 +142,7 @@
             border-right: 3px solid var(--terminal-green); padding: 5px 15px;
             background: rgba(0, 255, 65, 0.05);
             text-align: left;
-            display: none; /* Se muestra tras login */
+            display: none;
         }
         
         .currency { color: var(--gold); font-size: 1.2rem; font-weight: bold; }
@@ -186,8 +187,8 @@
         }
         .btn-exit:hover { background: #333; color: white; border-color: #666; }
 
-        /* --- SELECCIÓN DE MODO DE JUEGO (NUEVO) --- */
-        #gamemode-screen {
+        /* --- ONLINE LOBBY & GAME MODES --- */
+        #gamemode-screen, #online-lobby {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.98);
             display: none; flex-direction: column;
@@ -227,6 +228,17 @@
         .mode-info { padding: 20px; text-align: center; }
         .mode-title { color: var(--gold); font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px;}
         .mode-desc { color: #888; font-size: 0.8rem; line-height: 1.4; }
+
+        .lobby-status-box {
+            border: 1px solid var(--victory); background: rgba(0,255,136,0.05);
+            padding: 20px; width: 100%; max-width: 500px; text-align: center;
+            margin-bottom: 20px;
+        }
+        .room-code-display { font-size: 2rem; color: white; letter-spacing: 5px; margin: 10px 0; font-weight: bold; user-select: text; }
+        
+        .player-list { list-style: none; padding: 0; text-align: left; }
+        .player-list li { border-bottom: 1px solid #333; padding: 5px; display: flex; justify-content: space-between;}
+        .player-ready { color: var(--victory); }
 
         /* --- CONFIGURACIÓN Y MODALES --- */
         #settings-modal, #tutorial-screen, #abort-confirm, #overlay, #migration-modal {
@@ -317,7 +329,6 @@
             box-shadow: 1px 2px 4px rgba(0,0,0,0.5);
             z-index: 10;
         }
-        /* Variaciones de Pin por Puntaje */
         .pin.gold { background: var(--gold); border-color: #886600; box-shadow: 0 0 5px var(--gold); }
         .pin.blue { background: #0088ff; border-color: #003366; box-shadow: 0 0 5px #0088ff; }
 
@@ -595,17 +606,57 @@
                 </div>
             </div>
 
-            <div class="mode-card" style="border-color: var(--victory);" onclick="selectMode('competitive')">
+            <div class="mode-card" style="border-color: var(--victory);" onclick="openOnlineMenu()">
                 <div class="mode-img-placeholder" style="color: var(--victory);">
                     <span>⚡</span>
                 </div>
                 <div class="mode-info">
-                    <div class="mode-title" style="color: var(--victory);">Modo Competitivo</div>
-                    <div class="mode-desc">Protocolo de velocidad. 3 Rondas consecutivas. Gana puntos por tiempo y precisión.</div>
+                    <div class="mode-title" style="color: var(--victory);">Modo Competitivo (ONLINE)</div>
+                    <div class="mode-desc">Protocolo Multijugador. Salas privadas. Ranking en tiempo real.</div>
                 </div>
             </div>
         </div>
         <button class="btn-exit" onclick="closeGameModeSelection()" style="margin-top: 40px;">CANCELAR</button>
+    </div>
+
+    <div id="online-lobby">
+        <div class="tutorial-box" style="width:100%; max-width:600px; border-color: var(--victory);">
+            <h2 style="color: var(--victory);">RED PRIVADA ENCRIPTADA</h2>
+            
+            <div id="online-main-options">
+                <button class="btn-main" style="margin-bottom:10px;" onclick="createRoom()">CREAR SALA NUEVA (HOST)</button>
+                <div style="display:flex; gap:10px; margin-bottom:20px;">
+                    <input type="text" id="join-room-input" class="login-input" style="margin:0; font-size:1rem;" placeholder="CÓDIGO DE SALA" maxlength="6">
+                    <button class="btn-main" style="width:auto; background:#222; border-color:var(--gold);" onclick="joinRoom()">UNIRSE</button>
+                </div>
+            </div>
+
+            <div id="online-wait-room" style="display:none;">
+                <p>CÓDIGO DE ACCESO SEGURO:</p>
+                <div class="room-code-display" id="lobby-room-code">Generating...</div>
+                
+                <div class="lobby-status-box">
+                    <div style="font-size:0.8rem; color:#aaa; margin-bottom:5px;">AGENTES CONECTADOS:</div>
+                    <ul id="lobby-player-list" class="player-list">
+                        <li>ESPERANDO CONEXIÓN...</li>
+                    </ul>
+                </div>
+
+                <div id="host-controls" style="display:none; margin-bottom:15px;">
+                    <p style="font-size:0.7rem; color:var(--gold);">CONFIGURACIÓN DE SALA (HOST)</p>
+                    <div class="mosaic-options" style="margin:5px 0;">
+                        <button class="mosaic-btn active" id="btn-seed-same" onclick="setOnlineMode('same')">CASO COMÚN</button>
+                        <button class="mosaic-btn" id="btn-seed-diff" onclick="setOnlineMode('diff')">CASOS DISTINTOS</button>
+                    </div>
+                    <button class="btn-main" style="background:var(--victory); color:black;" onclick="hostStartGame()">INICIAR OPERACIÓN</button>
+                </div>
+                <div id="client-wait-msg" style="display:none; color:var(--terminal-green);">
+                    > ESPERANDO A QUE EL LÍDER INICIE LA MISIÓN...
+                </div>
+            </div>
+
+            <button class="btn-exit" onclick="exitOnlineLobby()">SALIR DEL LOBBY</button>
+        </div>
     </div>
 
     <div id="migration-modal">
@@ -615,7 +666,7 @@
             
             <div class="step" style="border-left-color: var(--terminal-green);">
                 <b>ESTADO DE BASE DE DATOS:</b>
-                <span style="color: #aaa;">HISTORIAL PURGADO POR ACTUALIZACIÓN A V7.</span>
+                <span style="color: #aaa;">HISTORIAL PURGADO POR ACTUALIZACIÓN A V8.</span>
             </div>
             
             <div class="step" style="border-left-color: var(--gold);">
@@ -700,7 +751,7 @@
         let musicTimerID;
         let nextNoteTime = 0;
         let musicBeat = 0;
-        let musicMode = 1; // Por defecto Modo 1 (DOOM JAZZ) para el menú
+        let musicMode = 1; 
         let currentTempo = 80;
         
         const CHORDS = {
@@ -712,7 +763,6 @@
             doom_cluster_L: [65.41, 77.78, 92.50], doom_cluster_R: [155.56, 185.00, 220.00],
             taxi_stab_L: [146.83, 185.00, 233.08], taxi_stab_R: [369.99, 440.00, 523.25],
             f_min_L: [87.31, 103.83, 130.81], f_min_R: [174.61, 207.65, 261.63],
-            // New chords for extended play
             eb_maj7_L: [155.56, 196.00, 233.08], eb_maj7_R: [311.13, 392.00, 466.16],
             d7alt_L: [146.83, 185.00, 246.94], d7alt_R: [293.66, 369.99, 440.00]
         };
@@ -724,20 +774,16 @@
             mystery_dim: [65.41, 77.78, 92.50, 110.00, 130.81], 
             urban_penta: [196.00, 233.08, 261.63, 293.66, 349.23], 
             noir_theme: [196.00, 207.65, 233.08, 261.63, 293.66],
-            // New scale for extended variation
             taxi_extended: [196.00, 233.08, 261.63, 293.66, 311.13, 349.23, 392.00, 466.16]
         };
 
-        // Función para inicializar el sistema de audio completo
         async function initAudioSystem() {
-            // Ocultar overlay
             const overlay = document.getElementById('interaction-overlay');
             overlay.style.opacity = '0';
             overlay.style.backdropFilter = 'blur(0px)';
             overlay.style.webkitBackdropFilter = 'blur(0px)';
             setTimeout(() => { overlay.style.display = 'none'; }, 800);
 
-            // Iniciar Contexto
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             actx = new AudioContext({ latencyHint: 'playback' });
             await actx.resume();
@@ -748,7 +794,6 @@
             limiter.ratio.value = 12;
             
             musicMaster = actx.createGain();
-            // Volumen de música equilibrado para no tapar SFX
             musicMaster.gain.value = 0.6; 
 
             warmDistortion = actx.createWaveShaper();
@@ -761,16 +806,13 @@
             createReverb();
             startAtmosphere(); 
             
-            // Iniciar Secuenciador
             isMusicRunning = true;
             nextNoteTime = actx.currentTime + 0.1;
             scheduler();
             
-            // VERIFICAR PERFIL DE USUARIO ANTES DE IR AL MENU
             checkUserProfile();
         }
 
-        // --- SISTEMA DE IDENTIFICACIÓN (NUEVO) ---
         let currentUser = null;
 
         function checkUserProfile() {
@@ -778,9 +820,8 @@
             if (storedProfile) {
                 currentUser = JSON.parse(storedProfile);
                 updateProfileUI();
-                fadeToMode(1); // Iniciar música de menú
+                fadeToMode(1); 
             } else {
-                // Si no hay perfil, mostrar pantalla de login y silenciar música por ahora o dejarla en ambient
                 fadeToMode(1);
                 document.getElementById('login-screen').style.display = 'flex';
                 document.getElementById('agent-name-input').focus();
@@ -798,10 +839,7 @@
             }
 
             playSFX('click');
-            
-            // Generar ID única: "U-" + Timestamp base 36 + Random Hex
             const uniqueId = "U-" + Date.now().toString(36).toUpperCase().slice(-4) + Math.floor(Math.random()*1000);
-            
             currentUser = {
                 name: name,
                 id: uniqueId,
@@ -809,12 +847,9 @@
             };
 
             localStorage.setItem('bioBreachProfile', JSON.stringify(currentUser));
-            
-            // Ocultar login
             document.getElementById('login-screen').style.display = 'none';
             updateProfileUI();
-            
-            playSFX('win'); // Sonido de confirmación
+            playSFX('win'); 
         }
 
         function updateProfileUI() {
@@ -850,17 +885,13 @@
             revGain.connect(limiter);
         }
 
-        // --- TRANSICIONES SUAVES ---
         function fadeToMode(newMode) {
             if (!isMusicRunning) return;
-            // Crossfade rápido
             const t = actx.currentTime;
             musicMaster.gain.cancelScheduledValues(t);
-            musicMaster.gain.setTargetAtTime(0, t, 0.1); // Bajar volumen rápido
-
+            musicMaster.gain.setTargetAtTime(0, t, 0.1); 
             setTimeout(() => {
                 setMusicModeData(newMode);
-                // Subir volumen
                 musicMaster.gain.setTargetAtTime(0.55, actx.currentTime, 0.2); 
             }, 300);
         }
@@ -869,12 +900,11 @@
             if (!actx) return;
             const t = actx.currentTime;
             musicMaster.gain.cancelScheduledValues(t);
-            musicMaster.gain.setTargetAtTime(0, t, 0.05); // Corte casi inmediato
+            musicMaster.gain.setTargetAtTime(0, t, 0.05); 
         }
 
         function restoreMusic() {
             if (!actx) return;
-             // Asegurar que estamos en el modo correcto del juego (Modo 3)
             setMusicModeData(3);
             const t = actx.currentTime;
             musicMaster.gain.cancelScheduledValues(t);
@@ -883,13 +913,11 @@
 
         function setMusicModeData(m) {
             musicMode = m;
-            musicBeat = 0; // Reset beat on mode change to start sequence fresh
-            // 0: Classic, 1: Doom, 2: Twin Peaks, 3: Taxi Driver
+            musicBeat = 0; 
             const tempos = [95, 80, 60, 105]; 
             currentTempo = tempos[m];
         }
 
-        // --- INSTRUMENTOS ---
         function playSax(note, duration, technique = 'normal') {
             if(!isMusicRunning) return;
             const t = actx.currentTime;
@@ -897,36 +925,29 @@
             const modulator = actx.createOscillator(); modulator.type = 'sine'; modulator.frequency.value = note; 
             const modGain = actx.createGain(); modGain.gain.value = note * 0.8; 
             modulator.connect(modGain); modGain.connect(carrier.frequency); 
-
             const dynFilter = actx.createBiquadFilter(); dynFilter.type = 'lowpass'; dynFilter.Q.value = 1.5; 
             const bodyFilter = actx.createBiquadFilter(); bodyFilter.type = 'peaking'; bodyFilter.frequency.value = 900; 
             bodyFilter.gain.value = 8; bodyFilter.Q.value = 1.0;
-
             const noiseBufferSize = actx.sampleRate * 0.5; const noiseBuffer = actx.createBuffer(1, noiseBufferSize, actx.sampleRate);
             const noiseData = noiseBuffer.getChannelData(0); for (let i = 0; i < noiseBufferSize; i++) noiseData[i] = Math.random() * 2 - 1;
             const breathSrc = actx.createBufferSource(); breathSrc.buffer = noiseBuffer; breathSrc.loop = true;
             const breathFilter = actx.createBiquadFilter(); breathFilter.type = 'bandpass'; breathFilter.frequency.value = note * 4; breathFilter.Q.value = 0.5;
             const breathGain = actx.createGain(); breathGain.gain.value = 0.03; 
-
             const masterGain = actx.createGain();
             masterGain.gain.setValueAtTime(0, t);
             masterGain.gain.linearRampToValueAtTime(0.5, t + 0.1); 
             masterGain.gain.exponentialRampToValueAtTime(0.3, t + duration * 0.6); 
             masterGain.gain.exponentialRampToValueAtTime(0.001, t + duration);
-
             dynFilter.frequency.setValueAtTime(note, t);
             dynFilter.frequency.exponentialRampToValueAtTime(note * 4, t + 0.15); 
             dynFilter.frequency.linearRampToValueAtTime(note * 2, t + duration);
-
             carrier.connect(dynFilter); breathSrc.connect(breathFilter); breathFilter.connect(breathGain); breathGain.connect(dynFilter); 
             dynFilter.connect(bodyFilter); bodyFilter.connect(masterGain); masterGain.connect(warmDistortion); 
             warmDistortion.connect(limiter); warmDistortion.connect(reverbNode);
-
             const vib = actx.createOscillator(); vib.frequency.value = 4.0;
             const vibGain = actx.createGain(); vibGain.gain.value = 0;
             vibGain.gain.setValueAtTime(0, t); vibGain.gain.linearRampToValueAtTime(note * 0.015, t + 0.6); 
             vib.connect(vibGain); vibGain.connect(carrier.frequency);
-
             carrier.start(t); modulator.start(t); breathSrc.start(t); vib.start(t);
             carrier.stop(t + duration); modulator.stop(t + duration); breathSrc.stop(t + duration); vib.stop(t + duration);
         }
@@ -1041,7 +1062,6 @@
         }
 
         function runPattern(t, b) {
-            // MODO 0: CLASSIC NOIR (Archivos)
             if (musicMode === 0) {
                 const bassNotes = [32.70, 38.89, 43.65, 46.25]; 
                 playBass(bassNotes[b % 4], 0.6); 
@@ -1053,7 +1073,6 @@
                 if (b % 16 === 6) playSax(SCALES.noir_theme[0], 0.8, 'normal'); 
                 if (b % 16 === 7) playSax(SCALES.noir_theme[3], 2.0, 'growl'); 
             }
-            // MODO 1: DOOM JAZZ (Menú Principal / Config)
             else if (musicMode === 1) {
                 if (b % 8 === 0) playBass(32.70, 6.0); 
                 if (b % 8 === 4) playBass(46.25, 6.0); 
@@ -1065,97 +1084,68 @@
                 if (b % 16 === 0) playSax(SCALES.mystery_dim[0], 2.5, 'growl'); 
                 if (b % 16 === 4) playSax(SCALES.mystery_dim[1], 3.0, 'growl'); 
             }
-            // MODO 2: TWIN PEAKS (Tutorial / Manual)
             else if (musicMode === 2) {
-                if (b % 4 === 0) playBass(43.65, 2.0); // F1
+                if (b % 4 === 0) playBass(43.65, 2.0); 
                 if (b % 4 === 2) playBass(43.65, 2.0); 
                 if (b % 8 === 0) playDrum('ride'); 
                 if (b % 8 === 0) playChord('f_maj', 4, 0.1); 
                 if (b % 8 === 4) playChord('f_min', 4, 0.1);
             }
-            // MODO 3: TAXI DRIVER (Juego) - EXTENDED 4 MINUTES LOGIC
             else if (musicMode === 3) {
-                // 105 BPM -> 4 minutos = 420 beats exactos.
                 const loop = 420;
-                const lb = b % loop; // Beat local dentro del ciclo de 4 min
-
-                // --- BATERÍA ---
-                // Base Ride (Casi siempre presente pero varía)
-                if (lb < 380) { // Cortar al final para fade out
+                const lb = b % loop; 
+                if (lb < 380) { 
                     if (lb % 2 === 0 || (lb % 4 === 3 && Math.random() > 0.4)) playDrum('ride');
                 }
-                
-                // Kick y Snare con evolución
-                if (lb > 32 && lb < 224) { // Fase normal
+                if (lb > 32 && lb < 224) { 
                     if (lb % 4 === 0) playDrum('kick');
                     if (lb % 8 === 6) playDrum('snare');
-                } else if (lb >= 224 && lb < 320) { // Fase caos/tensión (más activo)
+                } else if (lb >= 224 && lb < 320) { 
                      if (lb % 2 === 0) playDrum('kick');
                      if (Math.random() > 0.6) playDrum('snare');
-                } else if (lb >= 320 && lb < 380) { // Retorno a calma
+                } else if (lb >= 320 && lb < 380) { 
                      if (lb % 4 === 0) playDrum('kick');
                 }
-
-                // --- BAJO ---
-                // Patrón evolutivo
-                if (lb < 32) { // Intro Minimalista
-                    if (lb % 8 === 0) playBass(49.00, 1.5); // G1
+                if (lb < 32) { 
+                    if (lb % 8 === 0) playBass(49.00, 1.5); 
                 } 
-                else if (lb < 160) { // Walking Bass relajado
-                    const walk = [49.00, 58.27, 65.41, 73.42]; // Gm
+                else if (lb < 160) { 
+                    const walk = [49.00, 58.27, 65.41, 73.42]; 
                     if (lb % 2 === 0) playBass(walk[(lb/2)%4], 0.8);
                 } 
-                else if (lb < 288) { // Tensión cromática
+                else if (lb < 288) { 
                     if (lb % 2 === 0) playBass(Math.random() > 0.5 ? 46.25 : 49.00, 0.6); 
                 } 
-                else { // Outro
+                else { 
                     if (lb % 8 === 0) playBass(49.00, 3.0);
                 }
-
-                // --- ACORDES (PIANO) ---
                 if (lb > 16 && lb < 360) {
-                    if (lb % 32 === 0) playChord('taxi_stab', 0.5, 0.0); // Gm stab
-                    if (lb % 32 === 16) playChord('cm11', 0.6, 0.05); // Cm cambio
-                    
-                    // Variación en la sección media
+                    if (lb % 32 === 0) playChord('taxi_stab', 0.5, 0.0); 
+                    if (lb % 32 === 16) playChord('cm11', 0.6, 0.05); 
                     if (lb > 128 && lb < 256 && lb % 16 === 12) {
                         playChord(Math.random() > 0.5 ? 'eb_maj7' : 'd7alt', 0.4, 0.02);
                     }
                 }
-
-                // --- SAXOFÓN (MELODÍA PRINCIPAL) ---
-                // Aquí está la variedad de tonos nuevos
-                
-                // Seccion A: Tema Principal (Low & Slow) - Beats 32-96
                 if (lb >= 32 && lb < 96) {
                     if (lb % 16 === 0) playSax(SCALES.urban_penta[0], 2.0, 'normal');
                     if (lb % 16 === 4) playSax(SCALES.urban_penta[2], 1.5, 'normal');
                     if (lb % 16 === 14) playSax(SCALES.urban_penta[1], 1.0, 'normal');
                 }
-                
-                // Sección B: Desarrollo (Higher & Agitated) - Beats 96-192
                 else if (lb >= 96 && lb < 192) {
-                    // Usamos la escala extendida para notas nuevas
                     if (lb % 8 === 0 && Math.random() > 0.3) playSax(SCALES.taxi_extended[4], 1.2, 'normal'); 
-                    if (lb % 16 === 10) playSax(SCALES.taxi_extended[6], 1.5, 'growl'); // Nota aguda con growl
+                    if (lb % 16 === 10) playSax(SCALES.taxi_extended[6], 1.5, 'growl'); 
                     if (lb % 32 === 30) playSax(SCALES.taxi_extended[3], 0.5, 'normal');
                 }
-                
-                // Sección C: "The Breakdown" (Caos/Free Jazz) - Beats 192-288
                 else if (lb >= 192 && lb < 288) {
                     if (lb % 4 === 0 && Math.random() > 0.4) {
                         const randomNote = SCALES.taxi_extended[Math.floor(Math.random() * SCALES.taxi_extended.length)];
-                        playSax(randomNote * 2, 0.3, 'growl'); // Notas muy agudas y cortas
+                        playSax(randomNote * 2, 0.3, 'growl'); 
                     }
                 }
-                
-                // Sección D: Retorno a la Melodía (Resolución) - Beats 288-360
                 else if (lb >= 288 && lb < 360) {
                     if (lb % 16 === 0) playSax(SCALES.urban_penta[0], 2.5, 'normal');
                     if (lb % 16 === 8) playSax(SCALES.urban_penta[3], 1.5, 'normal');
                 }
-                
-                // Outro: Silencio de saxo, solo ambiente
             }
         }
         // ==========================================
@@ -1174,20 +1164,41 @@
         let compMaxRounds = 3;
         let compStartTime = 0;
         let compTotalScore = 0;
-        let compTimerInterval = null; // VARIABLE PARA EL INTERVALO DEL RELOJ
+        let compTimerInterval = null; 
+
+        // --- ONLINE VARIABLES ---
+        let peer = null;
+        let conn = null;
+        let isHost = false;
+        let myPeerId = null;
+        let connections = []; // Solo para Host
+        let onlinePlayers = []; 
+        let sameCaseMode = true; 
+        let seededRNGVal = 1;
+
+        // Función pseudo-aleatoria para "Same Case"
+        function seededRandom() {
+            var x = Math.sin(seededRNGVal++) * 10000;
+            return x - Math.floor(x);
+        }
+
+        function getRand() {
+            if (isCompetitiveMode && sameCaseMode) return seededRandom();
+            return Math.random();
+        }
 
         // --- MANEJO DE ARCHIVOS Y MURO ---
         function openArchives() {
             playSFX('click');
             renderWall();
-            fadeToMode(0); // CLASSIC NOIR
+            fadeToMode(0); 
             document.getElementById('archives-screen').style.display = 'flex';
             document.getElementById('main-menu').style.display = 'none';
         }
 
         function closeArchives() {
             playSFX('click');
-            fadeToMode(1); // BACK TO DOOM JAZZ
+            fadeToMode(1); 
             document.getElementById('archives-screen').style.display = 'none';
             document.getElementById('main-menu').style.display = 'flex';
         }
@@ -1208,7 +1219,6 @@
                 card.className = 'wall-card';
                 card.style.transform = `rotate(${rotation}deg)`;
                 
-                // Determinar clase del pin según puntos
                 let pinClass = "";
                 const pts = data.points || 0;
                 if(pts >= 25) pinClass = "gold";
@@ -1230,11 +1240,9 @@
                 container.appendChild(card);
             });
         }
-        // --- FIN ARCHIVOS ---
 
         function openSettings() {
             playSFX('click');
-            // Nota: Settings es un modal sobre el menú, así que mantenemos DOOM JAZZ (Modo 1)
             document.getElementById('settings-modal').style.display = 'flex';
             selectMosaic(currentMosaicMode); 
         }
@@ -1261,16 +1269,13 @@
         function applyMosaicChange(newMode) {
             const loading = document.getElementById('loading-screen');
             const bar = document.getElementById('loader-progress');
-            
             loading.style.display = 'flex';
             bar.style.width = "0%";
-            
             let progress = 0;
             const interval = setInterval(() => {
                 progress += Math.random() * 15;
                 if(progress > 100) progress = 100;
                 bar.style.width = progress + "%";
-                
                 if(progress === 100) {
                     clearInterval(interval);
                     setTimeout(() => {
@@ -1289,7 +1294,6 @@
             board.className = 'board-grid'; 
             board.classList.add(`mode-${currentMosaicMode}`);
         }
-
         
         async function preloadAssets() {
             const statusEl = document.getElementById('preload-status');
@@ -1297,11 +1301,9 @@
                 statusEl.innerText = "SISTEMA: CACHÉ NO SOPORTADA";
                 return;
             }
-
             try {
                 const cache = await caches.open(CACHE_NAME);
                 const urlsToCache = Object.values(AUDIO_CONFIG).map(cfg => cfg.src);
-                
                 for (const url of urlsToCache) {
                     const response = await cache.match(url);
                     if (!response) {
@@ -1315,24 +1317,17 @@
             }
         }
 
-        // --- SISTEMA DE MIGRACIÓN (Nuevo Solicitado) ---
-        // Se ha reemplazado el alert() por un manejo de DOM (modal)
         function checkMigration() {
             if (!localStorage.getItem('bioBreach_v8_migration')) {
                 const oldSolved = JSON.parse(localStorage.getItem('bioBreachSolved') || '[]');
                 const count = oldSolved.length;
-                
                 if (count > 0) {
                     const bonus = count * 100;
                     let currentMoney = parseInt(localStorage.getItem('bioBreachMoney')) || 0;
                     currentMoney += bonus;
                     localStorage.setItem('bioBreachMoney', currentMoney);
-                    
-                    // Resetear historial para devolver casos al sistema
                     localStorage.setItem('bioBreachSolved', '[]');
                     localStorage.setItem('bioBreachUsedIDs', '[]');
-                    
-                    // MOSTRAR MODAL EN LUGAR DE ALERT
                     document.getElementById('mig-count').innerText = count;
                     document.getElementById('mig-money').innerText = bonus;
                     document.getElementById('migration-modal').style.display = 'flex';
@@ -1344,7 +1339,6 @@
             }
         }
 
-        // Función para cerrar el nuevo modal
         function closeMigrationModal() {
             playSFX('click');
             document.getElementById('migration-modal').style.display = 'none';
@@ -1353,7 +1347,7 @@
         window.addEventListener('load', () => {
             preloadAssets();
             updateBoardClass();
-            checkMigration(); // Verificar migración al cargar
+            checkMigration(); 
         });
 
         const AUDIO_CONFIG = {
@@ -1412,7 +1406,7 @@
         let pendingDiscards = []; 
         let lastQueryText = "";   
         let matchPoints = 0; 
-        let pointsPool = 0; // Banco de puntos pendientes de visualización
+        let pointsPool = 0; 
 
         async function typeWriter(text, elementId, speed = 20) {
             if (isTyping) return;
@@ -1442,7 +1436,6 @@
             localStorage.setItem('bioBreachMoney', totalMoney);
         }
 
-        // --- NUEVO: FUNCIONES DE SELECCIÓN DE MODO ---
         function openGameModeSelection() {
             playSFX('click');
             document.getElementById('main-menu').style.display = 'none';
@@ -1457,58 +1450,213 @@
 
         function selectMode(mode) {
             playSFX('click');
-            isCompetitiveMode = (mode === 'competitive');
-            
-            // Preparar variables competitivas si aplica
-            if (isCompetitiveMode) {
-                compRound = 1;
-                compTotalScore = 0;
+            isCompetitiveMode = false;
+            if (mode === 'competitive') { 
+                // Legacy check, now button redirects to openOnlineMenu
+                isCompetitiveMode = true; 
             }
-
-            // Ocultar pantalla de selección y mostrar tutorial
             document.getElementById('gamemode-screen').style.display = 'none';
             showTutorial();
         }
 
+        // --- ONLINE LOGIC START ---
+        
+        function openOnlineMenu() {
+            playSFX('click');
+            document.getElementById('gamemode-screen').style.display = 'none';
+            document.getElementById('online-lobby').style.display = 'flex';
+            document.getElementById('online-main-options').style.display = 'block';
+            document.getElementById('online-wait-room').style.display = 'none';
+            
+            // Inicializar Peer si no existe
+            if(!peer) {
+                const randomId = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digitos
+                peer = new Peer(randomId);
+                
+                peer.on('open', (id) => {
+                    myPeerId = id;
+                });
+
+                peer.on('connection', (c) => {
+                    if(!isHost) return;
+                    handleHostConnection(c);
+                });
+            }
+        }
+        
+        function exitOnlineLobby() {
+            playSFX('click');
+            // Clean peer connections
+            if(peer) peer.destroy();
+            peer = null;
+            connections = [];
+            onlinePlayers = [];
+            
+            document.getElementById('online-lobby').style.display = 'none';
+            document.getElementById('main-menu').style.display = 'flex';
+        }
+        
+        function createRoom() {
+            playSFX('click');
+            isHost = true;
+            isCompetitiveMode = true;
+            compRound = 1;
+            compTotalScore = 0;
+            onlinePlayers = [{id: myPeerId, name: currentUser.name, score: 0, done: false}];
+            
+            document.getElementById('online-main-options').style.display = 'none';
+            document.getElementById('online-wait-room').style.display = 'block';
+            document.getElementById('host-controls').style.display = 'block';
+            document.getElementById('lobby-room-code').innerText = myPeerId;
+            
+            updateLobbyUI();
+        }
+
+        function handleHostConnection(c) {
+            connections.push(c);
+            
+            c.on('open', () => {
+                // Pedir nombre
+                c.send({type: 'REQUEST_INFO'});
+            });
+
+            c.on('data', (data) => {
+                if(data.type === 'INFO_RESPONSE') {
+                    onlinePlayers.push({id: c.peer, name: data.name, score: 0, done: false});
+                    broadcast({type: 'UPDATE_LOBBY', players: onlinePlayers});
+                    updateLobbyUI();
+                    playSFX('newCase');
+                }
+                else if(data.type === 'ROUND_FINISHED') {
+                    const p = onlinePlayers.find(pl => pl.id === c.peer);
+                    if(p) {
+                        p.score += data.score;
+                        p.done = true;
+                    }
+                    checkAllFinished();
+                }
+            });
+            
+            c.on('close', () => {
+                 onlinePlayers = onlinePlayers.filter(p => p.id !== c.peer);
+                 connections = connections.filter(con => con.peer !== c.peer);
+                 broadcast({type: 'UPDATE_LOBBY', players: onlinePlayers});
+                 updateLobbyUI();
+            });
+        }
+        
+        function joinRoom() {
+            const code = document.getElementById('join-room-input').value.trim();
+            if(code.length < 4) { playSFX('error'); return; }
+            playSFX('click');
+            
+            isHost = false;
+            isCompetitiveMode = true;
+            compRound = 1;
+            compTotalScore = 0;
+            
+            conn = peer.connect(code);
+            
+            conn.on('open', () => {
+                document.getElementById('online-main-options').style.display = 'none';
+                document.getElementById('online-wait-room').style.display = 'block';
+                document.getElementById('client-wait-msg').style.display = 'block';
+                document.getElementById('lobby-room-code').innerText = code;
+            });
+            
+            conn.on('data', (data) => {
+                if(data.type === 'REQUEST_INFO') {
+                    conn.send({type: 'INFO_RESPONSE', name: currentUser.name});
+                }
+                else if(data.type === 'UPDATE_LOBBY') {
+                    onlinePlayers = data.players;
+                    updateLobbyUI();
+                }
+                else if(data.type === 'START_GAME') {
+                    sameCaseMode = data.sameCase;
+                    seededRNGVal = data.seed;
+                    compRound = data.round;
+                    
+                    document.getElementById('online-lobby').style.display = 'none';
+                    showTutorial(); // Will trigger startGame -> initGame logic
+                }
+                else if(data.type === 'GAME_OVER_FINAL') {
+                     showRanking(data.ranking);
+                }
+            });
+        }
+        
+        function updateLobbyUI() {
+            const list = document.getElementById('lobby-player-list');
+            list.innerHTML = '';
+            onlinePlayers.forEach(p => {
+                const li = document.createElement('li');
+                li.innerText = p.name + (p.id === myPeerId ? " (TÚ)" : "");
+                if(p.done) li.classList.add('player-ready');
+                list.appendChild(li);
+            });
+        }
+        
+        function broadcast(msg) {
+            connections.forEach(c => c.send(msg));
+        }
+        
+        function setOnlineMode(mode) {
+            playSFX('click');
+            sameCaseMode = (mode === 'same');
+            document.getElementById('btn-seed-same').className = sameCaseMode ? 'mosaic-btn active' : 'mosaic-btn';
+            document.getElementById('btn-seed-diff').className = !sameCaseMode ? 'mosaic-btn active' : 'mosaic-btn';
+        }
+        
+        function hostStartGame() {
+            playSFX('click');
+            // Reset "Done" status
+            onlinePlayers.forEach(p => p.done = false);
+            
+            // Seed para la ronda 1
+            const seed = Math.floor(Math.random() * 100000);
+            seededRNGVal = seed;
+            
+            broadcast({type: 'START_GAME', seed: seed, sameCase: sameCaseMode, round: compRound});
+            
+            document.getElementById('online-lobby').style.display = 'none';
+            showTutorial();
+        }
+
+        // --- END ONLINE LOGIC ---
+
         function showTutorial() {
-            fadeToMode(2); // TWIN PEAKS
+            fadeToMode(2); 
             const tContent = document.getElementById('tutorial-content');
             
-            // CAMBIO DINÁMICO DEL MANUAL DE CAMPO
             if (isCompetitiveMode) {
-                // MANUAL COMPETITIVO
                 tContent.innerHTML = `
                     <div class="step" style="border-left-color: var(--victory);">
-                        <b>1. PROTOCOLO DE VELOCIDAD</b>
-                        El objetivo es completar 3 rondas consecutivas en el menor tiempo posible.
+                        <b>1. PROTOCOLO ONLINE</b>
+                        Compite contra otros agentes. 3 rondas. ${sameCaseMode ? 'TODOS TIENEN EL MISMO CASO.' : 'CASOS DISTINTOS PARA CADA AGENTE.'}
                     </div>
                     <div class="step" style="border-left-color: var(--gold);">
-                        <b>2. SISTEMA DE PUNTOS</b>
-                        Tu puntuación final dependerá de los segundos ahorrados y la precisión de tus consultas.
+                        <b>2. PUNTUACIÓN</b>
+                        La velocidad es clave. Acabar antes que los demás otorga bonus masivos.
                     </div>
                     <div class="step">
                         <b>3. SIN PAUSAS</b>
-                        Al finalizar un caso, pasarás inmediatamente al siguiente. Mantén el ritmo.
+                        Al terminar una ronda, esperarás a que el resto finalice para ver los resultados.
                     </div>
                 `;
             } else {
-                // MANUAL CLÁSICO (Original)
                 tContent.innerHTML = `
                     <div class="step">
                         <b>1. INTERROGATORIO PRECISO</b>
-                        Formule las preguntas correctamente usando signos (¿...?). Ejemplo: "¿Es de España?". No escriba palabras sueltas al final.
+                        Formule preguntas (¿...?). Ejemplo: "¿Es de España?".
                     </div>
                     <div class="step">
                         <b>2. DESCARTE OBLIGATORIO</b>
-                        El sistema bloqueará nuevos comandos hasta que elimines a TODOS los sospechosos que creas incorrectos. <b>¡CUIDADO!</b> Si eliminas al sospechoso equivocado, no habrá aviso.
+                        Si la respuesta descarta a muchos, debe eliminarlos antes de volver a preguntar.
                     </div>
                     <div class="step">
-                        <b>3. SISTEMA DE PUNTOS</b>
-                        Eliminar múltiples sospechosos con una sola pregunta otorga puntos extra (3+ sospechosos = +5 PTS).
-                    </div>
-                     <div class="step">
-                        <b>4. OBJETIVO ÚNICO</b>
-                        La misión termina cuando descubres al culpable. Si lo descartas por error, pierdes el contrato inmediatamente.
+                        <b>3. OBJETIVO ÚNICO</b>
+                        Descubra al culpable sin eliminarlo por error.
                     </div>
                 `;
             }
@@ -1521,18 +1669,16 @@
             if (window.parent && typeof window.parent.cerrarMotor === 'function') {
                 window.parent.cerrarMotor();
             } else {
-                fadeToMode(1); // BACK TO DOOM JAZZ
+                fadeToMode(1); 
                 alert("SISTEMA DESCONECTADO DEL NÚCLEO. SIMULANDO SALIDA.");
             }
         }
 
-        // --- FUNCIÓN PARA ACTUALIZAR EL RELOJ COMPETITIVO ---
         function updateCompTimer() {
             if (!gameActive || !isCompetitiveMode) return;
             const now = Date.now();
             const diff = Math.floor((now - compStartTime) / 1000);
             
-            // Formato MM:SS
             const m = Math.floor(diff / 60).toString().padStart(2, '0');
             const s = (diff % 60).toString().padStart(2, '0');
             
@@ -1542,15 +1688,12 @@
 
         function startGame() {
             playSFX('click');
-            fadeToMode(3); // TAXI DRIVER
+            fadeToMode(3); 
             document.getElementById('tutorial-screen').style.display = 'none';
             document.getElementById('main-ui').style.display = 'flex'; 
             
-            // Iniciar tiempo para competitivo
             if (isCompetitiveMode) {
                 compStartTime = Date.now();
-                
-                // Iniciar intervalo del reloj
                 if (compTimerInterval) clearInterval(compTimerInterval);
                 compTimerInterval = setInterval(updateCompTimer, 1000);
             }
@@ -1576,11 +1719,17 @@
             playSFX('click', true); 
             gameActive = false;
             
-            // Detener reloj si existe
             if(compTimerInterval) clearInterval(compTimerInterval);
             
+            // Abort online logic
+            if(isHost && peer) {
+                // Host aborting kills the room usually, but simplified here
+                 peer.destroy(); peer = null;
+            }
+            if(conn) { conn.close(); conn = null; }
+
             closeAbortModal();
-            fadeToMode(1); // Vuelve al menú con DOOM JAZZ
+            fadeToMode(1); 
             document.getElementById('main-ui').style.display = 'none';
             document.getElementById('main-menu').style.display = 'flex';
         }
@@ -1592,34 +1741,22 @@
             let attempts = 0;
 
             while (!unique && attempts < 500) {
-                newId = "C-" + Math.floor(Math.random() * 8999 + 1000); 
+                newId = "C-" + Math.floor(getRand() * 8999 + 1000); 
                 if (!usedIDs.includes(newId)) {
                     unique = true;
                 }
                 attempts++;
             }
-
             if (!unique) {
                 usedIDs = [];
-                newId = "C-" + Math.floor(Math.random() * 8999 + 1000);
+                newId = "C-" + Math.floor(getRand() * 8999 + 1000);
             }
-
-            usedIDs.push(newId);
-            if (usedIDs.length > 5000) usedIDs.shift(); 
-            
-            localStorage.setItem('bioBreachUsedIDs', JSON.stringify(usedIDs));
+            if (!isCompetitiveMode) { // Solo guardar IDs en modo local normal
+                usedIDs.push(newId);
+                if (usedIDs.length > 5000) usedIDs.shift(); 
+                localStorage.setItem('bioBreachUsedIDs', JSON.stringify(usedIDs));
+            }
             return newId;
-        }
-
-        function isCriminalCaptured(suspect) {
-            const captured = JSON.parse(localStorage.getItem('bioBreachSolved') || '[]');
-            return captured.some(c => 
-                c.n === suspect.n && 
-                c.p === suspect.p && 
-                c.t === suspect.t && 
-                c.o === suspect.o && 
-                c.accName === suspect.accName
-            );
         }
 
         function initGame() {
@@ -1627,34 +1764,25 @@
             document.getElementById('main-ui').classList.remove('blur-effect');
             document.getElementById('out').style.color = "var(--terminal-green)";
             
-            // Asegurar que la música del juego vuelve si venimos de Win/Lose
             restoreMusic();
-            
             playSFX('newCase', true);
             
-            currentReward = Math.floor(Math.random() * 500) + 100;
-            // Resetear puntos de investigación y pool
+            currentReward = Math.floor(getRand() * 500) + 100;
             matchPoints = 0;
             pointsPool = 0;
             document.getElementById('game-points').innerText = "PTS: " + matchPoints;
 
-            // --- LÓGICA DE UI SEGÚN MODO ---
             const btnNewCase = document.getElementById('btn-new-case');
             const timerDisplay = document.getElementById('comp-timer-display');
 
             if (isCompetitiveMode) {
-                // MODO COMPETITIVO: Ocultar botón, mostrar reloj
                 document.getElementById('case-id-display').innerText = `RONDA ${compRound}/${compMaxRounds}`;
                 btnNewCase.style.display = 'none';
                 timerDisplay.style.display = 'inline';
-                
             } else {
-                // MODO CLÁSICO: Mostrar botón, ocultar reloj
                 document.getElementById('case-id-display').innerText = `CASO #${Math.floor(Math.random() * 9000) + 1000}`;
                 btnNewCase.style.display = 'inline';
                 timerDisplay.style.display = 'none';
-                
-                // Asegurarse de limpiar intervalo si se coló
                 if(compTimerInterval) clearInterval(compTimerInterval);
             }
 
@@ -1665,29 +1793,12 @@
             document.getElementById('queryInput').disabled = false;
             document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA (¿...?)...";
 
-            let attempts = 0;
-            let validCase = false;
-            
-            while (!validCase && attempts < 100) {
-                generateNewSquad(); 
-                const candidate = personas[Math.floor(Math.random() * personas.length)];
-                
-                if (!isCriminalCaptured(candidate)) {
-                    objetivo = candidate;
-                    validCase = true;
-                } else {
-                    attempts++;
-                }
-            }
-            
-            if (!validCase) {
-                objetivo = personas[Math.floor(Math.random() * personas.length)];
-            }
-
+            generateNewSquad(); 
+            // En modo competitivo Same Case, el RNG es seed, así que todos tendrán el mismo objetivo en el mismo índice si el squad se genera igual.
+            objetivo = personas[Math.floor(getRand() * personas.length)];
             objetivo.recordId = generateCriminalRecordID();
 
             gameActive = true;
-            
             typeWriter("ESCANEO FINALIZADO. ESPERANDO CONSULTA...", "out", 15);
             renderBoard();
             updateWalletUI();
@@ -1696,27 +1807,8 @@
         function generateNewSquad() {
             personas = [];
             DP = {
-                M: [
-                    "LEON", "MARC", "OTTO", "IVAN", "ERIC", "HUAN", "KURT", "NOAH", "AXEL", "SAUL", "IGOR", "LIAM", "ENZO", "HUGO", "OMAR", "LUC", "YURI", "RYAN", "FINN", "EZRA", "MILO", "IAN", "ALAN", "KAI", "BORIS",
-                    "OSCAR", "VICTOR", "FELIX", "DANTE", "BRUNO", "KALEB", "SILAS", "ARLO", "THEO", "REMY", "ZAYN", "LUCA", "NICO", "JUDE", "ELIAS", "SETH", "KANE", "AARON", "SIMON", "RAUL", "LEVI", "TOBIAS", "GAGE", "XANDER", "JACE",
-                    "KAREM", "NASH", "ZION", "COLE", "BEAU", "REID", "KNOX", "RHYS", "OTIS", "MILO", "ARLO", "EZRA", "HUGO", "FELIX", "JUDE", "LUCA", "THEO", "SILAS", "KAI", "ENZO", "AXEL", "NOAH", "OTTO", "IVAN",
-                    "YOSEF", "MALIK", "SAID", "OMAR", "AMIR", "ZAYD", "HAMZA", "TARIQ", "KHALIL", "IDRIS", "HASSAN", "RAYAN", "SAMI", "KARIM", "ADAM", "NOAH", "LIAM", "ERIC", "MARC", "LEON", "HUAN", "KURT", "IGOR", "LUC", "YURI",
-                    "RYAN", "ALAN", "BORIS", "OSCAR", "VICTOR", "DANTE", "BRUNO", "KALEB", "REMY", "ZAYN", "NICO", "ELIAS", "SETH", "KANE", "AARON", "SIMON", "RAUL", "LEVI", "TOBIAS", "GAGE", "XANDER", "JACE", "KAREN", "NASH", "ZION",
-                    "COLE", "BEAU", "REID", "KNOX", "RHYS", "OTIS", "ALEX", "BLAKE", "CALEB", "DYLAN", "ETHAN", "FLYNN", "GRANT", "HENRY", "ISAAC", "JACK", "KYLE", "LUKE", "MAX", "NATE", "OWEN", "PIKE", "QUINN", "RILEY", "SEAN",
-                    "TATE", "URIE", "VANCE", "WADE", "XAVI", "YORK", "ZANE", "ALDO", "BART", "CARL", "DIRK", "EMIL", "FRANZ", "GUST", "HANS", "IVAR", "JENS", "KARL", "LARS", "MADS", "NILS", "OLAF", "PIET", "ROLF", "STIG",
-                    "THOR", "ULF", "VERN", "WOLF", "YENS", "ZOLT", "ANTON", "BORIS", "CYRIL", "DIMITRI", "EVAN", "FEDOR", "GREG", "IVAN", "IGOR", "JAN", "KONRAD", "LEV", "MIKHAIL", "NIKOLAI", "OLEG", "PAVEL", "SERGEI", "VIKTOR", "YURI",
-                    "ZINO", "ANDRE", "BLAISE", "CLAUDE", "DIDIER", "ETIENNE", "FABIEN", "OSVALDO", "HENRI", "ISAAC", "JEAN", "LUC", "MARC", "NOEL", "OLIVER", "PIERRE", "REMY", "SERGE", "THIERRY", "URBAIN", "VICTOR", "YVES", "ZEPHYR"
-                ],
-                F: [
-                    "MIA", "LARA", "YUNA", "OLGA", "ADRI", "ZOE", "INÉS", "KIRA", "EMMA", "RUTH", "SARA", "LUNA", "VERA", "NORA", "MAYA", "LEA", "IRIS", "ALBA", "GALA", "JUNE", "CLAUDIA", "ANA", "EVA", "LISA",
-                    "NINA", "JADE", "ROSE", "MILA", "RUBY", "EDEN", "ISLA", "LYRA", "MAIA", "OPAL", "FAYE", "SKYE", "TESS", "WILLA", "ZARA", "ALEXA", "BELLA", "CHLOE", "DIANA", "ELSA", "FREYA", "HOPE", "IVY", "KYRA", "LANA", "MYRA",
-                    "AMARA", "BELLE", "CORA", "DAISY", "ELIZA", "FLORA", "GRETA", "HAZEL", "INDIE", "JUNE", "KEIRA", "LOLA", "MABEL", "NELL", "OLIVE", "PEARL", "QUINN", "RENA", "SADIE", "THEA", "UNA", "VADA", "WREN", "XENA", "YARA",
-                    "ZELDA", "ALMA", "BONNIE", "SOLANGE", "DORA", "EDNA", "FAITH", "GIA", "HOLLY", "IDA", "JOY", "KAY", "LILY", "MINA", "NELL", "ORA", "PIPA", "ROSA", "SHEA", "TARA", "UTAH", "VIDA", "WILD", "XIA", "YOLI",
-                    "ZOEY", "ANNA", "BETH", "CLARA", "DINA", "ELLA", "FAYE", "GWEN", "HEIDI", "ASTRID", "JANE", "KATE", "LUCY", "MARY", "NELL", "OLGA", "POLY", "RUTH", "SARA", "TESS", "UMA", "VIV", "WYN", "XIA", "YARA", "ZITA",
-                    "ADELE", "BINA", "COCO", "ALEXA", "ENID", "FIFI", "GIGI", "HOPE", "INES", "JANA", "KIKI", "LULU", "MIMI", "NANA", "ORLY", "PEPA", "QUEE", "RIRI", "SISI", "TITI", "UVEE", "VIVI", "ISABEL", "XIXI", "YAYA", "ZIZI",
-                    "ALICE", "BIANCA", "CELIA", "DORIS", "ELENA", "FIONA", "GRACE", "HELEN", "IRENE", "JULIA", "KAREN", "LINDA", "MARIA", "NAOMI", "PAULA", "ROSE", "SONIA", "TANIA", "URSULA", "VAL", "WANDA", "XENIA", "YVON", "ZARA",
-                    "AUREA", "BRISA", "CIELO", "DALIA", "ESTER", "FLOR", "GEMMA", "HILDA", "IRMA", "JUANA", "KATIA", "LIDIA", "MARTA", "NURIA", "OLIVIA", "PILAR", "RAQUEL", "SILVIA", "TERE", "VICKY", "XEMA", "YIZA", "ZENIA", "AGATHA"
-                ],
+                M: ["LEON", "MARC", "OTTO", "IVAN", "ERIC", "HUAN", "KURT", "NOAH", "AXEL", "SAUL", "IGOR", "LIAM", "ENZO", "HUGO", "OMAR", "LUC", "YURI", "RYAN", "FINN", "EZRA", "MILO", "IAN", "ALAN", "KAI", "BORIS", "OSCAR", "VICTOR", "FELIX", "DANTE", "BRUNO", "KALEB", "SILAS", "ARLO", "THEO", "REMY", "ZAYN", "LUCA", "NICO", "JUDE", "ELIAS", "SETH", "KANE", "AARON", "SIMON", "RAUL", "LEVI", "TOBIAS", "GAGE", "XANDER", "JACE"],
+                F: ["MIA", "LARA", "YUNA", "OLGA", "ADRI", "ZOE", "INÉS", "KIRA", "EMMA", "RUTH", "SARA", "LUNA", "VERA", "NORA", "MAYA", "LEA", "IRIS", "ALBA", "GALA", "JUNE", "CLAUDIA", "ANA", "EVA", "LISA", "NINA", "JADE", "ROSE", "MILA", "RUBY", "EDEN", "ISLA", "LYRA", "MAIA", "OPAL", "FAYE", "SKYE", "TESS", "WILLA", "ZARA", "ALEXA", "BELLA", "CHLOE", "DIANA", "ELSA", "FREYA"],
                 P: [
                     {n: "ALEMANIA", c: "EUROPA"}, {n: "ESPAÑA", c: "EUROPA"}, {n: "ITALIA", c: "EUROPA"}, {n: "FRANCIA", c: "EUROPA"}, {n: "SUIZA", c: "EUROPA"}, {n: "RUSIA", c: "EUROPA"},
                     {n: "JAPÓN", c: "ASIA"}, {n: "CHINA", c: "ASIA"}, {n: "COREA", c: "ASIA"}, {n: "INDIA", c: "ASIA"}, {n: "TAILANDIA", c: "ASIA"}, {n: "VIETNAM", c: "ASIA"},
@@ -1733,14 +1825,22 @@
                 ]
             };
 
-            const shuffle = (array) => array.sort(() => Math.random() - 0.5);
-            const poolM = shuffle([...new Set(DP.M)]);
-            const poolF = shuffle([...new Set(DP.F)]);
+            // Custom shuffle using seeded random if needed
+            const customShuffle = (array) => {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(getRand() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            };
+
+            const poolM = customShuffle([...new Set(DP.M)]);
+            const poolF = customShuffle([...new Set(DP.F)]);
 
             for (let i = 0; i < 25; i++) {
-                const genero = Math.random() > 0.5 ? "MASCULINO" : "FEMENINO";
-                const pais = DP.P[Math.floor(Math.random() * DP.P.length)];
-                const acc = DP.A[Math.floor(Math.random() * DP.A.length)];
+                const genero = getRand() > 0.5 ? "MASCULINO" : "FEMENINO";
+                const pais = DP.P[Math.floor(getRand() * DP.P.length)];
+                const acc = DP.A[Math.floor(getRand() * DP.A.length)];
                 
                 let nombre = "";
                 if (genero === "MASCULINO") {
@@ -1751,17 +1851,15 @@
 
                 personas.push({
                     n: nombre, g: genero, p: pais.n, cont: pais.c,
-                    t: DP.T[Math.floor(Math.random() * DP.T.length)], o: DP.O[Math.floor(Math.random() * DP.O.length)],
-                    edad: Math.floor(Math.random() * 50) + 18, altura: (Math.random() * 0.5 + 1.5).toFixed(2),
+                    t: DP.T[Math.floor(getRand() * DP.T.length)], o: DP.O[Math.floor(getRand() * DP.O.length)],
+                    edad: Math.floor(getRand() * 50) + 18, altura: (getRand() * 0.5 + 1.5).toFixed(2),
                     accName: acc.n, accUbi: acc.u
                 });
             }
         }
 
-        // --- FUNCION DE ANIMACIÓN DE PUNTOS ---
         function spawnFloatingPoint(startX, startY, val) {
             if (val <= 0) return;
-            
             const el = document.createElement('div');
             el.className = 'flying-point';
             el.innerText = `+${val}`;
@@ -1770,11 +1868,9 @@
             document.body.appendChild(el);
 
             const target = document.getElementById('game-points').getBoundingClientRect();
-            // Ajustar destino al centro del contador
             const destX = target.left + (target.width / 2);
             const destY = target.top + (target.height / 2);
 
-            // Forzar reflow para animación
             requestAnimationFrame(() => {
                 el.style.transform = `translate(${destX - startX}px, ${destY - startY}px) scale(0.5)`;
                 el.style.opacity = '0';
@@ -1807,33 +1903,23 @@
 
                         if (pendingDiscards.length > 0) {
                             playSFX('discard');
-                            
-                            // --- EFECTO VISUAL DE PUNTOS ---
-                            // Obtener coordenadas de la tarjeta
                             const rect = cardEl.getBoundingClientRect();
                             const centerX = rect.left + rect.width / 2;
                             const centerY = rect.top + rect.height / 2;
 
-                            // Distribuir puntos del pool
                             let ptsToGive = 0;
                             if (pointsPool > 0) {
-                                // Lógica simple de distribución entera:
-                                // Dividir el pool restante entre los descartes restantes
-                                const remainingDiscards = pendingDiscards.length; // Incluye al actual aun no borrado de la lista logica
+                                const remainingDiscards = pendingDiscards.length; 
                                 ptsToGive = Math.ceil(pointsPool / remainingDiscards);
-                                
-                                // Ajuste para no dar más de lo que hay
                                 if (ptsToGive > pointsPool) ptsToGive = pointsPool;
                                 pointsPool -= ptsToGive;
                             }
                             
-                            // --- FIX: Añadido winDelay para esperar animación ---
                             let winDelay = 0;
                             if (ptsToGive > 0) {
                                 spawnFloatingPoint(centerX, centerY, ptsToGive);
-                                winDelay = 900; // Esperar 900ms si hay puntos volando
+                                winDelay = 900; 
                             }
-                            // --------------------------------
 
                             discardVisual(cardEl);
                             
@@ -1842,7 +1928,7 @@
                             }
 
                             if (p.n === objetivo.n) {
-                                checkStatus(0); // Game Over inmediato
+                                checkStatus(0); 
                                 return;
                             }
 
@@ -1880,11 +1966,7 @@
         }
 
         function discardVisual(card) {
-            if (currentMosaicMode === 5) {
-                card.classList.add('discarded'); 
-            } else {
-                card.classList.add('discarded');
-            }
+            card.classList.add('discarded'); 
         }
 
         function checkStatus(delay = 0) {
@@ -1895,7 +1977,6 @@
             }
             
             if (activeCards.length === 1 && activeCards[0].id === `card-${objetivo.n}`) {
-                // Esperar a que la animación de puntos termine antes de mostrar la victoria
                 setTimeout(() => {
                     endGame(true);
                 }, delay);
@@ -1903,62 +1984,112 @@
             }
         }
 
+        function checkAllFinished() {
+            if(!isHost) return;
+            const allDone = onlinePlayers.every(p => p.done);
+            if(allDone) {
+                 if(compRound < compMaxRounds) {
+                     // Next Round
+                     setTimeout(() => {
+                         compRound++;
+                         const seed = Math.floor(Math.random() * 100000);
+                         broadcast({type: 'START_GAME', seed: seed, sameCase: sameCaseMode, round: compRound});
+                         
+                         // Host also starts
+                         seededRNGVal = seed;
+                         onlinePlayers.forEach(p => p.done = false);
+                         
+                         document.getElementById('overlay').classList.remove('active');
+                         document.getElementById('main-ui').classList.remove('blur-effect');
+                         showTutorial(); 
+                     }, 3000);
+                 } else {
+                     // End Tournament
+                     // Sort rankings
+                     const ranking = onlinePlayers.sort((a,b) => b.score - a.score);
+                     broadcast({type: 'GAME_OVER_FINAL', ranking: ranking});
+                     showRanking(ranking);
+                 }
+            }
+        }
+
+        function showRanking(ranking) {
+            silenceMusic();
+            document.getElementById('main-ui').style.display = 'none';
+            document.getElementById('overlay').classList.add('active');
+            
+            let html = '<h2 style="color:var(--gold);">RANKING FINAL</h2><ol style="text-align:left; font-size:1.2rem; color:white;">';
+            ranking.forEach((p, index) => {
+                const color = index === 0 ? 'var(--victory)' : 'white';
+                html += `<li style="color:${color}; margin-bottom:10px;">#${index+1} ${p.name} - ${p.score} PTS</li>`;
+            });
+            html += '</ol>';
+            
+            document.getElementById('overlay-desc').innerHTML = html;
+            document.getElementById('overlay-title').innerText = "OPERACIÓN COMPLETADA";
+            document.getElementById('overlay-reward-msg').innerText = "CLASIFICACIÓN GLOBAL";
+            
+            const btn = document.getElementById('btn-next-case');
+            btn.innerText = "VOLVER AL MENÚ";
+            btn.onclick = () => { location.reload(); };
+        }
+
         function endGame(win) {
             gameActive = false;
-            // CORTAR MÚSICA
-            silenceMusic();
             
-            // DETENER RELOJ VISUAL SI ESTÁ ACTIVO
             if(compTimerInterval) clearInterval(compTimerInterval);
             
+            if (isCompetitiveMode) {
+                // Calculation
+                const pointBonus = win ? matchPoints * 10 : 0;
+                let finalRoundPoints = win ? matchPoints : 0;
+                const timeTaken = (Date.now() - compStartTime) / 1000;
+                const speedBonus = win ? Math.max(0, Math.floor((120 - timeTaken) * 2)) : 0; 
+                finalRoundPoints += speedBonus + pointBonus;
+                
+                compTotalScore += finalRoundPoints;
+                
+                document.getElementById('main-ui').classList.add('blur-effect');
+                document.getElementById('overlay').classList.add('active');
+                
+                document.getElementById('overlay-title').innerText = win ? "OBJETIVO LOCALIZADO" : "OBJETIVO PERDIDO";
+                document.getElementById('overlay-title').style.color = win ? "var(--victory)" : "var(--hazard)";
+                document.getElementById('overlay-reward-msg').innerHTML = `<span style="color:white">PUNTOS RONDA: ${finalRoundPoints}</span><br>ESPERANDO A OTROS AGENTES...`;
+                
+                document.getElementById('btn-next-case').style.display = 'none'; // Hide button, wait for server
+                
+                // Send score to host
+                if(isHost) {
+                    const me = onlinePlayers.find(p => p.id === myPeerId);
+                    me.score += finalRoundPoints;
+                    me.done = true;
+                    checkAllFinished();
+                } else {
+                    conn.send({type: 'ROUND_FINISHED', score: finalRoundPoints});
+                }
+                return;
+            }
+
+            // CLASSIC MODE LOGIC
+            silenceMusic();
             document.getElementById('main-ui').classList.add('blur-effect');
             document.getElementById('overlay').classList.add('active');
             const rewardMsg = document.getElementById('overlay-reward-msg');
             const desc = document.getElementById('overlay-desc');
             const nextBtn = document.getElementById('btn-next-case');
+            nextBtn.style.display = 'inline-block';
             
             if (win) { 
                 playSFX('win', true); 
-                
-                // CALCULO DE BONIFICACIÓN POR PUNTOS
                 const pointBonus = matchPoints * 10;
-                let finalRoundPoints = matchPoints;
-                
-                // LÓGICA COMPETITIVA: BONUS DE TIEMPO
-                if (isCompetitiveMode) {
-                    const timeTaken = (Date.now() - compStartTime) / 1000;
-                    const speedBonus = Math.max(0, Math.floor((120 - timeTaken) * 2)); // Bonus si < 2 min
-                    finalRoundPoints += speedBonus;
-                    compTotalScore += finalRoundPoints;
-                    
-                    compRound++;
-                    
-                    if (compRound > compMaxRounds) {
-                         // FIN DE TORNEO
-                         document.getElementById('overlay-title').innerText = "TORNEO FINALIZADO"; 
-                         rewardMsg.innerHTML = `<span style="color:var(--victory)">PUNTUACIÓN TOTAL: ${compTotalScore}</span><br>RONDAS COMPLETADAS`;
-                         nextBtn.innerText = "VOLVER AL MENÚ";
-                         nextBtn.onclick = () => { location.reload(); }; // Reset simple
-                    } else {
-                         // SIGUIENTE RONDA
-                         document.getElementById('overlay-title').innerText = `RONDA ${compRound-1} COMPLETADA`;
-                         rewardMsg.innerHTML = `TIEMPO: ${timeTaken.toFixed(1)}s<br>PTS RONDA: ${finalRoundPoints}`;
-                         nextBtn.innerText = `INICIAR RONDA ${compRound}`;
-                         nextBtn.onclick = () => { initGame(); }; // Siguiente ronda
-                    }
-                } 
-                else {
-                    // MODO CLÁSICO
-                    totalMoney += currentReward + pointBonus;
-                    document.getElementById('overlay-title').innerText = "OBJETIVO LOCALIZADO"; 
-                    rewardMsg.innerHTML = `+${currentReward} S/ CONTRATO<br><span style="color:var(--gold)">+${pointBonus} S/ BONUS (${matchPoints} PTS)</span>`;
-                    nextBtn.innerText = "SIGUIENTE CASO";
-                    nextBtn.onclick = () => { initGame(); };
-                }
+                totalMoney += currentReward + pointBonus;
+                document.getElementById('overlay-title').innerText = "OBJETIVO LOCALIZADO"; 
+                rewardMsg.innerHTML = `+${currentReward} S/ CONTRATO<br><span style="color:var(--gold)">+${pointBonus} S/ BONUS (${matchPoints} PTS)</span>`;
+                nextBtn.innerText = "SIGUIENTE CASO";
+                nextBtn.onclick = () => { initGame(); };
 
                 document.getElementById('overlay-title').style.color = "var(--victory)";
-                
-                objetivo.points = matchPoints; // Guardar puntos en registro
+                objetivo.points = matchPoints; 
 
                 const solvedList = JSON.parse(localStorage.getItem('bioBreachSolved') || '[]');
                 solvedList.push(objetivo);
@@ -1987,14 +2118,8 @@
                 document.getElementById('overlay-title').innerText = "OBJETIVO PERDIDO"; 
                 document.getElementById('overlay-title').style.color = "var(--hazard)";
                 rewardMsg.innerText = "CONTRATO CANCELADO";
-                
-                if (isCompetitiveMode) {
-                    nextBtn.innerText = "VOLVER AL MENÚ";
-                    nextBtn.onclick = () => { location.reload(); };
-                } else {
-                    nextBtn.innerText = "INTENTAR OTRO CASO";
-                    nextBtn.onclick = () => { initGame(); };
-                }
+                nextBtn.innerText = "INTENTAR OTRO CASO";
+                nextBtn.onclick = () => { initGame(); };
 
                 desc.innerHTML = `
                     <div class="dossier-container" style="border-color: var(--hazard); background: rgba(50, 0, 0, 0.3);">
@@ -2142,18 +2267,15 @@
                     const targetHasTrait = checkFunc(objetivo);
                     const respText = targetHasTrait ? "SÍ." : "NO.";
                     
-                    const cards = document.querySelectorAll('.suspect-card');
                     pendingDiscards = personas.filter(p => {
                         const card = document.getElementById('card-' + p.n);
                         if (card.classList.contains('discarded')) return false; 
-                        
                         const suspectHasTrait = checkFunc(p);
                         return suspectHasTrait !== targetHasTrait; 
                     }).map(p => p.n);
 
                     lastQueryText = `CONSULTA: ${q}<br>RESPUESTA: ${respText}`;
 
-                    // --- SISTEMA DE PUNTOS DE INVESTIGACIÓN (MODIFICADO) ---
                     let earned = 0;
                     let count = pendingDiscards.length;
                     if(count > 0) {
@@ -2161,14 +2283,9 @@
                         else if(count >= 5) earned = 8;
                         else if(count >= 3) earned = 5;
                         else earned = count; 
-                        
-                        // NO sumar inmediatamente. Almacenar en POOL para efecto visual
                         pointsPool = earned;
-                        
-                        // Mensaje de texto indicativo
                         lastQueryText += ` <span style="color:var(--gold)">[DETECTADOS: ${earned} PTS]</span>`;
                     }
-                    // ------------------------------------------
 
                     if (pendingDiscards.length > 0) {
                         const msg = `${lastQueryText}<br><span style="color:var(--hazard)">BLOQUEO ACTIVO: ELIMINE A ${pendingDiscards.length} SOSPECHOSOS INCOMPATIBLES.</span>`;
