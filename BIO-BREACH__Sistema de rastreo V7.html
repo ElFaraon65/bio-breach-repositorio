@@ -2142,9 +2142,9 @@ border-bottom: 2px solid #00BFFF;
             document.getElementById('main-ui').style.display = 'none';
             document.getElementById('overlay').classList.add('active');
             
-            let html = '<h2 style="color:var(--ranking-blue);">RANKING GLOBAL</h2><ol style="text-align:left; font-size:1.2rem; color:white;">';
+            let html = '<h2 style="color:var(--gold);">RANKING GLOBAL</h2><ol style="text-align:left; font-size:1.2rem; color:white;">';
             ranking.forEach((p, index) => {
-                const color = index === 0 ? 'var(--ranking-blue)' : 'white';
+                const color = index === 0 ? 'var(--victory)' : 'white';
                 html += `<li style="color:${color}; margin-bottom:10px;">#${index+1} ${p.name} - ${p.score} PTS</li>`;
             });
             html += '</ol>';
