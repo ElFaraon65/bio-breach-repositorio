@@ -2157,7 +2157,28 @@ border-bottom: 2px solid #00BFFF;
             const btn = document.getElementById('btn-next-case');
             btn.style.display = 'inline-block'; 
             btn.innerText = "VOLVER AL MENÚ";
-            btn.onclick = () => { window.location.reload(); };
+            
+            // --- CORRECCIÓN PANTALLA NEGRA ---
+            // Reemplazamos window.location.reload() por un reset manual de estado
+            btn.onclick = () => { 
+                playSFX('click');
+                // Limpieza visual
+                document.getElementById('overlay').classList.remove('active');
+                document.getElementById('main-ui').style.display = 'none';
+                document.getElementById('main-ui').classList.remove('blur-effect'); 
+                document.getElementById('main-menu').style.display = 'flex'; // MOSTRAR MENU
+
+                // Limpieza lógica online
+                if(peer) { peer.destroy(); peer = null; }
+                if(conn) { conn.close(); conn = null; }
+                connections = [];
+                onlinePlayers = [];
+                isHost = false;
+                isCompetitiveMode = false;
+
+                // Restaurar audio
+                fadeToMode(1);
+            };
         }
 
         function endGame(win) {
