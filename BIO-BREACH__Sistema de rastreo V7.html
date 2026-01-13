@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIO-BREACH: ONLINE SURVIVAL V8.1</title>
+    <title>BIO-BREACH: ONLINE SURVIVAL V8</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
@@ -63,7 +63,7 @@
             color: #fff; font-weight: bold; font-size: 1rem;
             background: linear-gradient(90deg, transparent, rgba(0, 191, 255, 0.8), transparent);
             padding: 10px; border-top: 2px solid #00BFFF;
-            border-bottom: 2px solid #00BFFF;
+border-bottom: 2px solid #00BFFF;
             z-index: 2000; display: none; opacity: 0;
             text-shadow: 0 0 5px #000;
             pointer-events: none;
@@ -287,14 +287,6 @@
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%; height: 4px; cursor: pointer; background: #333; border-radius: 2px;
         }
-        /* Estilos para estado deshabilitado */
-        input[type=range]:disabled {
-            opacity: 0.5; cursor: not-allowed;
-        }
-        input[type=range]:disabled::-webkit-slider-thumb {
-            background: #555; box-shadow: none;
-        }
-
         .time-display {
             font-size: 1.2rem; color: var(--ranking-blue); font-weight: bold; margin-bottom: 10px;
         }
@@ -333,14 +325,6 @@
             padding: 15px 25px; cursor: pointer; font-family: 'Consolas', monospace;
         }
         .mosaic-btn.active { border-color: var(--gold); color: var(--gold); background: #221a00; }
-        
-        /* Estilos deshabilitados para botones mosaico */
-        .mosaic-btn:disabled {
-            opacity: 0.5; cursor: not-allowed; border-color: #333; color: #555; background: #111;
-        }
-        .mosaic-btn.active:disabled {
-            border-color: #555; color: #777; background: #222;
-        }
 
         .step { margin-bottom: 20px; text-align: left; border-left: 2px solid var(--dark-red); padding-left: 15px; }
         .step b { color: var(--gold); display: block; margin-bottom: 5px; }
@@ -711,8 +695,8 @@
                     </ul>
                 </div>
 
-                <div id="host-controls" style="margin-bottom:15px;">
-                    <p style="font-size:0.7rem; color:var(--gold);">CONFIGURACIÓN DE OPERACIÓN</p>
+                <div id="host-controls" style="display:none; margin-bottom:15px;">
+                    <p style="font-size:0.7rem; color:var(--gold);">CONFIGURACIÓN DE SALA (HOST)</p>
                     
                     <div style="margin: 20px 0; border: 1px dashed #444; padding: 10px;">
                         <label for="time-slider" style="color:#aaa; font-size:0.8rem;">TIEMPO DE OPERACIÓN:</label>
@@ -724,11 +708,9 @@
                         <button class="mosaic-btn active" id="btn-seed-same" onclick="setOnlineMode('same')">CASO COMÚN</button>
                         <button class="mosaic-btn" id="btn-seed-diff" onclick="setOnlineMode('diff')">CASOS DISTINTOS</button>
                     </div>
+                    <button class="btn-main" style="background:var(--ranking-blue); color:black;" onclick="hostStartGame()">INICIAR OPERACIÓN</button>
                 </div>
-
-                <button id="btn-start-host" class="btn-main" style="background:var(--ranking-blue); color:black; display:none;" onclick="hostStartGame()">INICIAR OPERACIÓN</button>
-                
-                <div id="client-wait-msg" style="display:none; color:var(--terminal-green); margin-top:15px;">
+                <div id="client-wait-msg" style="display:none; color:var(--terminal-green);">
                     > ESPERANDO A QUE EL LÍDER INICIE LA MISIÓN...
                 </div>
             </div>
@@ -1584,14 +1566,7 @@
             
             document.getElementById('online-main-options').style.display = 'none';
             document.getElementById('online-wait-room').style.display = 'block';
-            
-            // Mostrar controles host y botón de inicio
             document.getElementById('host-controls').style.display = 'block';
-            document.getElementById('btn-start-host').style.display = 'inline-block';
-            
-            // Habilitar controles para el Host
-            toggleLobbyControls(true);
-
             document.getElementById('lobby-room-code').innerText = myPeerId || "GENERANDO...";
             
             updateLobbyUI();
@@ -1602,12 +1577,6 @@
             
             c.on('open', () => {
                 c.send({type: 'REQUEST_INFO'});
-                // Enviar configuración actual al nuevo usuario inmediatamente
-                c.send({
-                    type: 'LOBBY_SETTINGS_SYNC',
-                    time: hostTimeMinutes,
-                    sameCase: sameCaseMode
-                });
             });
 
             c.on('data', (data) => {
@@ -1626,41 +1595,18 @@
                     if(p) { p.score = data.score; p.done = true; }
                     checkAllFinishedTimer();
                 }
+                // --- CAMBIO: NUEVA LÓGICA RIVAL ---
                 else if (data.type === 'RIVAL_BATCH_DISCARD') {
                     broadcastExcluding(c.peer, {type: 'RIVAL_BATCH_DISCARD', count: data.count});
                     triggerRivalAlert(data.count); // Host ve alerta
                 }
             });
             
-            // --- MODIFICACIÓN: LÓGICA DE DESCONEXIÓN INMEDIATA ---
             c.on('close', () => {
-                 // Quitar al jugador
-                 const removedPlayer = onlinePlayers.find(p => p.id === c.peer);
                  onlinePlayers = onlinePlayers.filter(p => p.id !== c.peer);
                  connections = connections.filter(con => con.peer !== c.peer);
-                 
-                 // Actualizar lobby
                  broadcast({type: 'UPDATE_LOBBY', players: onlinePlayers});
                  updateLobbyUI();
-
-                 // LÓGICA DE JUEGO: Si el juego está activo
-                 if (gameActive) {
-                    if (onlinePlayers.length === 1) {
-                        // SI SOLO QUEDA 1 PERSONA (EL HOST), VICTORIA INMEDIATA
-                        endGame(true);
-                        alert("RIVAL DESCONECTADO. VICTORIA POR ABANDONO.");
-                    } else {
-                        // SI QUEDAN MÁS, EL JUEGO SIGUE PERO AVISAMOS
-                        if(removedPlayer) {
-                            // Mostrar alerta visual genérica
-                            const el = document.getElementById('rival-alert');
-                            el.innerText = `AGENTE ${removedPlayer.name} HA ABANDONADO LA SESIÓN`;
-                            el.classList.remove('active-alert');
-                            void el.offsetWidth;
-                            el.classList.add('active-alert');
-                        }
-                    }
-                 }
             });
         }
         
@@ -1686,28 +1632,11 @@
                 document.getElementById('online-main-options').style.display = 'none';
                 document.getElementById('online-wait-room').style.display = 'block';
                 document.getElementById('client-wait-msg').style.display = 'block';
-                
-                // Mostrar controles PERO deshabilitados
-                document.getElementById('host-controls').style.display = 'block';
-                toggleLobbyControls(false); 
-
                 document.getElementById('lobby-room-code').innerText = code;
             });
             
             conn.on('error', (err) => {
                 alert("No se pudo conectar a la sala. Verifica el código.");
-            });
-            
-            // --- DETECCIÓN DE CIERRE DEL HOST ---
-            conn.on('close', () => {
-                if (gameActive) {
-                    // Si el Host cierra la conexión y estamos jugando
-                    endGame(true);
-                    alert("CONEXIÓN CON HOST PERDIDA. VICTORIA POR ABANDONO.");
-                } else {
-                    alert("El Host ha cerrado la sala.");
-                    exitOnlineLobby();
-                }
             });
 
             conn.on('data', (data) => {
@@ -1718,14 +1647,10 @@
                     onlinePlayers = data.players;
                     updateLobbyUI();
                 }
-                // --- RECEPCIÓN DE SINCRONIZACIÓN ---
-                else if(data.type === 'LOBBY_SETTINGS_SYNC') {
-                    syncLobbyUI(data.time, data.sameCase);
-                }
                 else if(data.type === 'START_GAME') {
                     sameCaseMode = data.sameCase;
                     seededRNGVal = data.seed;
-                    compTimeLeft = data.timeLimit || 600; 
+                    compTimeLeft = data.timeLimit || 600; // Recibir tiempo del host
                     
                     document.getElementById('online-lobby').style.display = 'none';
                     showTutorial(); 
@@ -1733,6 +1658,7 @@
                 else if(data.type === 'GAME_OVER_FINAL') {
                      showRanking(data.ranking);
                 }
+                // --- CAMBIO: NUEVA LÓGICA RIVAL ---
                 else if (data.type === 'RIVAL_BATCH_DISCARD') {
                     triggerRivalAlert(data.count);
                 }
@@ -1760,55 +1686,17 @@
             });
         }
         
-        // --- CONTROL DE SINCRONIZACIÓN Y UI ---
-
-        function toggleLobbyControls(enable) {
-            document.getElementById('time-slider').disabled = !enable;
-            document.getElementById('btn-seed-same').disabled = !enable;
-            document.getElementById('btn-seed-diff').disabled = !enable;
-        }
-
-        function syncLobbyUI(timeVal, isSameCase) {
-            // Actualizar variables locales (sin reenviar broadcast si soy cliente)
-            hostTimeMinutes = timeVal;
-            sameCaseMode = isSameCase;
-
-            // Actualizar UI
-            document.getElementById('time-slider').value = timeVal;
-            document.getElementById('time-val-display').innerText = timeVal;
-
-            document.getElementById('btn-seed-same').className = isSameCase ? 'mosaic-btn active' : 'mosaic-btn';
-            document.getElementById('btn-seed-diff').className = !isSameCase ? 'mosaic-btn active' : 'mosaic-btn';
-        }
-        
-        function updateTimeSliderDisplay(val) {
-            if(!isHost) return; // Seguridad extra
-            hostTimeMinutes = parseInt(val);
-            document.getElementById('time-val-display').innerText = hostTimeMinutes;
-            
-            // TRANSMITIR CAMBIO A TODOS
-            broadcast({
-                type: 'LOBBY_SETTINGS_SYNC',
-                time: hostTimeMinutes,
-                sameCase: sameCaseMode
-            });
-        }
-
         function setOnlineMode(mode) {
-            if(!isHost) return; // Seguridad extra
             playSFX('click');
             sameCaseMode = (mode === 'same');
-            
-            // Actualizar mi propia UI
             document.getElementById('btn-seed-same').className = sameCaseMode ? 'mosaic-btn active' : 'mosaic-btn';
             document.getElementById('btn-seed-diff').className = !sameCaseMode ? 'mosaic-btn active' : 'mosaic-btn';
+        }
 
-            // TRANSMITIR CAMBIO A TODOS
-            broadcast({
-                type: 'LOBBY_SETTINGS_SYNC',
-                time: hostTimeMinutes,
-                sameCase: sameCaseMode
-            });
+        // --- CONTROL DE TIEMPO HOST ---
+        function updateTimeSliderDisplay(val) {
+            hostTimeMinutes = parseInt(val);
+            document.getElementById('time-val-display').innerText = hostTimeMinutes;
         }
         
         function hostStartGame() {
@@ -1831,6 +1719,7 @@
             showTutorial();
         }
 
+        // --- CAMBIO: Trigger visual de presión CORRECTO ---
         function triggerRivalAlert(count) {
             // Solo mostrar si viene de la red (no invocar localmente)
             const el = document.getElementById('rival-alert');
