@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIO-BREACH: ONLINE SURVIVAL V8</title>
+    <title>BIO-BREACH: ONLINE SURVIVAL V8.1</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
@@ -63,13 +63,12 @@
             color: #fff; font-weight: bold; font-size: 1rem;
             background: linear-gradient(90deg, transparent, rgba(0, 191, 255, 0.8), transparent);
             padding: 10px; border-top: 2px solid #00BFFF;
-border-bottom: 2px solid #00BFFF;
+            border-bottom: 2px solid #00BFFF;
             z-index: 2000; display: none; opacity: 0;
             text-shadow: 0 0 5px #000;
             pointer-events: none;
         }
         
-        /* Animación lenta de aparición y desvanecimiento */
         @keyframes alertFadeSlow { 
             0% { opacity: 0; transform: scale(0.9); } 
             15% { opacity: 1; transform: scale(1.1); } 
@@ -221,11 +220,9 @@ border-bottom: 2px solid #00BFFF;
             display: none; flex-direction: column;
             justify-content: center; align-items: center;
             z-index: 3200; padding: 20px;
-            /* ARREGLO PARA SCROLL EN MOVILES */
             overflow-y: auto;
         }
 
-        /* ARREGLO RESPONSIVO PARA QUE NO SE CORTE EL CONTENIDO */
         @media (max-height: 850px) {
             #gamemode-screen {
                 justify-content: flex-start;
@@ -289,6 +286,26 @@ border-bottom: 2px solid #00BFFF;
         }
         .time-display {
             font-size: 1.2rem; color: var(--ranking-blue); font-weight: bold; margin-bottom: 10px;
+        }
+
+        /* Bloqueo visual para clientes en lobby */
+        .locked-settings {
+            pointer-events: none;
+            opacity: 0.7;
+            position: relative;
+        }
+        .locked-settings::after {
+            content: "SOLO ADMIN";
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: #444;
+            font-size: 0.8rem;
+            font-weight: bold;
+            border: 1px solid #444;
+            padding: 2px 5px;
+            background: black;
+            opacity: 0.8;
         }
 
         /* --- CONFIGURACIÓN Y MODALES --- */
@@ -695,8 +712,8 @@ border-bottom: 2px solid #00BFFF;
                     </ul>
                 </div>
 
-                <div id="host-controls" style="display:none; margin-bottom:15px;">
-                    <p style="font-size:0.7rem; color:var(--gold);">CONFIGURACIÓN DE SALA (HOST)</p>
+                <div id="lobby-settings" style="margin-bottom:15px;">
+                    <p style="font-size:0.7rem; color:var(--gold);">CONFIGURACIÓN DE SALA</p>
                     
                     <div style="margin: 20px 0; border: 1px dashed #444; padding: 10px;">
                         <label for="time-slider" style="color:#aaa; font-size:0.8rem;">TIEMPO DE OPERACIÓN:</label>
@@ -708,8 +725,10 @@ border-bottom: 2px solid #00BFFF;
                         <button class="mosaic-btn active" id="btn-seed-same" onclick="setOnlineMode('same')">CASO COMÚN</button>
                         <button class="mosaic-btn" id="btn-seed-diff" onclick="setOnlineMode('diff')">CASOS DISTINTOS</button>
                     </div>
-                    <button class="btn-main" style="background:var(--ranking-blue); color:black;" onclick="hostStartGame()">INICIAR OPERACIÓN</button>
                 </div>
+
+                <button id="btn-start-host" class="btn-main" style="background:var(--ranking-blue); color:black; display:none;" onclick="hostStartGame()">INICIAR OPERACIÓN</button>
+
                 <div id="client-wait-msg" style="display:none; color:var(--terminal-green);">
                     > ESPERANDO A QUE EL LÍDER INICIE LA MISIÓN...
                 </div>
@@ -1220,6 +1239,7 @@ border-bottom: 2px solid #00BFFF;
         
         // --- VARIABLES DE MODO DE JUEGO ---
         let isCompetitiveMode = false;
+        let isGameStarted = false; // Flag para saber si la partida esta en curso
         let compRound = 0; 
         let compTimeLeft = 600; // 10 MIN DEFAULT
         let hostTimeMinutes = 10; // Variable de configuración del host
@@ -1379,7 +1399,6 @@ border-bottom: 2px solid #00BFFF;
 
         function checkMigration() {
             if (!localStorage.getItem('bioBreach_v8_migration')) {
-                // ...existing logic...
                 localStorage.setItem('bioBreach_v8_migration', 'true');
                 totalMoney = parseInt(localStorage.getItem('bioBreachMoney')) || 0;
                 updateWalletUI();
@@ -1551,6 +1570,7 @@ border-bottom: 2px solid #00BFFF;
             connections = [];
             onlinePlayers = [];
             isHost = false;
+            isGameStarted = false;
             
             document.getElementById('online-lobby').style.display = 'none';
             document.getElementById('main-menu').style.display = 'flex';
@@ -1566,7 +1586,11 @@ border-bottom: 2px solid #00BFFF;
             
             document.getElementById('online-main-options').style.display = 'none';
             document.getElementById('online-wait-room').style.display = 'block';
-            document.getElementById('host-controls').style.display = 'block';
+            
+            // Host controls visibles y habilitados, botón de start visible
+            document.getElementById('lobby-settings').classList.remove('locked-settings');
+            document.getElementById('btn-start-host').style.display = 'block';
+            
             document.getElementById('lobby-room-code').innerText = myPeerId || "GENERANDO...";
             
             updateLobbyUI();
@@ -1583,6 +1607,12 @@ border-bottom: 2px solid #00BFFF;
                 if(data.type === 'INFO_RESPONSE') {
                     onlinePlayers.push({id: c.peer, name: data.name, score: 0, done: false});
                     broadcast({type: 'UPDATE_LOBBY', players: onlinePlayers});
+                    // SINCRONIZACIÓN INICIAL: Enviar configuración actual al nuevo jugador
+                    c.send({
+                        type: 'LOBBY_SETTINGS_UPDATE', 
+                        time: hostTimeMinutes, 
+                        mode: sameCaseMode ? 'same' : 'diff'
+                    });
                     updateLobbyUI();
                     playSFX('newCase');
                 }
@@ -1595,16 +1625,37 @@ border-bottom: 2px solid #00BFFF;
                     if(p) { p.score = data.score; p.done = true; }
                     checkAllFinishedTimer();
                 }
-                // --- CAMBIO: NUEVA LÓGICA RIVAL ---
                 else if (data.type === 'RIVAL_BATCH_DISCARD') {
                     broadcastExcluding(c.peer, {type: 'RIVAL_BATCH_DISCARD', count: data.count});
-                    triggerRivalAlert(data.count); // Host ve alerta
+                    triggerRivalAlert(data.count); 
                 }
             });
             
+            // --- CAMBIO: DETECCIÓN DE DESCONEXIÓN Y WIN CONDITION ---
             c.on('close', () => {
+                 const wasPlayerCount = onlinePlayers.length;
                  onlinePlayers = onlinePlayers.filter(p => p.id !== c.peer);
                  connections = connections.filter(con => con.peer !== c.peer);
+                 
+                 // Si el juego está activo y alguien se sale
+                 if(isGameStarted) {
+                     // Si eran 2 y ahora queda 1 (Host), gana Host
+                     if(wasPlayerCount === 2 && onlinePlayers.length === 1 && onlinePlayers[0].id === myPeerId) {
+                         alert("EL RIVAL HA ABANDONADO LA SALA. VICTORIA POR DEFECTO.");
+                         // Forzar fin de juego como victoria local
+                         endGameTimer(); // Esto parará el timer
+                         showRanking([{name: currentUser.name, score: compTotalScore + 1000}]); // Victoria simulada
+                     }
+                     // Si eran 2 y queda 1 (que no es Host, aunque este evento es en Host), enviamos WIN al superviviente
+                     else if (wasPlayerCount === 2 && onlinePlayers.length === 1) {
+                         // El que queda es un cliente
+                         const survivor = onlinePlayers[0];
+                         const connSurvivor = connections.find(con => con.peer === survivor.id);
+                         if(connSurvivor) connSurvivor.send({type: 'GAME_OVER_DISCONNECT_WIN'});
+                     }
+                     // Si eran mas de 2, el juego sigue
+                 }
+
                  broadcast({type: 'UPDATE_LOBBY', players: onlinePlayers});
                  updateLobbyUI();
             });
@@ -1632,6 +1683,11 @@ border-bottom: 2px solid #00BFFF;
                 document.getElementById('online-main-options').style.display = 'none';
                 document.getElementById('online-wait-room').style.display = 'block';
                 document.getElementById('client-wait-msg').style.display = 'block';
+                
+                // Cliente ve controles bloqueados
+                document.getElementById('lobby-settings').classList.add('locked-settings');
+                document.getElementById('btn-start-host').style.display = 'none';
+
                 document.getElementById('lobby-room-code').innerText = code;
             });
             
@@ -1647,10 +1703,15 @@ border-bottom: 2px solid #00BFFF;
                     onlinePlayers = data.players;
                     updateLobbyUI();
                 }
+                // --- CAMBIO: RECIBIR ACTUALIZACIÓN DE SETTINGS ---
+                else if (data.type === 'LOBBY_SETTINGS_UPDATE') {
+                    updateLobbySettingsUI(data.time, data.mode);
+                }
                 else if(data.type === 'START_GAME') {
                     sameCaseMode = data.sameCase;
                     seededRNGVal = data.seed;
-                    compTimeLeft = data.timeLimit || 600; // Recibir tiempo del host
+                    compTimeLeft = data.timeLimit || 600; 
+                    isGameStarted = true; // Cliente marca inicio
                     
                     document.getElementById('online-lobby').style.display = 'none';
                     showTutorial(); 
@@ -1658,10 +1719,23 @@ border-bottom: 2px solid #00BFFF;
                 else if(data.type === 'GAME_OVER_FINAL') {
                      showRanking(data.ranking);
                 }
-                // --- CAMBIO: NUEVA LÓGICA RIVAL ---
+                // --- CAMBIO: RECIBIR WIN POR DESCONEXION ---
+                else if (data.type === 'GAME_OVER_DISCONNECT_WIN') {
+                    alert("EL RIVAL HA ABANDONADO. VICTORIA POR DEFECTO.");
+                    gameActive = false;
+                    silenceMusic();
+                    if(compTimerInterval) clearInterval(compTimerInterval);
+                    showRanking([{name: currentUser.name, score: compTotalScore + 1000}]);
+                }
                 else if (data.type === 'RIVAL_BATCH_DISCARD') {
                     triggerRivalAlert(data.count);
                 }
+            });
+            
+            // Si el host se desconecta
+            conn.on('close', () => {
+                alert("CONEXIÓN CON SALA PERDIDA (HOST DESCONECTADO).");
+                exitOnlineLobby();
             });
         }
         
@@ -1686,48 +1760,86 @@ border-bottom: 2px solid #00BFFF;
             });
         }
         
+        // --- CONTROL DE TIEMPO Y MODOS (HOST & SYNC) ---
+        function updateTimeSliderDisplay(val) {
+            hostTimeMinutes = parseInt(val);
+            document.getElementById('time-val-display').innerText = hostTimeMinutes;
+            
+            // SI SOY HOST, ENVÍO LA ACTUALIZACIÓN A TODOS
+            if (isHost) {
+                broadcast({
+                    type: 'LOBBY_SETTINGS_UPDATE', 
+                    time: hostTimeMinutes, 
+                    mode: sameCaseMode ? 'same' : 'diff'
+                });
+            }
+        }
+
         function setOnlineMode(mode) {
             playSFX('click');
             sameCaseMode = (mode === 'same');
+            updateUIButtonsMode();
+
+            // SI SOY HOST, ENVÍO LA ACTUALIZACIÓN
+            if (isHost) {
+                 broadcast({
+                    type: 'LOBBY_SETTINGS_UPDATE', 
+                    time: hostTimeMinutes, 
+                    mode: sameCaseMode ? 'same' : 'diff'
+                });
+            }
+        }
+
+        function updateUIButtonsMode() {
             document.getElementById('btn-seed-same').className = sameCaseMode ? 'mosaic-btn active' : 'mosaic-btn';
             document.getElementById('btn-seed-diff').className = !sameCaseMode ? 'mosaic-btn active' : 'mosaic-btn';
         }
 
-        // --- CONTROL DE TIEMPO HOST ---
-        function updateTimeSliderDisplay(val) {
-            hostTimeMinutes = parseInt(val);
-            document.getElementById('time-val-display').innerText = hostTimeMinutes;
+        // Función para que el cliente actualice su UI al recibir datos del host
+        function updateLobbySettingsUI(time, mode) {
+            // Actualizar tiempo
+            document.getElementById('time-slider').value = time;
+            document.getElementById('time-val-display').innerText = time;
+            
+            // Actualizar modo
+            sameCaseMode = (mode === 'same');
+            updateUIButtonsMode();
         }
         
         function hostStartGame() {
             playSFX('click');
+
+            // --- CAMBIO: PROHIBIR JUGAR SOLO ---
+            if (onlinePlayers.length < 2) {
+                playSFX('error');
+                alert("ERROR DE PROTOCOLO: SE REQUIEREN MÍNIMO 2 AGENTES PARA INICIAR EL MODO SUPERVIVENCIA.");
+                return;
+            }
+
             onlinePlayers.forEach(p => p.done = false);
+            isGameStarted = true; // Host marca inicio
             
             const seed = Math.floor(Math.random() * 100000);
             seededRNGVal = seed;
             const timeInSeconds = hostTimeMinutes * 60;
-            compTimeLeft = timeInSeconds; // Set local host time
+            compTimeLeft = timeInSeconds; 
 
             broadcast({
                 type: 'START_GAME', 
                 seed: seed, 
                 sameCase: sameCaseMode,
-                timeLimit: timeInSeconds // Send selected time
+                timeLimit: timeInSeconds 
             });
             
             document.getElementById('online-lobby').style.display = 'none';
             showTutorial();
         }
 
-        // --- CAMBIO: Trigger visual de presión CORRECTO ---
         function triggerRivalAlert(count) {
-            // Solo mostrar si viene de la red (no invocar localmente)
             const el = document.getElementById('rival-alert');
             el.innerText = `EL RIVAL HA DESCARTADO A ${count} SOSPECHOSOS`;
-            
-            // Reiniciar animación css
             el.classList.remove('active-alert');
-            void el.offsetWidth; // Trigger reflow
+            void el.offsetWidth; 
             el.classList.add('active-alert');
         }
 
@@ -1828,7 +1940,6 @@ border-bottom: 2px solid #00BFFF;
             document.getElementById('main-ui').style.display = 'flex'; 
             
             if (isCompetitiveMode) {
-                // Solo iniciar timer si es la primera vez (compTimeLeft ya fue seteado por Host)
                 if (compRound === 1) {
                     if (compTimerInterval) clearInterval(compTimerInterval);
                     compTimerInterval = setInterval(updateCompTimer, 1000);
@@ -2076,11 +2187,9 @@ border-bottom: 2px solid #00BFFF;
                                 document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA (¿...?)...";
                                 document.getElementById('queryInput').focus();
 
-                                // --- CAMBIO: ENVIAR MENSAJE AL RIVAL AL COMPLETAR LOTE ---
                                 if(isCompetitiveMode && currentBatchTotal > 0) {
                                     if(isHost) broadcastExcluding(myPeerId, {type: 'RIVAL_BATCH_DISCARD', count: currentBatchTotal});
                                     else if(conn) conn.send({type: 'RIVAL_BATCH_DISCARD', count: currentBatchTotal});
-                                    // NO ME MUESTRO EL MENSAJE A MI MISMO, solo lo envío
                                     currentBatchTotal = 0;
                                 }
                             }
@@ -2158,25 +2267,21 @@ border-bottom: 2px solid #00BFFF;
             btn.style.display = 'inline-block'; 
             btn.innerText = "VOLVER AL MENÚ";
             
-            // --- CORRECCIÓN PANTALLA NEGRA ---
-            // Reemplazamos window.location.reload() por un reset manual de estado
             btn.onclick = () => { 
                 playSFX('click');
-                // Limpieza visual
                 document.getElementById('overlay').classList.remove('active');
                 document.getElementById('main-ui').style.display = 'none';
                 document.getElementById('main-ui').classList.remove('blur-effect'); 
-                document.getElementById('main-menu').style.display = 'flex'; // MOSTRAR MENU
+                document.getElementById('main-menu').style.display = 'flex'; 
 
-                // Limpieza lógica online
                 if(peer) { peer.destroy(); peer = null; }
                 if(conn) { conn.close(); conn = null; }
                 connections = [];
                 onlinePlayers = [];
                 isHost = false;
                 isCompetitiveMode = false;
+                isGameStarted = false;
 
-                // Restaurar audio
                 fadeToMode(1);
             };
         }
@@ -2414,7 +2519,6 @@ border-bottom: 2px solid #00BFFF;
                         return suspectHasTrait !== targetHasTrait; 
                     }).map(p => p.n);
 
-                    // --- CAMBIO: GUARDAR TOTAL PARA ENVIAR AL RIVAL ---
                     currentBatchTotal = pendingDiscards.length;
 
                     lastQueryText = `CONSULTA: ${q}<br>RESPUESTA: ${respText}`;
@@ -2437,7 +2541,7 @@ border-bottom: 2px solid #00BFFF;
                         document.getElementById('queryInput').placeholder = "!! DESCARTE REQUERIDO !!";
                     } else {
                         typeWriter(`${lastQueryText}<br>NINGÚN DESCARTE DISPONIBLE CON ESTA INFORMACIÓN.`, "out", 15);
-                        currentBatchTotal = 0; // Si no hay descarte, no se envía nada
+                        currentBatchTotal = 0; 
                     }
 
                 } else {
