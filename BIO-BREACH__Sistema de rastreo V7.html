@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIO-BREACH: ONLINE SURVIVAL V8.2</title>
+    <title>BIO-BREACH: ONLINE SURVIVAL V8.2 - WARFARE UPDATE</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
@@ -20,6 +20,82 @@
             --ranking-blue: #0088ff;
         }
 
+        /* CLASES DE SABOTAJE */
+        .sabotage-blur {
+            filter: blur(5px) !important;
+            pointer-events: none;
+            user-select: none;
+            transition: filter 0.5s;
+        }
+
+        .sabotage-scramble {
+            font-family: 'Wingdings', 'Zapf Dingbats', sans-serif !important; 
+            letter-spacing: 2px;
+        }
+        
+        /* Contenedor de sugerencias de comandos */
+        #cmd-suggestions {
+            position: absolute;
+            bottom: 60px; /* Encima del input */
+            left: 10px;
+            width: calc(100% - 20px);
+            background: rgba(0, 0, 0, 0.95);
+            border: 1px solid var(--terminal-green);
+            z-index: 6000;
+            display: none;
+            flex-direction: column;
+            max-height: 200px;
+            overflow-y: auto;
+            box-shadow: 0 -5px 20px rgba(0, 255, 65, 0.2);
+        }
+
+        .cmd-item {
+            padding: 10px;
+            border-bottom: 1px solid #333;
+            color: var(--terminal-green);
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .cmd-item:hover {
+            background: rgba(0, 255, 65, 0.1);
+        }
+        .cmd-item.used {
+            color: #555;
+            text-decoration: line-through;
+            pointer-events: none;
+            background: #111;
+        }
+        .cmd-desc {
+            font-size: 0.65rem;
+            color: #888;
+            font-style: italic;
+        }
+
+        /* Alerta de Sabotaje Recibido */
+        #sabotage-alert {
+            position: fixed; top: 150px; width: 100%; text-align: center;
+            color: var(--hazard); font-weight: bold; font-size: 1.2rem;
+            background: rgba(50, 0, 0, 0.8);
+            padding: 15px; border-top: 2px solid var(--hazard);
+            border-bottom: 2px solid var(--hazard);
+            z-index: 8000; display: none;
+            text-shadow: 0 0 10px var(--hazard);
+            pointer-events: none;
+            animation: glitch-anim 0.2s infinite;
+        }
+
+        @keyframes glitch-anim {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+
         * { box-sizing: border-box; }
 
         body {
@@ -31,6 +107,7 @@
             overflow-x: hidden;
             min-height: 100vh;
             overscroll-behavior-y: contain;
+            transition: background-color 2s ease; /* Para efecto chromatic */
         }
 
         /* --- EFECTOS VISUALES (PUNTOS) --- */
@@ -526,7 +603,7 @@
         .card-header { font-size: 0.65rem; font-weight: bold; color: var(--gold); border-bottom: 1px solid #333; margin-bottom: 4px; text-align: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex-shrink: 0;}
         .card-body { color: #aaa; word-wrap: break-word; flex-grow: 1;}
 
-        .terminal-zone { background: #000; border: 1px solid #222; padding: 10px; border-radius: 5px; margin-top: auto; flex-shrink: 0; }
+        .terminal-zone { background: #000; border: 1px solid #222; padding: 10px; border-radius: 5px; margin-top: auto; flex-shrink: 0; position: relative; }
         
         #queryInput { 
             width: 100%; background: transparent; border: none; 
@@ -550,7 +627,7 @@
         }
         .btn-mini:hover { background: var(--gold); color: #000; }
 
-        #case-info-bar { display: flex; justify-content: space-between; align-items: center; color: var(--gold); margin-bottom: 10px; font-size: 0.75rem; border-bottom: 1px solid #222; padding-bottom: 5px; flex-shrink: 0; }
+        #case-info-bar { display: flex; justify-content: space-between; align-items: center; color: var(--gold); margin-bottom: 10px; font-size: 0.75rem; border-bottom: 1px solid #222; padding-bottom: 5px; flex-shrink: 0; transition: filter 0.5s; }
 
         #preload-status {
             position: fixed; bottom: 10px; left: 10px;
@@ -612,6 +689,9 @@
     </div>
 
     <div id="rival-alert">EL RIVAL HA DESCARTADO</div>
+    
+    <!-- Alerta de Sabotaje recibido -->
+    <div id="sabotage-alert">¡ERROR CRÍTICO!</div>
 
     <div id="loading-screen">
         <div class="loading-text">RECALIBRANDO SISTEMA...</div>
@@ -682,7 +762,7 @@
                 </div>
                 <div class="mode-info">
                     <div class="mode-title" style="color: var(--ranking-blue);">Modo Supervivencia (ONLINE)</div>
-                    <div class="mode-desc">Resuelve infinitos casos contra un rival. Gana quien acumule más puntos antes del límite.</div>
+                    <div class="mode-desc">Resuelve infinitos casos contra un rival. Comandos de sabotaje habilitados.</div>
                 </div>
             </div>
         </div>
@@ -815,6 +895,7 @@
         <div class="board-grid mode-5" id="board"></div>
         
         <div class="terminal-zone">
+            <div id="cmd-suggestions"></div>
             <input type="text" id="queryInput" autocomplete="off" placeholder="INTERROGAR SISTEMA (¿...?)...">
             <div class="output" id="out">> AGUARDANDO COMANDOS...</div>
         </div>
@@ -1256,6 +1337,30 @@
         let sameCaseMode = true; 
         let seededRNGVal = 1;
 
+        // --- SABOTAJE / CIBERGUERRA ---
+        // Lista de comandos disponibles (se reinicia cada partida)
+        let sabotageCmds = {}; 
+        
+        const SABOTAGE_DEFINITIONS = {
+            'REORGANIZED': { desc: 'ALTERAR POSICIÓN FÍSICA DE TARJETAS' },
+            'RESTORE': { desc: 'RESTAURAR 3 SOSPECHOSOS DESCARTADOS' },
+            'DATABLIND': { desc: 'OCULTAR CONTADORES Y DIFUMINAR CONSOLA' },
+            'ENCRYPTEDFILES': { desc: 'CIFRAR TEXTO DE TARJETAS (SÍMBOLOS)' },
+            'CHROMATIC': { desc: 'ALTERAR ESPECTRO DE COLOR VISUAL' }
+        };
+
+        function initSabotageSystem() {
+            // Reiniciar estado de comandos
+            sabotageCmds = {
+                'REORGANIZED': false,
+                'RESTORE': false,
+                'DATABLIND': false,
+                'ENCRYPTEDFILES': false,
+                'CHROMATIC': false
+            };
+            document.getElementById('cmd-suggestions').style.display = 'none';
+        }
+
         // Función pseudo-aleatoria para "Same Case"
         function seededRandom() {
             var x = Math.sin(seededRNGVal++) * 10000;
@@ -1629,9 +1734,13 @@
                     broadcastExcluding(c.peer, {type: 'RIVAL_BATCH_DISCARD', count: data.count});
                     triggerRivalAlert(data.count); 
                 }
+                else if (data.type === 'SABOTAGE') {
+                    // Host recibe un ataque y lo procesa si es para él, o lo ignora (aquí asumimos 1v1 el peer que envía es el atacante)
+                    // Si el juego fuera multi-jugador >2, habría que definir target. Asumimos 1v1.
+                    applySabotageEffect(data.effect);
+                }
             });
             
-            // --- CAMBIO: DETECCIÓN DE DESCONEXIÓN Y WIN CONDITION ---
             c.on('close', () => {
                  const wasPlayerCount = onlinePlayers.length;
                  onlinePlayers = onlinePlayers.filter(p => p.id !== c.peer);
@@ -1639,21 +1748,16 @@
                  
                  // Si el juego está activo y alguien se sale
                  if(isGameStarted) {
-                     // Si eran 2 y ahora queda 1 (Host), gana Host
                      if(wasPlayerCount === 2 && onlinePlayers.length === 1 && onlinePlayers[0].id === myPeerId) {
                          alert("EL RIVAL HA ABANDONADO LA SALA. VICTORIA POR DEFECTO.");
-                         // Forzar fin de juego como victoria local
-                         endGameTimer(); // Esto parará el timer
-                         showRanking([{name: currentUser.name, score: compTotalScore + 1000}]); // Victoria simulada
+                         endGameTimer(); 
+                         showRanking([{name: currentUser.name, score: compTotalScore + 1000}]); 
                      }
-                     // Si eran 2 y queda 1 (que no es Host, aunque este evento es en Host), enviamos WIN al superviviente
                      else if (wasPlayerCount === 2 && onlinePlayers.length === 1) {
-                         // El que queda es un cliente
                          const survivor = onlinePlayers[0];
                          const connSurvivor = connections.find(con => con.peer === survivor.id);
                          if(connSurvivor) connSurvivor.send({type: 'GAME_OVER_DISCONNECT_WIN'});
                      }
-                     // Si eran mas de 2, el juego sigue
                  }
 
                  broadcast({type: 'UPDATE_LOBBY', players: onlinePlayers});
@@ -1703,7 +1807,6 @@
                     onlinePlayers = data.players;
                     updateLobbyUI();
                 }
-                // --- CAMBIO: RECIBIR ACTUALIZACIÓN DE SETTINGS ---
                 else if (data.type === 'LOBBY_SETTINGS_UPDATE') {
                     updateLobbySettingsUI(data.time, data.mode);
                 }
@@ -1711,7 +1814,8 @@
                     sameCaseMode = data.sameCase;
                     seededRNGVal = data.seed;
                     compTimeLeft = data.timeLimit || 600; 
-                    isGameStarted = true; // Cliente marca inicio
+                    isGameStarted = true; 
+                    initSabotageSystem(); // Reiniciar sabotajes al inicio
                     
                     document.getElementById('online-lobby').style.display = 'none';
                     showTutorial(); 
@@ -1719,7 +1823,6 @@
                 else if(data.type === 'GAME_OVER_FINAL') {
                      showRanking(data.ranking);
                 }
-                // --- CAMBIO: RECIBIR WIN POR DESCONEXION ---
                 else if (data.type === 'GAME_OVER_DISCONNECT_WIN') {
                     alert("EL RIVAL HA ABANDONADO. VICTORIA POR DEFECTO.");
                     gameActive = false;
@@ -1729,6 +1832,9 @@
                 }
                 else if (data.type === 'RIVAL_BATCH_DISCARD') {
                     triggerRivalAlert(data.count);
+                }
+                else if (data.type === 'SABOTAGE') {
+                    applySabotageEffect(data.effect);
                 }
             });
             
@@ -1795,13 +1901,9 @@
             document.getElementById('btn-seed-diff').className = !sameCaseMode ? 'mosaic-btn active' : 'mosaic-btn';
         }
 
-        // Función para que el cliente actualice su UI al recibir datos del host
         function updateLobbySettingsUI(time, mode) {
-            // Actualizar tiempo
             document.getElementById('time-slider').value = time;
             document.getElementById('time-val-display').innerText = time;
-            
-            // Actualizar modo
             sameCaseMode = (mode === 'same');
             updateUIButtonsMode();
         }
@@ -1809,7 +1911,6 @@
         function hostStartGame() {
             playSFX('click');
 
-            // --- CAMBIO: PROHIBIR JUGAR SOLO ---
             if (onlinePlayers.length < 2) {
                 playSFX('error');
                 alert("ERROR DE PROTOCOLO: SE REQUIEREN MÍNIMO 2 AGENTES PARA INICIAR EL MODO SUPERVIVENCIA.");
@@ -1818,6 +1919,7 @@
 
             onlinePlayers.forEach(p => p.done = false);
             isGameStarted = true; // Host marca inicio
+            initSabotageSystem(); // Reiniciar sabotajes
             
             const seed = Math.floor(Math.random() * 100000);
             seededRNGVal = seed;
@@ -1843,6 +1945,104 @@
             el.classList.add('active-alert');
         }
 
+        // --- SISTEMA DE SABOTAJE - LÓGICA DE APLICACIÓN ---
+        function applySabotageEffect(effectName) {
+            playSFX('error'); // Sonido de alerta
+            
+            // Mostrar Alerta Visual
+            const alertBox = document.getElementById('sabotage-alert');
+            alertBox.innerText = `¡ATAQUE DE SISTEMA: ${effectName}!`;
+            alertBox.style.display = 'block';
+            setTimeout(() => { alertBox.style.display = 'none'; }, 4000);
+
+            // LOGICA ESPECÍFICA POR COMANDO
+            switch(effectName) {
+                case 'REORGANIZED':
+                    const board = document.getElementById('board');
+                    // Mezclar hijos del DOM
+                    for (let i = board.children.length; i >= 0; i--) {
+                        board.appendChild(board.children[Math.random() * i | 0]);
+                    }
+                    typeWriter("ADVERTENCIA: INTEGRIDAD ESTRUCTURAL DEL TABLERO COMPROMETIDA.", "out", 5);
+                    break;
+                    
+                case 'RESTORE':
+                    const discarded = Array.from(document.querySelectorAll('.suspect-card.discarded'));
+                    if(discarded.length > 0) {
+                        // Barajar y tomar hasta 3
+                        discarded.sort(() => Math.random() - 0.5);
+                        const toRestore = discarded.slice(0, 3);
+                        toRestore.forEach(card => {
+                            card.classList.remove('discarded');
+                            // Efecto visual de restauración
+                            card.style.filter = "sepia(1) hue-rotate(90deg)";
+                            setTimeout(() => { card.style.filter = ""; }, 1000);
+                        });
+                        typeWriter(`ALERTA: SE HAN REINTEGRADO ${toRestore.length} SOSPECHOSOS A LA BASE DE DATOS.`, "out", 5);
+                    }
+                    break;
+                    
+                case 'DATABLIND':
+                    const out = document.getElementById('out');
+                    const infoBar = document.getElementById('case-info-bar');
+                    out.classList.add('sabotage-blur');
+                    infoBar.classList.add('sabotage-blur');
+                    
+                    setTimeout(() => {
+                        out.classList.remove('sabotage-blur');
+                        infoBar.classList.remove('sabotage-blur');
+                        typeWriter("SISTEMA VISUAL RESTAURADO.", "out", 5);
+                    }, 15000); // 15 segundos
+                    break;
+                    
+                case 'ENCRYPTEDFILES':
+                    const bodies = document.querySelectorAll('.card-body');
+                    bodies.forEach(b => {
+                        b.setAttribute('data-original', b.innerHTML);
+                        b.classList.add('sabotage-scramble');
+                        // Generar texto basura
+                        let trash = "";
+                        for(let i=0; i<30; i++) trash += String.fromCharCode(33 + Math.random()*30);
+                        b.innerHTML = trash;
+                    });
+                    
+                    setTimeout(() => {
+                        bodies.forEach(b => {
+                            b.classList.remove('sabotage-scramble');
+                            b.innerHTML = b.getAttribute('data-original');
+                        });
+                        typeWriter("ENCRIPTACIÓN FINALIZADA. DATOS LEGIBLES.", "out", 5);
+                    }, 15000); // 15 segundos
+                    break;
+                    
+                case 'CHROMATIC':
+                    document.body.style.filter = "hue-rotate(180deg) invert(1)";
+                    setTimeout(() => {
+                        document.body.style.filter = "none";
+                        typeWriter("CALIBRACIÓN DE COLOR COMPLETADA.", "out", 5);
+                    }, 20000); // 20 segundos
+                    break;
+            }
+        }
+
+        function triggerSabotage(cmd) {
+            if(!isCompetitiveMode || !gameActive) return;
+            if(sabotageCmds[cmd]) return; // Ya usado
+
+            // Marcar como usado
+            sabotageCmds[cmd] = true;
+            
+            // Enviar al rival
+            if(isHost) broadcastExcluding(myPeerId, {type: 'SABOTAGE', effect: cmd});
+            else if(conn) conn.send({type: 'SABOTAGE', effect: cmd});
+            
+            // Feedback local
+            playSFX('type');
+            typeWriter(`UPLOAD COMPLETE: EJECUTANDO PROTOCOLO ${cmd}...`, "out", 10);
+            document.getElementById('cmd-suggestions').style.display = 'none';
+            document.getElementById('queryInput').value = '';
+        }
+
         // --- END ONLINE LOGIC ---
 
         function showTutorial() {
@@ -1860,9 +2060,9 @@
                         <b>1. SUPERVIVENCIA</b>
                         El reloj cuenta hacia atrás. Resuelve tantos casos como puedas antes de que llegue a cero.
                     </div>
-                    <div class="step" style="border-left-color: var(--gold);">
-                        <b>2. SIN LÍMITE</b>
-                        No hay rondas fijas. Al terminar un caso, carga el siguiente de inmediato.
+                    <div class="step" style="border-left-color: var(--hazard);">
+                        <b>2. GUERRA CIBERNÉTICA</b>
+                        Usa la consola escribiendo <b>"/"</b> para ver comandos de sabotaje. ¡Ciega, confunde y entorpece a tu rival!
                     </div>
                     <div class="step">
                         <b>3. PRESIÓN</b>
@@ -2053,7 +2253,6 @@
         function generateNewSquad() {
             personas = [];
             DP = {
-                // MODIFICADO: Listas depuradas para evitar errores de género (Karen solo en F) y más nombres
                 M: ["LEON", "MARC", "OTTO", "IVAN", "ERIC", "HUAN", "KURT", "NOAH", "AXEL", "SAUL", "IGOR", "LIAM", "ENZO", "HUGO", "OMAR", "LUC", "YURI", "RYAN", "FINN", "EZRA", "MILO", "IAN", "ALAN", "KAI", "BORIS", "OSCAR", "VICTOR", "FELIX", "DANTE", "BRUNO", "KALEB", "SILAS", "ARLO", "THEO", "REMY", "ZAYN", "LUCA", "NICO", "JUDE", "ELIAS", "SETH", "KANE", "AARON", "SIMON", "RAUL", "LEVI", "TOBIAS", "GAGE", "XANDER", "JACE", "JOHN", "JAMES", "WILLIAM", "DAVID"],
                 F: ["MIA", "LARA", "YUNA", "OLGA", "ADRIANA", "ZOE", "INÉS", "KIRA", "EMMA", "RUTH", "SARA", "LUNA", "VERA", "NORA", "MAYA", "LEA", "IRIS", "ALBA", "GALA", "JUNE", "CLAUDIA", "ANA", "EVA", "LISA", "NINA", "JADE", "ROSE", "MILA", "RUBY", "EDEN", "ISLA", "LYRA", "MAIA", "OPAL", "FAYE", "SKYE", "TESS", "WILLA", "ZARA", "ALEXA", "BELLA", "CHLOE", "DIANA", "ELSA", "FREYA", "KAREN", "MARIA", "SOFIA", "JULIA"],
                 P: [
@@ -2402,10 +2601,48 @@
             updateWalletUI();
         }
 
+        // Evento para mostrar sugerencias al escribir "/"
+        document.getElementById('queryInput').addEventListener('input', function(e) {
+            if(!isCompetitiveMode || !gameActive) return;
+            
+            const val = this.value;
+            const suggestions = document.getElementById('cmd-suggestions');
+            
+            if(val.startsWith('/')) {
+                suggestions.style.display = 'flex';
+                suggestions.innerHTML = '';
+                
+                Object.keys(SABOTAGE_DEFINITIONS).forEach(cmd => {
+                    const isUsed = sabotageCmds[cmd];
+                    const div = document.createElement('div');
+                    div.className = `cmd-item ${isUsed ? 'used' : ''}`;
+                    div.innerHTML = `<span>/${cmd}</span><span class="cmd-desc">${SABOTAGE_DEFINITIONS[cmd].desc}</span>`;
+                    
+                    if(!isUsed) {
+                        div.onclick = () => {
+                            triggerSabotage(cmd);
+                        };
+                    }
+                    suggestions.appendChild(div);
+                });
+            } else {
+                suggestions.style.display = 'none';
+            }
+        });
+
         document.getElementById('queryInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter' && !isTyping) {
                 let rawValue = this.value.trim();
                 
+                // CHEQUEO DE COMANDO DE SABOTAJE
+                if (isCompetitiveMode && rawValue.startsWith('/')) {
+                    const cmd = rawValue.substring(1).toUpperCase();
+                    if(SABOTAGE_DEFINITIONS[cmd]) {
+                        triggerSabotage(cmd);
+                        return;
+                    }
+                }
+
                 if (!rawValue.startsWith('¿') || !rawValue.endsWith('?')) {
                     playSFX('error');
                     document.getElementById('out').style.color = "var(--hazard)";
