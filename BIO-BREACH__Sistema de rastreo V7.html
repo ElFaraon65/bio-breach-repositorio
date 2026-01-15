@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIO-BREACH: ONLINE SURVIVAL V8.1</title>
+    <title>BIO-BREACH: ONLINE SURVIVAL V8.2</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
@@ -2053,14 +2053,29 @@
         function generateNewSquad() {
             personas = [];
             DP = {
-                M: ["LEON", "MARC", "OTTO", "IVAN", "ERIC", "HUAN", "KURT", "NOAH", "AXEL", "SAUL", "IGOR", "LIAM", "ENZO", "HUGO", "OMAR", "LUC", "YURI", "RYAN", "FINN", "EZRA", "MILO", "IAN", "ALAN", "KAI", "BORIS", "OSCAR", "VICTOR", "FELIX", "DANTE", "BRUNO", "KALEB", "SILAS", "ARLO", "THEO", "REMY", "ZAYN", "LUCA", "NICO", "JUDE", "ELIAS", "SETH", "KANE", "AARON", "SIMON", "RAUL", "LEVI", "TOBIAS", "GAGE", "XANDER", "JACE"],
-                F: ["MIA", "LARA", "YUNA", "OLGA", "ADRI", "ZOE", "INÉS", "KIRA", "EMMA", "RUTH", "SARA", "LUNA", "VERA", "NORA", "MAYA", "LEA", "IRIS", "ALBA", "GALA", "JUNE", "CLAUDIA", "ANA", "EVA", "LISA", "NINA", "JADE", "ROSE", "MILA", "RUBY", "EDEN", "ISLA", "LYRA", "MAIA", "OPAL", "FAYE", "SKYE", "TESS", "WILLA", "ZARA", "ALEXA", "BELLA", "CHLOE", "DIANA", "ELSA", "FREYA"],
+                // MODIFICADO: Listas depuradas para evitar errores de género (Karen solo en F) y más nombres
+                M: ["LEON", "MARC", "OTTO", "IVAN", "ERIC", "HUAN", "KURT", "NOAH", "AXEL", "SAUL", "IGOR", "LIAM", "ENZO", "HUGO", "OMAR", "LUC", "YURI", "RYAN", "FINN", "EZRA", "MILO", "IAN", "ALAN", "KAI", "BORIS", "OSCAR", "VICTOR", "FELIX", "DANTE", "BRUNO", "KALEB", "SILAS", "ARLO", "THEO", "REMY", "ZAYN", "LUCA", "NICO", "JUDE", "ELIAS", "SETH", "KANE", "AARON", "SIMON", "RAUL", "LEVI", "TOBIAS", "GAGE", "XANDER", "JACE", "JOHN", "JAMES", "WILLIAM", "DAVID"],
+                F: ["MIA", "LARA", "YUNA", "OLGA", "ADRIANA", "ZOE", "INÉS", "KIRA", "EMMA", "RUTH", "SARA", "LUNA", "VERA", "NORA", "MAYA", "LEA", "IRIS", "ALBA", "GALA", "JUNE", "CLAUDIA", "ANA", "EVA", "LISA", "NINA", "JADE", "ROSE", "MILA", "RUBY", "EDEN", "ISLA", "LYRA", "MAIA", "OPAL", "FAYE", "SKYE", "TESS", "WILLA", "ZARA", "ALEXA", "BELLA", "CHLOE", "DIANA", "ELSA", "FREYA", "KAREN", "MARIA", "SOFIA", "JULIA"],
                 P: [
+                    // EUROPA (Agregados Portugal, Inglaterra, Suecia, Noruega, Paises Bajos)
                     {n: "ALEMANIA", c: "EUROPA"}, {n: "ESPAÑA", c: "EUROPA"}, {n: "ITALIA", c: "EUROPA"}, {n: "FRANCIA", c: "EUROPA"}, {n: "SUIZA", c: "EUROPA"}, {n: "RUSIA", c: "EUROPA"},
+                    {n: "PORTUGAL", c: "EUROPA"}, {n: "INGLATERRA", c: "EUROPA"}, {n: "SUECIA", c: "EUROPA"}, {n: "NORUEGA", c: "EUROPA"}, {n: "PAÍSES BAJOS", c: "EUROPA"},
+                    
+                    // ASIA
                     {n: "JAPÓN", c: "ASIA"}, {n: "CHINA", c: "ASIA"}, {n: "COREA", c: "ASIA"}, {n: "INDIA", c: "ASIA"}, {n: "TAILANDIA", c: "ASIA"}, {n: "VIETNAM", c: "ASIA"},
-                    {n: "MÉXICO", c: "AMÉRICA"}, {n: "BRASIL", c: "AMÉRICA"}, {n: "USA", c: "AMÉRICA"}, {n: "BOLIVIA", c: "AMÉRICA"}, {n: "COLOMBIA", c: "AMÉRICA"}, {n: "ECUADOR", c: "AMÉRICA"}, {n: "PERÚ", c: "AMÉRICA"}, {n: "ARGENTINA", c: "AMÉRICA"}, {n: "CANADÁ", c: "AMÉRICA"},
+                    
+                    // AMÉRICA (Dividido en NORTE y SUR)
+                    {n: "MÉXICO", c: "AMÉRICA DEL NORTE"}, {n: "USA", c: "AMÉRICA DEL NORTE"}, {n: "CANADÁ", c: "AMÉRICA DEL NORTE"},
+                    
+                    {n: "BRASIL", c: "AMÉRICA DEL SUR"}, {n: "BOLIVIA", c: "AMÉRICA DEL SUR"}, {n: "COLOMBIA", c: "AMÉRICA DEL SUR"}, {n: "ECUADOR", c: "AMÉRICA DEL SUR"}, 
+                    {n: "PERÚ", c: "AMÉRICA DEL SUR"}, {n: "ARGENTINA", c: "AMÉRICA DEL SUR"}, {n: "CHILE", c: "AMÉRICA DEL SUR"}, {n: "URUGUAY", c: "AMÉRICA DEL SUR"}, {n: "VENEZUELA", c: "AMÉRICA DEL SUR"},
+                    
+                    // OCEANÍA
                     {n: "AUSTRALIA", c: "OCEANÍA"}, {n: "NUEVA ZELANDA", c: "OCEANÍA"},
-                    {n: "EGIPTO", c: "ÁFRICA"}, {n: "SUDAFRICA", c: "ÁFRICA"}, {n: "NIGERIA", c: "ÁFRICA"}, {n: "MARRUECOS", c: "ÁFRICA"}
+                    
+                    // ÁFRICA (Agregados Kenia, Senegal, Ghana, Etiopia)
+                    {n: "EGIPTO", c: "ÁFRICA"}, {n: "SUDAFRICA", c: "ÁFRICA"}, {n: "NIGERIA", c: "ÁFRICA"}, {n: "MARRUECOS", c: "ÁFRICA"},
+                    {n: "KENIA", c: "ÁFRICA"}, {n: "SENEGAL", c: "ÁFRICA"}, {n: "GHANA", c: "ÁFRICA"}, {n: "ETIOPÍA", c: "ÁFRICA"}
                 ],
                 T: ["PÁLIDA", "OLIVA", "BRONCE", "OSCURA", "ÉBANO"],
                 O: ["AZULES", "VERDES", "NEGROS", "CAFÉS", "GRISES", "MIEL"],
@@ -2429,9 +2444,19 @@
                         else validQuery = false;
                     }
                 }
+                // MODIFICADO: Lógica expandida para Norte/Sur América y nuevos países
                 else if (q.match(/\b(EUROPA|EUROPEO|EUROPEA)\b/)) { checkFunc = p => p.cont === "EUROPA"; validQuery = true; }
                 else if (q.match(/\b(ASIA|ASIÁTICO|ASIÁTICA)\b/)) { checkFunc = p => p.cont === "ASIA"; validQuery = true; }
-                else if (q.match(/\b(AMÉRICA|AMERICANO|AMERICANA)\b/)) { checkFunc = p => p.cont === "AMÉRICA"; validQuery = true; }
+                else if (q.match(/\b(NORTEAMÉRICA|NORTEAMERICANO|NORTEAMERICANA)\b/) || (hasWord("AMÉRICA") && hasWord("NORTE"))) { 
+                    checkFunc = p => p.cont === "AMÉRICA DEL NORTE"; validQuery = true; 
+                }
+                else if (q.match(/\b(SUDAMÉRICA|SUDAMERICANO|SUDAMERICANA|SURAMÉRICA|SURAMERICANO)\b/) || (hasWord("AMÉRICA") && hasWord("SUR"))) { 
+                    checkFunc = p => p.cont === "AMÉRICA DEL SUR"; validQuery = true; 
+                }
+                else if (q.match(/\b(AMÉRICA|AMERICANO|AMERICANA)\b/)) { 
+                    // Si solo preguntan por América (general), incluye Norte y Sur
+                    checkFunc = p => p.cont.includes("AMÉRICA"); validQuery = true; 
+                }
                 else if (q.match(/\b(OCEANÍA|OCEÁNICO|OCEÁNICA)\b/)) { checkFunc = p => p.cont === "OCEANÍA"; validQuery = true; }
                 else if (q.match(/\b(ÁFRICA|AFRICANO|AFRICANA)\b/)) { checkFunc = p => p.cont === "ÁFRICA"; validQuery = true; }
                 
@@ -2439,10 +2464,22 @@
                     const demonyms = {
                         "ALEMANIA": "ALEMÁN", "ESPAÑA": "ESPAÑOL", "FRANCIA": "FRANCÉS", "ITALIA": "ITALIANO", "SUIZA": "SUIZO", "RUSIA": "RUSO",
                         "CHINA": "CHINO", "JAPÓN": "JAPONÉS", "COREA": "COREANO", "INDIA": "INDIO", "TAILANDIA": "TAILANDÉS", "VIETNAM": "VIETNAMITA", 
-                        "MÉXICO": "MEXICANO", "BRASIL": "BRASILEÑO", "USA": "AMERICANO", "BOLIVIA": "BOLIVIANO", "COLOMBIA": "COLOMBIANO", "ECUADOR": "ECUATORIANO",
-                        "PERÚ": "PERUANO", "ARGENTINA": "ARGENTINO", "CANADÁ": "CANADIENSE",
+                        
+                        // AMÉRICA DEL NORTE
+                        "MÉXICO": "MEXICANO", "USA": "AMERICANO", "EEUU": "AMERICANO", "ESTADOS UNIDOS": "AMERICANO", "CANADÁ": "CANADIENSE",
+                        
+                        // AMÉRICA DEL SUR
+                        "BRASIL": "BRASILEÑO", "BOLIVIA": "BOLIVIANO", "COLOMBIA": "COLOMBIANO", "ECUADOR": "ECUATORIANO",
+                        "PERÚ": "PERUANO", "ARGENTINA": "ARGENTINO", "CHILE": "CHILENO", "URUGUAY": "URUGUAYO", "VENEZUELA": "VENEZOLANO",
+                        
                         "AUSTRALIA": "AUSTRALIANO", "NUEVA ZELANDA": "NEOZELANDÉS",
-                        "EGIPTO": "EGIPCIO", "SUDAFRICA": "SUDAFRICANO", "NIGERIA": "NIGERIANO", "MARRUECOS": "MARROQUÍ"
+                        
+                        // ÁFRICA
+                        "EGIPTO": "EGIPCIO", "SUDAFRICA": "SUDAFRICANO", "NIGERIA": "NIGERIANO", "MARRUECOS": "MARROQUÍ",
+                        "KENIA": "KENIANO", "SENEGAL": "SENEGALÉS", "GHANA": "GHANÉS", "ETIOPÍA": "ETÍOPE",
+                        
+                        // EUROPA EXTRA
+                        "PORTUGAL": "PORTUGUÉS", "INGLATERRA": "INGLÉS", "SUECIA": "SUECO", "NORUEGA": "NORUEGO", "PAÍSES BAJOS": "HOLANDÉS"
                     };
 
                     const getFem = (word) => {
@@ -2455,7 +2492,15 @@
 
                     const foundCountry = DP.P.find(c => {
                         const demo = demonyms[c.n];
+                        
+                        // Check exact country name
                         if (hasWord(c.n) && validateSyntax(c.n, q)) return true;
+                        
+                        // Check logic for mapped demonyms/aliases
+                        if (c.n === "USA") { // Special aliases for USA
+                             if (hasWord("EEUU") || hasWord("ESTADOS UNIDOS")) return true;
+                        }
+
                         if (demo && hasWord(demo) && validateSyntax(demo, q)) return true;
                         if (demo) {
                             const fem = getFem(demo);
