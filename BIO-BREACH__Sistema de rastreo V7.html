@@ -2016,7 +2016,10 @@
                     break;
                     
                 case 'CHROMATIC':
-    // --- ACTIVACIÓN DEL SABOTAJE ---
+    // 1. Efecto visual global (invierte negro a blanco y viceversa)
+    document.body.style.filter = "hue-rotate(180deg) invert(1)";
+
+    // 2. Intercambio de clases para las cintas
     const allRibbons = document.querySelectorAll('.gender-ribbon');
     allRibbons.forEach(r => {
         if (r.classList.contains('ribbon-male')) {
@@ -2029,7 +2032,10 @@
     });
 
     setTimeout(() => {
-        // --- RESTAURACIÓN (Invertir de nuevo) ---
+        // 3. Restaurar filtro visual
+        document.body.style.filter = "none";
+
+        // 4. Restaurar clases de las cintas a su estado original
         const activeRibbons = document.querySelectorAll('.gender-ribbon');
         activeRibbons.forEach(r => {
             if (r.classList.contains('ribbon-male')) {
