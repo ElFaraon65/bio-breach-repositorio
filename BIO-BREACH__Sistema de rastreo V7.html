@@ -2016,12 +2016,33 @@
                     break;
                     
                 case 'CHROMATIC':
-                    document.body.style.filter = "hue-rotate(180deg) invert(1)";
-                    setTimeout(() => {
-                        document.body.style.filter = "none";
-                        typeWriter("CALIBRACIÓN DE COLOR COMPLETADA.", "out", 5);
-                    }, 20000); // 20 segundos
-                    break;
+    // --- ACTIVACIÓN DEL SABOTAJE ---
+    const allRibbons = document.querySelectorAll('.gender-ribbon');
+    allRibbons.forEach(r => {
+        if (r.classList.contains('ribbon-male')) {
+            r.classList.remove('ribbon-male');
+            r.classList.add('ribbon-female');
+        } else {
+            r.classList.remove('ribbon-female');
+            r.classList.add('ribbon-male');
+        }
+    });
+
+    setTimeout(() => {
+        // --- RESTAURACIÓN (Invertir de nuevo) ---
+        const activeRibbons = document.querySelectorAll('.gender-ribbon');
+        activeRibbons.forEach(r => {
+            if (r.classList.contains('ribbon-male')) {
+                r.classList.remove('ribbon-male');
+                r.classList.add('ribbon-female');
+            } else {
+                r.classList.remove('ribbon-female');
+                r.classList.add('ribbon-male');
+            }
+        });
+        typeWriter("CALIBRACIÓN DE COLOR COMPLETADA.", "out", 5);
+    }, 20000); // 20 segundos
+    break;
             }
         }
 
