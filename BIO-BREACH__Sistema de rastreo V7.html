@@ -1822,7 +1822,7 @@
                     compTimerInterval = setInterval(updateCompTimer, 1000);
                     
                     document.getElementById('online-lobby').style.display = 'none';
-                    showTutorial();  
+                    showTutorial();                                          
                 }
                 else if(data.type === 'GAME_OVER_FINAL') {
                      showRanking(data.ranking);
@@ -1926,8 +1926,7 @@
             initSabotageSystem(); // Reiniciar sabotajes
             
             const seed = Math.floor(Math.random() * 100000);
-            seededRNGVal = seed;
-                        const timeInSeconds = hostTimeMinutes * 60;
+            seededRNGVal             const timeInSeconds = hostTimeMinutes * 60;
             compTimeLeft = timeInSeconds; 
 
             // Iniciar temporizador global para el Host
@@ -1938,7 +1937,8 @@
                 type: 'START_GAME', 
                 seed: seed, 
                 sameCase: sameCaseMode,
-                timeLimit: timeInSeconds 
+                timeLimit: timeInSeco                nds 
+            });                nds 
             });
             
             document.getElementById('online-lobby').style.display = 'none';
@@ -2022,8 +2022,7 @@
                         typeWriter("ENCRIPTACIÓN FINALIZADA. DATOS LEGIBLES.", "out", 5);
                     }, 15000); // 15 segundos
                     break;
-                    
-                case 'CHROMATIC':
+ case 'CHROMATIC':
     // 1. Efecto visual global (invierte negro a blanco y viceversa)
     document.body.style.filter = "hue-rotate(180deg) invert(1)";
 
@@ -2056,6 +2055,7 @@
         });
         typeWriter("CALIBRACIÓN DE COLOR COMPLETADA.", "out", 5);
     }, 20000); // 20 segundos
+    break;    }, 20000); // 20 segundos
     break;
             }
         }
@@ -2164,11 +2164,7 @@
                 document.getElementById('overlay').classList.add('active');
                 document.getElementById('overlay-title').innerText = "TIEMPO AGOTADO";
                 document.getElementById('overlay-reward-msg').innerText = "SINCRONIZANDO RESULTADOS...";
-                document.getElementById('btn-next-case').style.display = 'none';
-            }
-        }
-
-                function startGame() {
+                document.getElementByI        function startGame() {
             playSFX('click');
             fadeToMode(3); 
             document.getElementById('tutorial-screen').style.display = 'none';
@@ -2181,7 +2177,7 @@
             }
 
             initGame();
-        }
+        }   
 
         function openAbortModal() {
             if (!gameActive) return;
