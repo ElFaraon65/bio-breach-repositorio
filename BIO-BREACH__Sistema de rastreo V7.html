@@ -1925,11 +1925,11 @@
             isGameStarted = true; // Host marca inicio
             initSabotageSystem(); // Reiniciar sabotajes
             
-            const seed = Math.floor(Math.random() * 100000);
-            seededRNGVal             const timeInSeconds = hostTimeMinutes * 60;
+                                                            const seed = Math.floor(Math.random() * 100000);
+            seededRNGVal = seed;
+            const timeInSeconds = hostTimeMinutes * 60;
             compTimeLeft = timeInSeconds; 
 
-            // Iniciar temporizador global para el Host
             if (compTimerInterval) clearInterval(compTimerInterval);
             compTimerInterval = setInterval(updateCompTimer, 1000);
 
@@ -1937,13 +1937,11 @@
                 type: 'START_GAME', 
                 seed: seed, 
                 sameCase: sameCaseMode,
-                timeLimit: timeInSeco                nds 
-            });                nds 
+                timeLimit: timeInSeconds 
             });
-            
             document.getElementById('online-lobby').style.display = 'none';
             showTutorial();
-        }
+        }        
 
         function triggerRivalAlert(count) {
             const el = document.getElementById('rival-alert');
@@ -2055,7 +2053,6 @@
         });
         typeWriter("CALIBRACIÓN DE COLOR COMPLETADA.", "out", 5);
     }, 20000); // 20 segundos
-    break;    }, 20000); // 20 segundos
     break;
             }
         }
@@ -2163,21 +2160,18 @@
                 conn.send({type: 'GAME_OVER_TIME', score: compTotalScore});
                 document.getElementById('overlay').classList.add('active');
                 document.getElementById('overlay-title').innerText = "TIEMPO AGOTADO";
-                document.getElementById('overlay-reward-msg').innerText = "SINCRONIZANDO RESULTADOS...";
-                document.getElementByI        function startGame() {
+                                                document.getElementById('overlay-reward-msg').innerText = "SINCRONIZANDO RESULTADOS...";
+            }
+        }
+
+                function startGame() {
             playSFX('click');
             fadeToMode(3); 
             document.getElementById('tutorial-screen').style.display = 'none';
             document.getElementById('main-ui').style.display = 'flex'; 
             
-            if (isCompetitiveMode) {
-                if (compRound === 1) {
-                    // Se elimina la creación del intervalo aquí para mantener la sincronía inicial
-                }
-            }
-
             initGame();
-        }   
+        }                   
 
         function openAbortModal() {
             if (!gameActive) return;
