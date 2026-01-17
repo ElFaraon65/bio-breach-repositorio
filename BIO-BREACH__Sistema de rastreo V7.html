@@ -2171,7 +2171,7 @@
             if(timerEl) timerEl.innerText = `${m}:${s}`;
         }
         
-        function endGameTimer() {
+                function endGameTimer() {
             gameActive = false;
             if(compTimerInterval) clearInterval(compTimerInterval);
             
@@ -2181,9 +2181,14 @@
                 checkAllFinishedTimer();
             } else {
                 conn.send({type: 'GAME_OVER_TIME', score: compTotalScore});
-                //document.getElementById('overlay').classList.add('active');
-                //document.getElementById('overlay-title').innerText = "TIEMPO AGOTADO";
-                                                //document.getElementById('overlay-reward-msg').innerText = "SINCRONIZANDO RESULTADOS...";
+                
+                // --- MODIFICACIÓN: Ventana de "Tiempo Agotado" desactivada ---
+                // document.getElementById('overlay').classList.add('active');
+                // document.getElementById('overlay-title').innerText = "TIEMPO AGOTADO";
+                // document.getElementById('overlay-reward-msg').innerText = "SINCRONIZANDO RESULTADOS...";
+                
+                // Opcional: Avisar en la consola interna que se espera al host
+                typeWriter("TIEMPO AGOTADO. SINCRONIZANDO CON HOST...", "out", 10);
             }
         }
 
