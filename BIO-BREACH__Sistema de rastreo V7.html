@@ -2877,6 +2877,22 @@
                 }
             }
         });
+        
+                // ==========================================
+        // === NUEVO: CERRAR SUGERENCIAS AL CLIC ===
+        // ==========================================
+        document.addEventListener('click', function(e) {
+            const suggestions = document.getElementById('cmd-suggestions');
+            const input = document.getElementById('queryInput');
+            
+            // Si la lista está visible
+            if (suggestions.style.display === 'flex') {
+                // Si el clic NO fue dentro de la lista Y NO fue en el input
+                if (!suggestions.contains(e.target) && e.target !== input) {
+                    suggestions.style.display = 'none';
+                }
+            }
+        });
 
         updateWalletUI();
     </script>
