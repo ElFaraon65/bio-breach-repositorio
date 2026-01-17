@@ -2507,7 +2507,14 @@
             }
         }
 
-        function showRanking(ranking) {
+                function showRanking(ranking) {
+            // --- CORRECCIÓN DE BUG DE CONGELAMIENTO ---
+            // Detenemos el juego y el intervalo inmediatamente para evitar
+            // que el temporizador local sobrescriba esta pantalla.
+            gameActive = false;
+            if(compTimerInterval) clearInterval(compTimerInterval);
+            // ------------------------------------------
+
             silenceMusic();
             document.getElementById('main-ui').style.display = 'none';
             document.getElementById('overlay').classList.add('active');
@@ -2545,7 +2552,7 @@
 
                 fadeToMode(1);
             };
-        }
+        }        
 
         function endGame(win) {
             if (isCompetitiveMode) {
