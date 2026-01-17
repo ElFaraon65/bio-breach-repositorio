@@ -2074,6 +2074,10 @@
             if (successfulQueriesCount < requiredQueries) {
                 playSFX('error');
                 const faltantes = requiredQueries - successfulQueriesCount;
+                
+                document.getElementById('out').style.color = "var(--hazard)";
+                // ------------------------------------------
+                
                 typeWriter(`ERROR: RECARGA INSUFICIENTE. REALICE ${faltantes} CONSULTA(S) MÁS.`, "out", 10);
                 return;
             }
