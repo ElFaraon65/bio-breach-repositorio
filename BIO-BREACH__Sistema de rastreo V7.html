@@ -1810,15 +1810,19 @@
                 else if (data.type === 'LOBBY_SETTINGS_UPDATE') {
                     updateLobbySettingsUI(data.time, data.mode);
                 }
-                else if(data.type === 'START_GAME') {
+                                else if(data.type === 'START_GAME') {
                     sameCaseMode = data.sameCase;
                     seededRNGVal = data.seed;
                     compTimeLeft = data.timeLimit || 600; 
                     isGameStarted = true; 
-                    initSabotageSystem(); // Reiniciar sabotajes al inicio
+                    initSabotageSystem(); 
+                    
+                    // Iniciar temporizador global para el Cliente
+                    if (compTimerInterval) clearInterval(compTimerInterval);
+                    compTimerInterval = setInterval(updateCompTimer, 1000);
                     
                     document.getElementById('online-lobby').style.display = 'none';
-                    showTutorial(); 
+                    showTutorial();  
                 }
                 else if(data.type === 'GAME_OVER_FINAL') {
                      showRanking(data.ranking);
@@ -1923,8 +1927,12 @@
             
             const seed = Math.floor(Math.random() * 100000);
             seededRNGVal = seed;
-            const timeInSeconds = hostTimeMinutes * 60;
+                        const timeInSeconds = hostTimeMinutes * 60;
             compTimeLeft = timeInSeconds; 
+
+            // Iniciar temporizador global para el Host
+            if (compTimerInterval) clearInterval(compTimerInterval);
+            compTimerInterval = setInterval(updateCompTimer, 1000);
 
             broadcast({
                 type: 'START_GAME', 
@@ -2160,7 +2168,7 @@
             }
         }
 
-        function startGame() {
+                function startGame() {
             playSFX('click');
             fadeToMode(3); 
             document.getElementById('tutorial-screen').style.display = 'none';
@@ -2168,8 +2176,7 @@
             
             if (isCompetitiveMode) {
                 if (compRound === 1) {
-                    if (compTimerInterval) clearInterval(compTimerInterval);
-                    compTimerInterval = setInterval(updateCompTimer, 1000);
+                    // Se elimina la creación del intervalo aquí para mantener la sincronía inicial
                 }
             }
 
