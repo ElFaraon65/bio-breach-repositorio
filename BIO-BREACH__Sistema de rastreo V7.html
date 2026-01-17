@@ -1337,9 +1337,11 @@
         let sameCaseMode = true; 
         let seededRNGVal = 1;
 
-        // --- SABOTAJE / CIBERGUERRA ---
+                // --- SABOTAJE / CIBERGUERRA ---
         // Lista de comandos disponibles (se reinicia cada partida)
         let sabotageCmds = {}; 
+        let sabotageUsageCount = 0; // NUEVO: Cuantos sabotajes he lanzado
+        let successfulQueriesCount = 0; // NUEVO: Cuantas preguntas he hecho 
         
         const SABOTAGE_DEFINITIONS = {
             'REORGANIZED': { desc: 'ALTERAR POSICIÓN FÍSICA DE TARJETAS' },
@@ -1349,7 +1351,7 @@
             'CHROMATIC': { desc: 'ALTERAR ESPECTRO DE COLOR VISUAL' }
         };
 
-        function initSabotageSystem() {
+                function initSabotageSystem() {
             // Reiniciar estado de comandos
             sabotageCmds = {
                 'REORGANIZED': false,
@@ -1358,6 +1360,8 @@
                 'ENCRYPTEDFILES': false,
                 'CHROMATIC': false
             };
+            sabotageUsageCount = 0; // NUEVO: Reiniciar conteo
+            successfulQueriesCount = 0; // NUEVO: Reiniciar conteo
             document.getElementById('cmd-suggestions').style.display = 'none';
         }
 
@@ -2061,8 +2065,23 @@
             if(!isCompetitiveMode || !gameActive) return;
             if(sabotageCmds[cmd]) return; // Ya usado
 
-            // Marcar como usado
+            // --- LÓGICA DE COSTE ESCALADO (NUEVO) ---
+            // 1er uso (count 0) = requiere 0 preguntas.
+            // 2do uso (count 1) = requiere 2 preguntas.
+            // 3er uso (count 2) = requiere 4 preguntas.
+            const requiredQueries = sabotageUsageCount * 2;
+            
+            if (successfulQueriesCount < requiredQueries) {
+                playSFX('error');
+                const faltantes = requiredQueries - successfulQueriesCount;
+                typeWriter(`ERROR: RECARGA INSUFICIENTE. REALICE ${faltantes} CONSULTA(S) MÁS.`, "out", 10);
+                return;
+            }
+            // ----------------------------------------
+
+            // Marcar como usado y aumentar contador de uso
             sabotageCmds[cmd] = true;
+            sabotageUsageCount++; // Aumentamos el costo para la siguiente
             
             // Enviar al rival
             if(isHost) broadcastExcluding(myPeerId, {type: 'SABOTAGE', effect: cmd});
@@ -2811,8 +2830,9 @@
                     }
                 }
 
-                if (validQuery && checkFunc) {
+                 if (validQuery && checkFunc) {
                     playSFX('click');
+                    successfulQueriesCount++; // NUEVO: Sumamos una pregunta válida para desbloquear sabotajes
                     document.getElementById('out').style.color = "var(--terminal-green)";
                     
                     const targetHasTrait = checkFunc(objetivo);
