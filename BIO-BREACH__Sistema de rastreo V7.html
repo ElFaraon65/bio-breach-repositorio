@@ -1748,33 +1748,42 @@
                 }
             });
             
-                                                c.on('close', () => {
-    const wasPlayerCount = onlinePlayers.length;
-    onlinePlayers = onlinePlayers.filter(p => p.id !== c.peer);
-    connections = connections.filter(con => con.peer !== c.peer);
-    
-    // Verificamos si el overlay de resultados está visible
-    const isShowingResults = document.getElementById('overlay').classList.contains('active');
+                                                // --- DENTRO DE handleHostConnection(c) ---
 
-    // Si el juego inició y NO estamos en la pantalla de resultados, procesar abandono
-    if (isGameStarted && !isShowingResults) {
-        if (wasPlayerCount === 2 && onlinePlayers.length === 1) {
-            // El host es el único que queda
-            if (onlinePlayers[0].id === myPeerId) {
-                alert("AVISO DE SISTEMA: CONEXIÓN PERDIDA CON EL RIVAL. VICTORIA POR ABANDONO.");
-                endGameTimer(); 
-                showRanking([{name: currentUser.name, score: compTotalScore + 1000}]); 
-            } else {
-                // Notificar al sobreviviente si el host fuera a salir (lógica de seguridad)
-                const survivor = onlinePlayers[0];
-                const connSurvivor = connections.find(con => con.peer === survivor.id);
-                if(connSurvivor) connSurvivor.send({type: 'GAME_OVER_DISCONNECT_WIN'});
-            }
-        }
-    }
+c.on('close', () => {
+     const wasPlayerCount = onlinePlayers.length;
+     
+     // Eliminar al jugador desconectado de la lista
+     onlinePlayers = onlinePlayers.filter(p => p.id !== c.peer);
+     connections = connections.filter(con => con.peer !== c.peer);
+     
+     const isShowingResults = document.getElementById('overlay').classList.contains('active');
 
-    broadcast({type: 'UPDATE_LOBBY', players: onlinePlayers});
-    updateLobbyUI();
+     // LÓGICA DE VICTORIA AUTOMÁTICA
+     // Si el juego inició, no estamos en resultados y era una partida de 2 (ahora queda 1)
+     if(isGameStarted && !isShowingResults) {
+         if(wasPlayerCount === 2 && onlinePlayers.length === 1 && onlinePlayers[0].id === myPeerId) {
+             // Detenemos música y reloj
+             gameActive = false;
+             silenceMusic();
+             if(compTimerInterval) clearInterval(compTimerInterval);
+             
+             alert("EL RIVAL HA ABANDONADO. ¡VICTORIA POR DEFECTO!");
+             
+             // El Host gana automáticamente
+             showRanking([
+                 { name: currentUser.name, score: compTotalScore + 1000 },
+                 { name: "RIVAL (ABANDONO)", score: 0 }
+             ]);
+             
+             // Importante: retornamos aquí para no actualizar el lobby visualmente
+             return; 
+         }
+     }
+
+     // Si no era partida en curso, actualizamos el lobby normal
+     broadcast({type: 'UPDATE_LOBBY', players: onlinePlayers});
+     updateLobbyUI();
 });                        
         }
         
@@ -1860,13 +1869,32 @@
             });
             
                                                 // Si el host se desconecta
-            conn.on('close', () => {
-    // Si el overlay de resultados está activo, ignoramos la desconexión silenciosamente
+            // --- DENTRO DE joinRoom() ---
+
+conn.on('close', () => {
+    // Verificar si ya estamos viendo resultados para no interrumpir
     const isShowingResults = document.getElementById('overlay').classList.contains('active');
-    
+
+    // SI EL JUEGO ESTABA ACTIVO Y NO HA TERMINADO LEGALMENTE
+    if (isGameStarted && !isShowingResults) {
+        // Detenemos música y reloj inmediatamente
+        gameActive = false;
+        silenceMusic();
+        if(compTimerInterval) clearInterval(compTimerInterval);
+
+        alert("EL HOST HA ABANDONADO LA SALA. ¡VICTORIA POR DEFECTO!");
+
+        // El cliente gana automáticamente
+        showRanking([
+            { name: currentUser.name, score: compTotalScore + 1000 }, // Tú (Cliente) ganas puntos
+            { name: "HOST (ABANDONO)", score: 0 } // El Host se queda en 0
+        ]);
+        return; 
+    }
+
+    // SI NO ESTABAN JUGANDO (Estaban en el lobby o ya había terminado)
     if (!isShowingResults) {
-        // Solo alertar si la partida estaba activa o en lobby
-        alert("ALERTA: SE HA CORTADO EL VÍNCULO CON EL HOST.");
+        alert("CONEXIÓN CON SALA PERDIDA.");
         exitOnlineLobby();
     }
 });
