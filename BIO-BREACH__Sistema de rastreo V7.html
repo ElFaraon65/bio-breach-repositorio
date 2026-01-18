@@ -1749,10 +1749,15 @@
                     broadcastExcluding(c.peer, {type: 'RIVAL_BATCH_DISCARD', count: data.count});
                     triggerRivalAlert(data.count); 
                 }
-                else if (data.type === 'SABOTAGE') {
+                                else if (data.type === 'SABOTAGE') {
                     // Host recibe un ataque y lo procesa si es para él, o lo ignora (aquí asumimos 1v1 el peer que envía es el atacante)
                     // Si el juego fuera multi-jugador >2, habría que definir target. Asumimos 1v1.
                     applySabotageEffect(data.effect);
+                }
+                // --- NUEVO: ESCUCHAR PETICIÓN DE INICIO DE TIEMPO ---
+                else if (data.type === 'REQUEST_GLOBAL_START') {
+                    // Un cliente presionó "ENTENDIDO", iniciamos para todos
+                    triggerGlobalTimerStart();
                 }
             });
             
@@ -1846,23 +1851,36 @@
                 else if (data.type === 'LOBBY_SETTINGS_UPDATE') {
                     updateLobbySettingsUI(data.time, data.mode);
                 }
-                                                                                else if(data.type === 'START_GAME') {
+                                                                                                else if(data.type === 'START_GAME') {
                     sameCaseMode = data.sameCase;
                     seededRNGVal = data.seed;
                     
-                    // Sincronización: Recibimos la hora exacta de fin
-                    globalEndTime = data.endTime; 
+                    // MODIFICACIÓN: No recibimos endTime todavía ni iniciamos reloj
+                    // globalEndTime = data.endTime; 
                     
                     isGameStarted = true; 
                     initSabotageSystem(); 
                     
-                    // INICIAR EL RELOJ INMEDIATAMENTE (Frecuencia AUMENTADA a 30ms para fluidez)
-                    // Corre de fondo aunque el jugador esté leyendo el tutorial
-                    if (compTimerInterval) clearInterval(compTimerInterval);
-                    compTimerInterval = setInterval(updateCompTimer, 30);
+                    // MODIFICACIÓN: Pausamos el inicio del intervalo
+                    // if (compTimerInterval) clearInterval(compTimerInterval);
+                    // compTimerInterval = setInterval(updateCompTimer, 30);
                     
                     document.getElementById('online-lobby').style.display = 'none';
                     showTutorial();                                          
+                }
+                // --- NUEVO EVENTO: EL DISPARO SINCRONIZADO REAL ---
+                else if(data.type === 'SYNC_START_TIMER') {
+                    globalEndTime = data.endTime;
+                    
+                    // AHORA SÍ INICIAMOS EL RELOJ Y CERRAMOS EL TUTORIAL A LA FUERZA
+                    if (compTimerInterval) clearInterval(compTimerInterval);
+                    compTimerInterval = setInterval(updateCompTimer, 30);
+                    
+                    // Forzar cierre de tutorial e inicio de juego
+                    fadeToMode(3); 
+                    document.getElementById('tutorial-screen').style.display = 'none';
+                    document.getElementById('main-ui').style.display = 'flex'; 
+                    initGame();
                 }
                 else if(data.type === 'GAME_OVER_FINAL') {
                      showRanking(data.ranking);
@@ -1987,7 +2005,7 @@
             updateUIButtonsMode();
         }
         
-                        function hostStartGame() {
+                                function hostStartGame() {
             playSFX('click');
 
             if (onlinePlayers.length < 2) {
@@ -2003,27 +2021,25 @@
             const seed = Math.floor(Math.random() * 100000);
             seededRNGVal = seed;
             
-                        // --- CÁLCULO DE TIEMPO ABSOLUTO ---
-            // Calculamos el momento exacto en el futuro donde termina el juego
-            const timeInSeconds = hostTimeMinutes * 60;
-            const now = Date.now();
-            globalEndTime = now + (timeInSeconds * 1000); 
+            // --- MODIFICACIÓN: EL TIEMPO YA NO SE CALCULA AQUÍ ---
+            // El tiempo se calculará cuando alguien presione "ENTENDIDO"
+            // globalEndTime = now + (timeInSeconds * 1000); <-- ELIMINADO/COMENTADO
             
-            // Iniciamos el reloj localmente (30ms para evitar saltos visuales)
-            if (compTimerInterval) clearInterval(compTimerInterval);
-            compTimerInterval = setInterval(updateCompTimer, 30); 
+            // Tampoco iniciamos el reloj todavía
+            // if (compTimerInterval) clearInterval(compTimerInterval); <-- ELIMINADO/COMENTADO
+            // compTimerInterval = setInterval(updateCompTimer, 30); <-- ELIMINADO/COMENTADO
 
-            // Enviamos el 'endTime' absoluto a todos los clientes
+            // Enviamos la configuración inicial, pero SIN tiempo de fin aún
             broadcast({
                 type: 'START_GAME',  
                 seed: seed, 
                 sameCase: sameCaseMode,
-                endTime: globalEndTime 
+                // endTime: globalEndTime <-- ELIMINADO DEL PAYLOAD
             });
             
             document.getElementById('online-lobby').style.display = 'none';
             showTutorial();
-        }        
+        }         
 
         function triggerRivalAlert(count) {
             const el = document.getElementById('rival-alert');
@@ -2284,12 +2300,48 @@
             }
         }
 
-                function startGame() {
+                        function startGame() {
             playSFX('click');
+
+            // --- NUEVA LÓGICA ONLINE ---
+            if (isCompetitiveMode) {
+                // En vez de iniciar localmente, avisamos a la red
+                if (isHost) {
+                    triggerGlobalTimerStart();
+                } else if (conn) {
+                    // Cliente avisa al Host
+                    conn.send({type: 'REQUEST_GLOBAL_START'});
+                    // Cambiamos el texto para feedback visual mientras espera al Host
+                    document.querySelector('#tutorial-screen .btn-main').innerText = "ESPERANDO SINCRONIZACIÓN...";
+                }
+                return; // IMPORTANTE: Detenemos la ejecución aquí para esperar el evento SYNC
+            }
+
+            // Lógica original para Modo Clásico (Offline)
             fadeToMode(3); 
             document.getElementById('tutorial-screen').style.display = 'none';
             document.getElementById('main-ui').style.display = 'flex'; 
             
+            initGame();
+        }
+        
+        // --- NUEVA FUNCIÓN AUXILIAR DEL HOST ---
+        function triggerGlobalTimerStart() {
+            // Calculamos el tiempo AHORA
+            const timeInSeconds = hostTimeMinutes * 60;
+            const now = Date.now();
+            globalEndTime = now + (timeInSeconds * 1000);
+            
+            // Avisamos a todos (incluido yo mismo si hago broadcast)
+            broadcast({type: 'SYNC_START_TIMER', endTime: globalEndTime});
+            
+            // Ejecutamos localmente para el Host inmediatamente
+            if (compTimerInterval) clearInterval(compTimerInterval);
+            compTimerInterval = setInterval(updateCompTimer, 30);
+            
+            fadeToMode(3);
+            document.getElementById('tutorial-screen').style.display = 'none';
+            document.getElementById('main-ui').style.display = 'flex';
             initGame();
         }                   
 
