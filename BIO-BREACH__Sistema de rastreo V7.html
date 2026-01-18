@@ -1318,11 +1318,12 @@
         
         let DP = {}; 
         
-        // --- VARIABLES DE MODO DE JUEGO ---
+                // --- VARIABLES DE MODO DE JUEGO ---
         let isCompetitiveMode = false;
         let isGameStarted = false; // Flag para saber si la partida esta en curso
         let compRound = 0; 
         let compTimeLeft = 600; // 10 MIN DEFAULT
+        let globalEndTime = 0; // NUEVO: Marca de tiempo absoluta para sincronización
         let hostTimeMinutes = 10; // Variable de configuración del host
         let compTotalScore = 0;
         let compTimerInterval = null; 
@@ -1814,14 +1815,18 @@
                 else if (data.type === 'LOBBY_SETTINGS_UPDATE') {
                     updateLobbySettingsUI(data.time, data.mode);
                 }
-                                else if(data.type === 'START_GAME') {
+                                                else if(data.type === 'START_GAME') {
                     sameCaseMode = data.sameCase;
                     seededRNGVal = data.seed;
-                    compTimeLeft = data.timeLimit || 600; 
+                    
+                    // MODIFICACIÓN: Recibir Timestamp Absoluto
+                    globalEndTime = data.endTime; 
+                    
                     isGameStarted = true; 
                     initSabotageSystem(); 
                     
-                    // Iniciar temporizador global para el Cliente
+                    // Iniciar temporizador global para el Cliente INMEDIATAMENTE
+                    // El tiempo correrá "de fondo" mientras leen el tutorial
                     if (compTimerInterval) clearInterval(compTimerInterval);
                     compTimerInterval = setInterval(updateCompTimer, 1000);
                     
@@ -1916,7 +1921,7 @@
             updateUIButtonsMode();
         }
         
-        function hostStartGame() {
+                function hostStartGame() {
             playSFX('click');
 
             if (onlinePlayers.length < 2) {
@@ -1929,11 +1934,15 @@
             isGameStarted = true; // Host marca inicio
             initSabotageSystem(); // Reiniciar sabotajes
             
-                                                            const seed = Math.floor(Math.random() * 100000);
+            const seed = Math.floor(Math.random() * 100000);
             seededRNGVal = seed;
+            
+            // MODIFICACIÓN: Calcular Timestamp Absoluto
             const timeInSeconds = hostTimeMinutes * 60;
-            compTimeLeft = timeInSeconds; 
-
+            const now = Date.now();
+            globalEndTime = now + (timeInSeconds * 1000); // Hora actual + duración en ms
+            
+            // Iniciar intervalo inmediatamente para el host, sin esperar al tutorial
             if (compTimerInterval) clearInterval(compTimerInterval);
             compTimerInterval = setInterval(updateCompTimer, 1000);
 
@@ -1941,7 +1950,7 @@
                 type: 'START_GAME', 
                 seed: seed, 
                 sameCase: sameCaseMode,
-                timeLimit: timeInSeconds 
+                endTime: globalEndTime // ENVIAMOS EL TIEMPO FINAL ABSOLUTO
             });
             document.getElementById('online-lobby').style.display = 'none';
             showTutorial();
@@ -2154,14 +2163,22 @@
             }
         }
 
-        function updateCompTimer() {
-            if (!gameActive || !isCompetitiveMode) return;
+                function updateCompTimer() {
+            // MODIFICACIÓN: Permitimos que el tiempo corra si es modo competitivo,
+            // aunque el juego no esté "Active" (o sea, durante el tutorial).
+            if (!isCompetitiveMode) return;
             
-            compTimeLeft--;
+            // CÁLCULO BASADO EN TIEMPO REAL (Sincronización perfecta)
+            const now = Date.now();
+            const diff = globalEndTime - now;
+            
+            // Convertir ms a segundos
+            compTimeLeft = Math.floor(diff / 1000);
             
             if (compTimeLeft <= 0) {
                 compTimeLeft = 0;
                 endGameTimer(); 
+                return; // Evitar renderizar negativos
             }
             
             const m = Math.floor(compTimeLeft / 60).toString().padStart(2, '0');
@@ -2187,8 +2204,6 @@
                 // document.getElementById('overlay-title').innerText = "TIEMPO AGOTADO";
                 // document.getElementById('overlay-reward-msg').innerText = "SINCRONIZANDO RESULTADOS...";
                 
-                // Opcional: Avisar en la consola interna que se espera al host
-                typeWriter("TIEMPO AGOTADO. SINCRONIZANDO CON HOST...", "out", 10);
             }
         }
 
