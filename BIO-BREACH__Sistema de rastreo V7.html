@@ -1339,6 +1339,7 @@
         let onlinePlayers = []; 
         let sameCaseMode = true; 
         let seededRNGVal = 1;
+        let isIntentionalDisconnect = false;
 
                 // --- SABOTAJE / CIBERGUERRA ---
         // Lista de comandos disponibles (se reinicia cada partida)
@@ -1675,8 +1676,12 @@
             });
         }
         
-        function exitOnlineLobby() {
+                function exitOnlineLobby() {
             playSFX('click');
+            
+            // ACTIVAR BANDERA
+            isIntentionalDisconnect = true;
+
             if(peer) peer.destroy();
             peer = null;
             connections = [];
@@ -1684,6 +1689,9 @@
             isHost = false;
             isGameStarted = false;
             
+            // Restaurar bandera
+            setTimeout(() => { isIntentionalDisconnect = false; }, 1000);
+
             document.getElementById('online-lobby').style.display = 'none';
             document.getElementById('main-menu').style.display = 'flex';
         }
@@ -1750,41 +1758,47 @@
             
                                                 // --- DENTRO DE handleHostConnection(c) ---
 
-c.on('close', () => {
-     const wasPlayerCount = onlinePlayers.length;
-     
-     // Eliminar al jugador desconectado de la lista
-     onlinePlayers = onlinePlayers.filter(p => p.id !== c.peer);
-     connections = connections.filter(con => con.peer !== c.peer);
-     
-     const isShowingResults = document.getElementById('overlay').classList.contains('active');
+            // --- DENTRO DE handleHostConnection() ---
 
-     // LÓGICA DE VICTORIA AUTOMÁTICA
-     // Si el juego inició, no estamos en resultados y era una partida de 2 (ahora queda 1)
-     if(isGameStarted && !isShowingResults) {
-         if(wasPlayerCount === 2 && onlinePlayers.length === 1 && onlinePlayers[0].id === myPeerId) {
-             // Detenemos música y reloj
-             gameActive = false;
-             silenceMusic();
-             if(compTimerInterval) clearInterval(compTimerInterval);
-             
-             alert("EL RIVAL HA ABANDONADO. ¡VICTORIA POR DEFECTO!");
-             
-             // El Host gana automáticamente
-             showRanking([
-                 { name: currentUser.name, score: compTotalScore + 1000 },
-                 { name: "RIVAL (ABANDONO)", score: 0 }
-             ]);
-             
-             // Importante: retornamos aquí para no actualizar el lobby visualmente
-             return; 
-         }
-     }
+            c.on('close', () => {
+                 // Si fue una desconexión intencional (ej. Host cierra la sala), ignorar
+                 if (isIntentionalDisconnect) return;
 
-     // Si no era partida en curso, actualizamos el lobby normal
-     broadcast({type: 'UPDATE_LOBBY', players: onlinePlayers});
-     updateLobbyUI();
-});                        
+                 const wasPlayerCount = onlinePlayers.length;
+                 onlinePlayers = onlinePlayers.filter(p => p.id !== c.peer);
+                 connections = connections.filter(con => con.peer !== c.peer);
+                 
+                 const isShowingResults = document.getElementById('overlay').classList.contains('active');
+
+                 // Si el juego estaba activo
+                 if(isGameStarted && !isShowingResults) {
+                     // Si quedo solo yo contra nadie
+                     if(wasPlayerCount === 2 && onlinePlayers.length === 1 && onlinePlayers[0].id === myPeerId) {
+                         
+                         // VERIFICACIÓN: Si mi propio peer se cayó, no puedo reclamar victoria
+                         if (!peer || peer.disconnected || peer.destroyed) {
+                             // Si yo me caí, no hago nada, el sistema me sacará pronto o el usuario notará el error
+                             return; 
+                         }
+
+                         // Si mi internet sigue bien, entonces el Cliente se fue -> GANO
+                         alert("EL RIVAL HA ABANDONADO. ¡VICTORIA POR DEFECTO!");
+                         
+                         gameActive = false;
+                         silenceMusic();
+                         if(compTimerInterval) clearInterval(compTimerInterval);
+                         
+                         showRanking([
+                             { name: currentUser.name, score: compTotalScore + 1000 },
+                             { name: "RIVAL (ABANDONO)", score: 0 }
+                         ]);
+                         return; 
+                     }
+                 }
+
+                 broadcast({type: 'UPDATE_LOBBY', players: onlinePlayers});
+                 updateLobbyUI();
+            });                        
         }
         
         function joinRoom() {
@@ -1871,33 +1885,43 @@ c.on('close', () => {
                                                 // Si el host se desconecta
             // --- DENTRO DE joinRoom() ---
 
-conn.on('close', () => {
-    // Verificar si ya estamos viendo resultados para no interrumpir
-    const isShowingResults = document.getElementById('overlay').classList.contains('active');
+            // --- DENTRO DE joinRoom() ---
+            
+            conn.on('close', () => {
+                // 1. Si YO pulsé "Abortar" o "Salir", no hacer nada (es intencional)
+                if (isIntentionalDisconnect) return;
 
-    // SI EL JUEGO ESTABA ACTIVO Y NO HA TERMINADO LEGALMENTE
-    if (isGameStarted && !isShowingResults) {
-        // Detenemos música y reloj inmediatamente
-        gameActive = false;
-        silenceMusic();
-        if(compTimerInterval) clearInterval(compTimerInterval);
+                // 2. Verificar si ya estamos viendo resultados
+                const isShowingResults = document.getElementById('overlay').classList.contains('active');
+                if (isShowingResults) return;
 
-        alert("EL HOST HA ABANDONADO LA SALA. ¡VICTORIA POR DEFECTO!");
+                // 3. VERIFICACIÓN CRÍTICA: ¿Soy yo el que perdió la conexión?
+                // Si 'peer' está desconectado o destruido, el problema es mi internet/señal
+                if (!peer || peer.disconnected || peer.destroyed) {
+                    alert("TU CONEXIÓN SE HA INTERRUMPIDO.");
+                    exitOnlineLobby();
+                    return;
+                }
 
-        // El cliente gana automáticamente
-        showRanking([
-            { name: currentUser.name, score: compTotalScore + 1000 }, // Tú (Cliente) ganas puntos
-            { name: "HOST (ABANDONO)", score: 0 } // El Host se queda en 0
-        ]);
-        return; 
-    }
+                // 4. Si mi internet está bien y el juego estaba activo, ENTONCES el Host se fue
+                if (isGameStarted) {
+                    alert("EL HOST HA ABANDONADO LA SALA. ¡VICTORIA POR DEFECTO!");
+                    
+                    gameActive = false;
+                    silenceMusic();
+                    if(compTimerInterval) clearInterval(compTimerInterval);
 
-    // SI NO ESTABAN JUGANDO (Estaban en el lobby o ya había terminado)
-    if (!isShowingResults) {
-        alert("CONEXIÓN CON SALA PERDIDA.");
-        exitOnlineLobby();
-    }
-});
+                    showRanking([
+                        { name: currentUser.name, score: compTotalScore + 1000 },
+                        { name: "HOST (ABANDONO)", score: 0 }
+                    ]);
+                    return;
+                }
+
+                // 5. Caída normal en Lobby
+                alert("CONEXIÓN CON SALA PERDIDA.");
+                exitOnlineLobby();
+            });
         }            
         
         function updateLobbyUI() {
@@ -2283,13 +2307,19 @@ conn.on('close', () => {
             document.getElementById('abort-confirm').classList.remove('active');
         }
 
-        function confirmAbort() {
+                function confirmAbort() {
             playSFX('click', true); 
             gameActive = false;
             
+            // ACTIVAR BANDERA: Me voy a propósito, no es un error.
+            isIntentionalDisconnect = true; 
+
             if(compTimerInterval) clearInterval(compTimerInterval);
             if(isHost && peer) { peer.destroy(); peer = null; }
             if(conn) { conn.close(); conn = null; }
+
+            // Restaurar bandera después de un momento (por si acaso reinicia rápido)
+            setTimeout(() => { isIntentionalDisconnect = false; }, 1000);
 
             closeAbortModal();
             fadeToMode(1); 
