@@ -1318,15 +1318,17 @@
         
         let DP = {}; 
         
-                // --- VARIABLES DE MODO DE JUEGO ---
+                        // --- VARIABLES DE MODO DE JUEGO ---
         let isCompetitiveMode = false;
-        let isGameStarted = false; // Flag para saber si la partida esta en curso
+        let isGameStarted = false; 
         let compRound = 0; 
-        let compTimeLeft = 600; // 10 MIN DEFAULT
-        let globalEndTime = 0; // NUEVO: Marca de tiempo absoluta para sincronización
-        let hostTimeMinutes = 10; // Variable de configuración del host
+        let compTimeLeft = 600; 
+        let hostTimeMinutes = 10; 
         let compTotalScore = 0;
-        let compTimerInterval = null; 
+        let compTimerInterval = null;
+        
+        // NUEVA VARIABLE PARA SINCRONIZACIÓN PERFECTA
+        let globalEndTime = 0; 
 
         // --- ONLINE VARIABLES ---
         let peer = null;
@@ -1815,20 +1817,20 @@
                 else if (data.type === 'LOBBY_SETTINGS_UPDATE') {
                     updateLobbySettingsUI(data.time, data.mode);
                 }
-                                                else if(data.type === 'START_GAME') {
+                                                                                else if(data.type === 'START_GAME') {
                     sameCaseMode = data.sameCase;
                     seededRNGVal = data.seed;
                     
-                    // MODIFICACIÓN: Recibir Timestamp Absoluto
+                    // Sincronización: Recibimos la hora exacta de fin
                     globalEndTime = data.endTime; 
                     
                     isGameStarted = true; 
                     initSabotageSystem(); 
                     
-                    // Iniciar temporizador global para el Cliente INMEDIATAMENTE
-                    // El tiempo correrá "de fondo" mientras leen el tutorial
+                    // INICIAR EL RELOJ INMEDIATAMENTE (Frecuencia AUMENTADA a 30ms para fluidez)
+                    // Corre de fondo aunque el jugador esté leyendo el tutorial
                     if (compTimerInterval) clearInterval(compTimerInterval);
-                    compTimerInterval = setInterval(updateCompTimer, 1000);
+                    compTimerInterval = setInterval(updateCompTimer, 30);
                     
                     document.getElementById('online-lobby').style.display = 'none';
                     showTutorial();                                          
@@ -1921,7 +1923,7 @@
             updateUIButtonsMode();
         }
         
-                function hostStartGame() {
+                        function hostStartGame() {
             playSFX('click');
 
             if (onlinePlayers.length < 2) {
@@ -1931,27 +1933,30 @@
             }
 
             onlinePlayers.forEach(p => p.done = false);
-            isGameStarted = true; // Host marca inicio
-            initSabotageSystem(); // Reiniciar sabotajes
+            isGameStarted = true;
+            initSabotageSystem();
             
             const seed = Math.floor(Math.random() * 100000);
             seededRNGVal = seed;
             
-            // MODIFICACIÓN: Calcular Timestamp Absoluto
+                        // --- CÁLCULO DE TIEMPO ABSOLUTO ---
+            // Calculamos el momento exacto en el futuro donde termina el juego
             const timeInSeconds = hostTimeMinutes * 60;
             const now = Date.now();
-            globalEndTime = now + (timeInSeconds * 1000); // Hora actual + duración en ms
+            globalEndTime = now + (timeInSeconds * 1000); 
             
-            // Iniciar intervalo inmediatamente para el host, sin esperar al tutorial
+            // Iniciamos el reloj localmente (30ms para evitar saltos visuales)
             if (compTimerInterval) clearInterval(compTimerInterval);
-            compTimerInterval = setInterval(updateCompTimer, 1000);
+            compTimerInterval = setInterval(updateCompTimer, 30); 
 
+            // Enviamos el 'endTime' absoluto a todos los clientes
             broadcast({
-                type: 'START_GAME', 
+                type: 'START_GAME',  
                 seed: seed, 
                 sameCase: sameCaseMode,
-                endTime: globalEndTime // ENVIAMOS EL TIEMPO FINAL ABSOLUTO
+                endTime: globalEndTime 
             });
+            
             document.getElementById('online-lobby').style.display = 'none';
             showTutorial();
         }        
@@ -2163,29 +2168,37 @@
             }
         }
 
-                function updateCompTimer() {
-            // MODIFICACIÓN: Permitimos que el tiempo corra si es modo competitivo,
-            // aunque el juego no esté "Active" (o sea, durante el tutorial).
+                                function updateCompTimer() {
+            // Solo actualizamos si es modo competitivo
             if (!isCompetitiveMode) return;
             
-            // CÁLCULO BASADO EN TIEMPO REAL (Sincronización perfecta)
+            // CÁLCULO MATEMÁTICO REAL
             const now = Date.now();
-            const diff = globalEndTime - now;
+            const diff = globalEndTime - now; // Diferencia en milisegundos
             
-            // Convertir ms a segundos
-            compTimeLeft = Math.floor(diff / 1000);
+            // USO DE MATH.CEIL: Evita que el reloj se quede en 00:00 mientras aún hay milisegundos
+            // Esto elimina la sensación de "pausa" al final de cada segundo.
+            compTimeLeft = Math.ceil(diff / 1000);
             
             if (compTimeLeft <= 0) {
                 compTimeLeft = 0;
+                const timerEl = document.getElementById('comp-timer-display');
+                if(timerEl) timerEl.innerText = "00:00";
+                
                 endGameTimer(); 
-                return; // Evitar renderizar negativos
+                return;
             }
             
+            // Formato de tiempo (MM:SS)
             const m = Math.floor(compTimeLeft / 60).toString().padStart(2, '0');
             const s = (compTimeLeft % 60).toString().padStart(2, '0');
-            
+            const timeString = `${m}:${s}`;
+
             const timerEl = document.getElementById('comp-timer-display');
-            if(timerEl) timerEl.innerText = `${m}:${s}`;
+            // OPTIMIZACIÓN: Solo tocar el DOM si el texto cambió (evita parpadeos y saltos)
+            if(timerEl && timerEl.innerText !== timeString) {
+                timerEl.innerText = timeString;
+            }
         }
         
                 function endGameTimer() {
