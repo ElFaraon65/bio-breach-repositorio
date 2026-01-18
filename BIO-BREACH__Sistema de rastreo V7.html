@@ -1748,14 +1748,13 @@
                 }
             });
             
-                                                c.on('close', () => {
+                                                            c.on('close', () => {
                  const wasPlayerCount = onlinePlayers.length;
                  onlinePlayers = onlinePlayers.filter(p => p.id !== c.peer);
                  connections = connections.filter(con => con.peer !== c.peer);
                  
-                 // Si el juego está activo y alguien se sale
                  // MODIFICACIÓN: Agregamos la condición !document.getElementById('overlay').classList.contains('active')
-                 // Esto verifica que NO estemos viendo ya la pantalla de ganar/ranking
+                 // Esto asegura que si ya estamos viendo la Tabla de Ganar (overlay active), NO se ejecute la victoria por defecto.
                  if(isGameStarted && !document.getElementById('overlay').classList.contains('active')) {
                      if(wasPlayerCount === 2 && onlinePlayers.length === 1 && onlinePlayers[0].id === myPeerId) {
                          alert("EL RIVAL HA ABANDONADO LA SALA. VICTORIA POR DEFECTO.");
@@ -1855,7 +1854,7 @@
                 }
             });
             
-                                                // Si el host se desconecta
+                                                            // Si el host se desconecta
             conn.on('close', () => {
                 // MODIFICACIÓN: Si ya estamos en la pantalla de ganar (Overlay activo), ignoramos la desconexión
                 if(document.getElementById('overlay').classList.contains('active')) return;
@@ -2545,7 +2544,7 @@
             }
         }
 
-                                function showRanking(ranking) {
+                                        function showRanking(ranking) {
             // DETENCIÓN TOTAL
             gameActive = false;
             isGameStarted = false; // MODIFICACIÓN: Aseguramos que el estado online se apague aquí oficialmente
