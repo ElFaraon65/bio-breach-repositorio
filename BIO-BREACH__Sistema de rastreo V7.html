@@ -1748,13 +1748,13 @@
                 }
             });
             
-                        c.on('close', () => {
+                                    c.on('close', () => {
                  const wasPlayerCount = onlinePlayers.length;
                  onlinePlayers = onlinePlayers.filter(p => p.id !== c.peer);
                  connections = connections.filter(con => con.peer !== c.peer);
                  
-                 // Si el juego está activo y alguien se sale (Y NO ESTAMOS EN LA PANTALLA DE RESULTADOS)
-                 if(isGameStarted && !document.getElementById('overlay').classList.contains('active')) {
+                 // Si el juego está activo y alguien se sale
+                 if(isGameStarted) {
                      if(wasPlayerCount === 2 && onlinePlayers.length === 1 && onlinePlayers[0].id === myPeerId) {
                          alert("EL RIVAL HA ABANDONADO LA SALA. VICTORIA POR DEFECTO.");
                          endGameTimer(); 
@@ -1853,13 +1853,10 @@
                 }
             });
             
-                        // Si el host se desconecta
+                                    // Si el host se desconecta
             conn.on('close', () => {
-                // Solo sacar al jugador si NO está viendo la pantalla de resultados
-                if(!document.getElementById('overlay').classList.contains('active')) {
-                    alert("CONEXIÓN CON SALA PERDIDA (HOST DESCONECTADO).");
-                    exitOnlineLobby();
-                }
+                alert("CONEXIÓN CON SALA PERDIDA (HOST DESCONECTADO).");
+                exitOnlineLobby();
             });
         }            
         
