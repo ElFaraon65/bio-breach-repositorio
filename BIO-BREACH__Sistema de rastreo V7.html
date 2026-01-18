@@ -2540,18 +2540,21 @@
             }
         }
 
-                function showRanking(ranking) {
-            // --- CORRECCIÓN DE BUG DE CONGELAMIENTO ---
-            // Detenemos el juego y el intervalo inmediatamente para evitar
-            // que el temporizador local sobrescriba esta pantalla.
+                        function showRanking(ranking) {
+            // DETENCIÓN TOTAL
             gameActive = false;
             if(compTimerInterval) clearInterval(compTimerInterval);
-            // ------------------------------------------
-
             silenceMusic();
+
+            // LIMPIEZA DE INTERFAZ: Asegurar que nada bloquee el Overlay
             document.getElementById('main-ui').style.display = 'none';
-            document.getElementById('overlay').classList.add('active');
-            
+            document.getElementById('gamemode-screen').style.display = 'none'; // Por si acaso
+            document.getElementById('settings-modal').style.display = 'none';  // Por si acaso
+
+            const overlay = document.getElementById('overlay');
+            overlay.classList.add('active');
+            overlay.style.zIndex = "9999"; // FORZAR PRIORIDAD MÁXIMA
+
             let html = '<h2 style="color:var(--gold);">RANKING GLOBAL</h2><ol style="text-align:left; font-size:1.2rem; color:white;">';
             ranking.forEach((p, index) => {
                 const color = index === 0 ? 'var(--victory)' : 'white';
@@ -2571,6 +2574,7 @@
             btn.onclick = () => { 
                 playSFX('click');
                 document.getElementById('overlay').classList.remove('active');
+                document.getElementById('overlay').style.zIndex = ""; // Restaurar z-index
                 document.getElementById('main-ui').style.display = 'none';
                 document.getElementById('main-ui').classList.remove('blur-effect'); 
                 document.getElementById('main-menu').style.display = 'flex'; 
