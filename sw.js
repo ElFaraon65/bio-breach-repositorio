@@ -1,4 +1,4 @@
-const CACHE_NAME = "bio-breach-v4.1-final";
+const CACHE_NAME = "bio-breach-v5";
 const ASSETS = [
   "./",
   "./index.html",
