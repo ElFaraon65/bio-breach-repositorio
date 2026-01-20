@@ -2,7 +2,8 @@ const CACHE_NAME = "bio-breach-v5";
 const ASSETS = [
   "./",
   "./index.html",
-  "./manifest.json"
+  "./manifest.json",
+  "./Logo%20BIO-BREACH.png"
 ];
 
 // 1. INSTALACIÓN: Solo guardamos lo crítico local
