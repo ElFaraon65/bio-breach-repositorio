@@ -3,7 +3,7 @@ const ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
-  "./Logo20%BIO-BREACH.png"
+  "./Logo%20BIO-BREACH.png"
 ];
 
 // 1. INSTALACIÓN: Solo guardamos lo crítico local
