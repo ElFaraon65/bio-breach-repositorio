@@ -22,13 +22,13 @@
   },
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png?v=5",
+      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20BIO-BREACH.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png?v=5",
+      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20BIO-BREACH.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
