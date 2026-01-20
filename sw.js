@@ -3,7 +3,7 @@ const ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
-  "./Logo BIO-BREACH.png"
+  "./Logo20%BIO-BREACH.png"
 ];
 
 // 1. INSTALACIÓN: Solo guardamos lo crítico local
@@ -69,8 +69,8 @@ self.addEventListener('push', (event) => {
   
   const options = {
     body: event.data ? event.data.text() : 'BIO-BREACH HUB: Nueva versión disponible',
-    icon: 'https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png',
-    badge: 'https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png',
+    icon: 'https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20BIO-BREACH.png',
+    badge: 'https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20BIO-BREACH.png',
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),
