@@ -67,7 +67,7 @@
       "short_name": "Jugar",
       "description": "Entrar al juego",
       "url": "./index.html",
-      "icons": [{ "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20de%20BIO-BREACH.png", "sizes": "512x512" }]
+      "icons": [{ "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Logo%20BIO-BREACH.png", "sizes": "512x512" }]
     }
   ]
 }
