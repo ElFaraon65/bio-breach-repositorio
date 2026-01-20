@@ -22,13 +22,13 @@
   },
   "icons": [
     {
-      "src": "./Logo%20BIO-BREACH.png?v=2",
+      "src": "./Logo%20BIO-BREACH.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./Logo%20BIO-BREACH.png?v=2",
+      "src": "./Logo%20BIO-BREACH.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -67,7 +67,7 @@
       "short_name": "Jugar",
       "description": "Entrar al juego",
       "url": "./index.html",
-      "icons": [{ "src": "./Logo%20BIO-BREACH.png?v=2", "sizes": "512x512" }]
+      "icons": [{ "src": "./Logo%20BIO-BREACH.png", "sizes": "512x512" }]
     }
   ]
 }
