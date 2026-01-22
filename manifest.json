@@ -2,7 +2,7 @@
   "name": "BIO-BREACH HUB",
   "short_name": "Bio Breach Hub",
   "description": "Launcher oficial de BIO-BREACH. Gestiona, descarga y juega versiones exclusivas del sistema de rastreo.",
-  "id": "bioBreachHub",
+  "id": "/?bioBreachHub",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -23,6 +23,12 @@
   "icons": [
     {
       "src": "./Logo%20BIO-BREACH.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./Logo%20BIO-BREACH.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
@@ -37,26 +43,36 @@
   "screenshots": [
     {
       "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Screenshots/Screenshot_20260107_210229.jpg",
+      "sizes": "1080x2400",
+      "type": "image/jpeg",
       "form_factor": "narrow",
       "label": "Inicio del Hub"
     },
     {
       "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Screenshots/Screenshot_20260107_210251.jpg",
+      "sizes": "1080x2400",
+      "type": "image/jpeg",
       "form_factor": "narrow",
       "label": "Interfaz de Versiones"
     },
     {
       "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Screenshots/Screenshot_20260107_210245.jpg",
+      "sizes": "1080x2400",
+      "type": "image/jpeg",
       "form_factor": "narrow",
       "label": "Panel de Control"
     },
     {
       "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Screenshots/Screenshot_20260107_210513.jpg",
+      "sizes": "1080x2400",
+      "type": "image/jpeg",
       "form_factor": "narrow",
       "label": "Sistema de Juego"
     },
     {
       "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Screenshots/Screenshot_20260107_210513.jpg",
+      "sizes": "1920x1080",
+      "type": "image/jpeg",
       "form_factor": "wide",
       "label": "Vista de Escritorio"
     }
@@ -67,7 +83,7 @@
       "short_name": "Jugar",
       "description": "Entrar al juego",
       "url": "./index.html",
-      "icons": [{ "src": "./Logo%20BIO-BREACH.png", "sizes": "512x512" }]
+      "icons": [{ "src": "./Logo%20BIO-BREACH.png", "sizes": "512x512", "type": "image/png" }]
     }
   ]
 }
