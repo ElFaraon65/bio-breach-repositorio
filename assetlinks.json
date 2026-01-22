@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.elfaraon65.twa",
+        "sha256_cert_fingerprints": ["84:F4:35:F4:A2:B8:54:2E:8B:DE:AE:26:DB:42:3D:93:A3:0F:B7:2D:38:C4:EA:8A:9E:82:AE:1B:A9:F4:DC:C9"]
+      }
+    }]
