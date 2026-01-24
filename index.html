@@ -43,8 +43,6 @@
     <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), vr=(), accelerometer=(), gyroscope=(), magnetometer=()">
 
     <link rel="manifest" href="./manifest.json?v=tabs_fix">
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-messaging-compat.js"></script>
 
     <style>
         :root { --gold: #ffd700; --bg: #0a0a0a; --card: #161616; --blue: #0078d4; --green: #00ff41; --orange: #ff8c00; --red: #ff0040; --tab-active: #222; }
@@ -139,69 +137,15 @@
         });
 
         if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("./sw.js?v=" + new Date().getTime(), { scope: "/" })
+            navigator.serviceWorker.register("./sw.js?v=" + new Date().getTime(), { scope: "./" })
                 .then(async reg => {
-                    console.log("SW Registrado.");
-                    if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });        
-                    
-                    // NUEVA LÍNEA: INICIAR FIREBASE
-                    initFirebase(reg); 
+                    if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                    if ('Notification' in window && Notification.permission === 'default') {
+                        Notification.requestPermission();
+                    }
                 })
                 .catch(err => console.error("SW Error:", err));
-        }
-        
-                // --- FUNCIÓN DE INICIO DE FIREBASE ---
-        function initFirebase(registration) {
-            // REEMPLAZA ESTOS DATOS CON LOS DE TU CONSOLA FIREBASE
-            const firebaseConfig = {
-                apiKey: "AIzaSyBmn_I9e9RWS6nwk95o-MYR45DTepe3Gzw",
-                authDomain: "bio-breach-game.firebaseapp.com",
-                projectId: "bio-breach-game",
-                storageBucket: "bio-breach-game.firebasestorage.app",
-                messagingSenderId: "446020506947",
-                appId: "1:446020506947:web:27e1b80ca7e8713b788bf6"
-            };
-
-            // REEMPLAZA CON TU CLAVE VAPID (Par de claves generado en Cloud Messaging)
-            const VAPID_KEY = "BEgDtcKbdKa9ktJbee4tvjbhYbALIxC26hvx07jAQtlQleEN6KyiRFEgVW2fmRJlI4uvqkBeEqXfXcqTwNRCOrM";
-
-            try {
-                firebase.initializeApp(firebaseConfig);
-                messaging = firebase.messaging();
-
-                // Pedir permiso y obtener el Token
-                Notification.requestPermission().then(permission => {
-                    if (permission === 'granted') {
-                        console.log("Permiso notificaciones: CONCEDIDO");
-                        
-                        // Vinculamos Firebase a TU Service Worker existente
-                        messaging.getToken({ 
-                            vapidKey: VAPID_KEY,
-                            serviceWorkerRegistration: registration 
-                        }).then((currentToken) => {
-                            if (currentToken) {
-                                console.log("--- COPIA ESTE TOKEN PARA ENVIAR PRUEBAS ---");
-                                console.log(currentToken);
-                                console.log("------------------------------------------");
-                            } else {
-                                console.log('No se pudo generar el token.');
-                            }
-                        }).catch((err) => {
-                            console.warn('Error obteniendo token (Posiblemente necesites HTTPS o Localhost): ', err);
-                        });
-                    }
-                });
-
-                // Escuchar mensajes si la app está abierta
-                messaging.onMessage((payload) => {
-                    console.log('Mensaje en primer plano:', payload);
-                    // Aquí podrías disparar una alerta visual si quieres
-                });
-
-            } catch (error) {
-                console.error("Error iniciando Firebase:", error);
-            }
-        }
+        }       }        
     </script>
 
     <script>
