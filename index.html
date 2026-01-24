@@ -160,9 +160,14 @@
 
         // --- LÓGICA DE PESTAÑAS ---
         function switchTab(tabName) {
+            // Ocultar todas las vistas
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+
+            // Mostrar seleccionada
             document.getElementById(`view-${tabName}`).classList.add('active');
+            
+            // Activar botón
             const index = tabName === 'library' ? 0 : 1;
             document.querySelectorAll('.tab')[index].classList.add('active');
         }
@@ -246,9 +251,11 @@
                     
                     if (necesitaUpdate) {
                         updateCount++;
+                        // A) Poner en "Centro de Datos"
                         const pendingCard = createCard(item, false, true, false);
                         pendingSection.appendChild(pendingCard);
 
+                        // B) Poner Botón en "Biblioteca" (Si no fue ignorado)
                         const localCard = document.getElementById(`card-local-${item.id}`);
                         if (localCard && !actualizacionesIgnoradas.has(item.id)) {
                              if (!localCard.querySelector('.btn-update')) {
@@ -399,7 +406,7 @@
             sincroServidor();
         }
 
-        // --- SISTEMA DE JUEGO ---
+        // --- SISTEMA DE JUEGO & PUENTE DE COMUNICACIÓN ---
         
         function lanzarMotor(id) {
             actualizacionesIgnoradas.add(id);
