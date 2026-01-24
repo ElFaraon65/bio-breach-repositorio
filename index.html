@@ -42,40 +42,37 @@
 
     <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), vr=(), accelerometer=(), gyroscope=(), magnetometer=()">
 
-    <link rel="manifest" href="./manifest.json?v=fix_connection">
+    <link rel="manifest" href="./manifest.json?v=tabs_update">
 
     <style>
-        :root { --gold: #ffd700; --bg: #0a0a0a; --card: #161616; --blue: #0078d4; --green: #00ff41; --orange: #ff8c00; }
+        :root { --gold: #ffd700; --bg: #0a0a0a; --card: #161616; --blue: #0078d4; --green: #00ff41; --orange: #ff8c00; --red: #ff0040; --tab-active: #222; }
         
-        /* Modificaciones para comportamiento nativo estricto */
-        html {
-            height: 100%;
-            overscroll-behavior: none; /* Bloquea el rebote/refresh en Android/Chrome */
-        }
-        
+        html { height: 100%; overscroll-behavior: none; }
         body { 
-            background: var(--bg); 
-            color: white; 
-            font-family: 'Segoe UI', sans-serif; 
-            margin: 0; 
-            padding: 0; 
-            user-select: none; 
-            
-            /* Asegura altura completa y bloquea gestos de navegador */
-            min-height: 100%;
-            overscroll-behavior-y: none; 
-            -webkit-tap-highlight-color: transparent; /* Elimina flash azul al tocar */
-            touch-action: manipulation; /* Mejora la respuesta táctil */
+            background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; 
+            margin: 0; padding: 0; user-select: none; min-height: 100%;
+            overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; 
         }
         
-        .header { background: #000; padding: 20px; text-align: center; border-bottom: 2px solid var(--gold); position: sticky; top: 0; z-index: 10; }
-        .header h1 { margin: 0; font-size: 1.4rem; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; }
-        
+        .header { background: #000; padding: 15px; text-align: center; border-bottom: 1px solid #333; position: sticky; top: 0; z-index: 10; }
+        .header h1 { margin: 0; font-size: 1.2rem; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; }
         #status-bar { font-size: 0.65rem; color: var(--orange); text-transform: uppercase; margin-top: 5px; letter-spacing: 1px; }
 
-        .container { padding: 15px; padding-bottom: 100px; }
+        /* --- SISTEMA DE PESTAÑAS --- */
+        .tabs { display: flex; background: #111; border-bottom: 2px solid var(--gold); position: sticky; top: 60px; z-index: 9; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .tab { flex: 1; padding: 15px; text-align: center; font-weight: bold; font-size: 0.9rem; color: #888; cursor: pointer; text-transform: uppercase; transition: 0.2s; position: relative; }
+        .tab.active { color: white; background: var(--tab-active); }
+        .tab.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: var(--gold); }
         
-        .project-card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid #333; display: flex; flex-direction: column; gap: 12px; transition: 0.3s; }
+        .badge { background: var(--red); color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; position: absolute; top: 10px; right: 10px; display: none; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        /* Contenedores de Vistas */
+        .view-section { display: none; padding: 15px; padding-bottom: 100px; animation: fadeIn 0.3s; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .project-card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid #333; display: flex; flex-direction: column; gap: 12px; transition: 0.3s; position: relative; }
         
         .v-name { font-size: 1.2rem; font-weight: bold; color: #fff; }
         .v-status { font-size: 0.8rem; color: #888; display: flex; align-items: center; gap: 6px; }
@@ -86,9 +83,14 @@
         .progress-container { width: 100%; background: #333; height: 10px; border-radius: 5px; overflow: hidden; display: none; margin-top: 10px; }
         .progress-bar { width: 0%; height: 100%; background: var(--blue); transition: width 0.1s; }
 
-        .btn { border: none; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; text-align: center; transition: 0.2s; margin-top: 5px; color: white; }
+        .btn { border: none; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; text-align: center; transition: 0.2s; margin-top: 5px; color: white; width: 100%; }
         .btn-play { background: var(--green); }
         .btn-download { background: var(--blue); }
+        
+        .btn-update { background: transparent; border: 2px solid var(--gold); color: var(--gold); margin-top: 5px; }
+        .btn-update:active { background: var(--gold); color: black; }
+
+        .empty-msg { text-align: center; padding: 40px; color: #666; font-size: 0.9rem; border: 1px dashed #333; border-radius: 10px; margin-top: 20px; }
 
         #game-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; overscroll-behavior: none; }
         iframe { width: 100%; height: 100%; border: none; display: block; }
@@ -101,7 +103,26 @@
         <div id="status-bar">MODO LOCAL</div>
     </div>
 
-    <div class="container" id="lista-versiones"></div>
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('library')">
+            BIBLIOTECA
+        </div>
+        <div class="tab" onclick="switchTab('updates')">
+            CENTRO DE DATOS
+            <span id="update-badge" class="badge">0</span>
+        </div>
+    </div>
+
+    <div id="view-library" class="view-section active">
+        <div id="lista-versiones"></div>
+    </div>
+
+    <div id="view-updates" class="view-section">
+        <div style="font-size:0.8rem; color:#888; text-transform:uppercase; border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:15px;">
+            Cola de descargas
+        </div>
+        <div id="pending-section"></div>
+    </div>
 
     <div id="game-view">
         <iframe id="game-frame"></iframe>
@@ -110,47 +131,17 @@
     <script>
         // --- GESTIÓN DE PWA / INSTALACIÓN ---
         let deferredPrompt;
-        
-        // Escucha el evento para evitar la barra mini-infobar predeterminada de Chrome
         window.addEventListener('beforeinstallprompt', (e) => {
-            // Previene que Chrome muestre el prompt automáticamente (estilo web)
             e.preventDefault();
-            // Guarda el evento para dispararlo manualmente si quisieras poner un botón de "Instalar"
             deferredPrompt = e;
-            console.log("Evento 'beforeinstallprompt' interceptado. App lista para instalación manual.");
         });
 
-        window.addEventListener('appinstalled', () => {
-            console.log('BIO-BREACH HUB instalada correctamente.');
-            deferredPrompt = null;
-        });
-
-        // Registro del Service Worker
         if ("serviceWorker" in navigator) {
-            // Se usa un timestamp para intentar forzar la actualización del registro
             navigator.serviceWorker.register("./sw.js?v=" + new Date().getTime(), { scope: "./" })
                 .then(async reg => {
-                    console.log("SW Activo (Scope):", reg.scope);
-                    
-                    // Actualización manual del SW si hay uno esperando
-                    if (reg.waiting) {
-                        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-                    }
-
-                    // --- FUNCIONES AVANZADAS ---
+                    if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
                     if ('Notification' in window && Notification.permission === 'default') {
-                        Notification.requestPermission().catch(e => console.log("Notificaciones bloqueadas"));
-                    }
-                    if ('sync' in reg) {
-                        try { await reg.sync.register('sync-datos'); } catch (err) {}
-                    }
-                    if ('periodicSync' in reg) {
-                        try {
-                            const status = await navigator.permissions.query({ name: 'periodic-background-sync' });
-                            if (status.state === 'granted') {
-                                await reg.periodicSync.register('sync-periodico', { minInterval: 12 * 60 * 60 * 1000 });
-                            }
-                        } catch (err) {}
+                        Notification.requestPermission();
                     }
                 })
                 .catch(err => console.error("SW Error:", err));
@@ -160,16 +151,31 @@
     <script>
         const URL_SERVIDOR = "https://elfaraon65.github.io/bio-breach-repositorio/"; 
         const BYPASS_CORS = "https://corsproxy.io/?"; 
+        
+        let actualizacionesIgnoradas = new Set(); 
 
         window.onload = () => {
             actualizarInterfaz();
         };
 
+        // --- LÓGICA DE PESTAÑAS ---
+        function switchTab(tabName) {
+            // Ocultar todas las vistas
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+
+            // Mostrar seleccionada
+            document.getElementById(`view-${tabName}`).classList.add('active');
+            
+            // Activar botón (hack simple para seleccionar el correcto)
+            const index = tabName === 'library' ? 0 : 1;
+            document.querySelectorAll('.tab')[index].classList.add('active');
+        }
+
         function getVersionesLocales() {
             return JSON.parse(localStorage.getItem('bio_breach_v_data')) || {};
         }
 
-        // Función de conexión robusta (Intenta directo -> Proxy)
         async function cargarRecursoSeguro(url) {
             const urlConTiempo = url + (url.includes('?') ? '&' : '?') + "t=" + new Date().getTime();
             try {
@@ -177,16 +183,12 @@
                 if (!res.ok) throw new Error("Status: " + res.status);
                 return res;
             } catch (e) {
-                console.warn("Fallo directo, intentando proxy...", e);
                 try {
                     const targetUrl = BYPASS_CORS + encodeURIComponent(urlConTiempo);
                     const resProxy = await fetch(targetUrl);
                     if (!resProxy.ok) throw new Error("Fallo proxy");
                     return resProxy;
-                } catch (errorProxy) {
-                    console.error("Conexión fallida total:", errorProxy);
-                    throw errorProxy;
-                }
+                } catch (errorProxy) { throw errorProxy; }
             }
         }
 
@@ -201,21 +203,31 @@
                 
                 renderNube(nube);
             } catch (e) {
-                console.log("Modo Offline activado");
-                statusBar.innerText = "MODO DESCONECTADO (OFFLINE)";
+                console.log("Offline");
+                statusBar.innerText = "MODO DESCONECTADO";
                 statusBar.style.color = "var(--orange)";
-                
-                const lista = document.getElementById('lista-versiones');
-                if (Object.keys(getVersionesLocales()).length === 0) {
-                    lista.innerHTML = `<div style="text-align:center; padding:40px; color:#666;">Sin conexión y sin datos.<br>Reinicia la app.</div>`;
-                }
             }
+        }
+
+        // LÓGICA SEMÁNTICA (Ignora parches 0.0.X)
+        function hayActualizacionImportante(vNube, vLocal) {
+            if (!vNube || !vLocal) return false;
+            const [M_nube, m_nube] = vNube.split('.').map(n => parseInt(n) || 0);
+            const [M_local, m_local] = vLocal.split('.').map(n => parseInt(n) || 0);
+
+            if (M_nube > M_local) return true;
+            if (M_nube === M_local && m_nube > m_local) return true;
+            return false;
         }
 
         function renderNube(datosNube) {
             const lista = document.getElementById('lista-versiones');
+            const pendingSection = document.getElementById('pending-section');
             const locales = getVersionesLocales();
             
+            pendingSection.innerHTML = "";
+            let updateCount = 0;
+
             datosNube.sort((a, b) => {
                 const numA = parseInt(a.id.replace(/\D/g, '')) || 0;
                 const numB = parseInt(b.id.replace(/\D/g, '')) || 0;
@@ -224,57 +236,108 @@
 
             datosNube.forEach(item => {
                 const local = locales[item.id];
-                const emptyMsg = lista.querySelector('.empty-msg');
-                if(emptyMsg) emptyMsg.remove();
 
+                // CASO 1: No instalado -> Solo aparece en Centro de Datos
                 if (!local) {
-                    if (!document.getElementById(`btn-dl-${item.id}`)) {
-                        const card = document.createElement('div');
-                        card.className = 'project-card';
-                        card.style.border = "1px dashed var(--blue)";
-                        card.innerHTML = `
-                            <div class="v-name">${item.nombre}</div>
-                            <div class="v-status"><div class="dot"></div> Disponible en Nube</div>
-                            <div class="progress-container" id="prog-cont-${item.id}">
-                                <div class="progress-bar" id="prog-bar-${item.id}"></div>
-                            </div>
-                            <button class="btn btn-download" id="btn-dl-${item.id}" onclick="descargarEInstalar('${item.url}', '${item.id}', '${item.nombre}', '${item.version || '1.0'}', true)">DESCARGAR</button>
-                        `;
-                        lista.appendChild(card);
+                    const card = createCard(item, false, false, true); // (item, esLocal, esUpdate, esNuevo)
+                    pendingSection.appendChild(card);
+                } 
+                // CASO 2: Instalado -> Revisar Updates
+                else {
+                    const versionNube = item.version || "1.0.0";
+                    const versionLocal = local.version || "0.0.0";
+                    
+                    const necesitaUpdate = hayActualizacionImportante(versionNube, versionLocal);
+                    
+                    if (necesitaUpdate) {
+                        updateCount++;
+                        // A) Poner en "Centro de Datos" SIEMPRE
+                        const pendingCard = createCard(item, false, true, false);
+                        pendingSection.appendChild(pendingCard);
+
+                        // B) Poner Botón en "Biblioteca" (Si no fue ignorado)
+                        const localCard = document.getElementById(`card-local-${item.id}`);
+                        if (localCard && !actualizacionesIgnoradas.has(item.id)) {
+                             if (!localCard.querySelector('.btn-update')) {
+                                const btnUpdate = document.createElement('button');
+                                btnUpdate.className = 'btn btn-update';
+                                btnUpdate.innerText = "ACTUALIZAR DATOS";
+                                btnUpdate.onclick = () => descargarEInstalar(item.url, item.id, item.nombre, versionNube, true);
+                                
+                                const btnPlay = localCard.querySelector('.btn-play');
+                                localCard.insertBefore(btnUpdate, btnPlay);
+                                
+                                // Barra progreso local
+                                const progDiv = document.createElement('div');
+                                progDiv.className = 'progress-container';
+                                progDiv.id = `prog-cont-local-${item.id}`;
+                                progDiv.innerHTML = `<div class="progress-bar" id="prog-bar-local-${item.id}"></div>`;
+                                localCard.insertBefore(progDiv, btnUpdate);
+                            }
+                        }
                     }
-                } else {
-                    verificarActualizacionSilenciosa(item, local);
                 }
             });
-        }
 
-        async function verificarActualizacionSilenciosa(itemNube, itemLocal) {
-            try {
-                const res = await cargarRecursoSeguro(itemNube.url);
-                const nuevoCodigo = await res.text();
-                
-                if (nuevoCodigo !== itemLocal.codigo) {
-                    let locales = getVersionesLocales();
-                    locales[itemNube.id] = { 
-                        nombre: itemNube.nombre, 
-                        codigo: nuevoCodigo, 
-                        version: itemNube.version, 
-                        fecha: new Date().toLocaleString() 
-                    };
-                    localStorage.setItem('bio_breach_v_data', JSON.stringify(locales));
-                }
-            } catch (e) {
-                console.log("No se pudo verificar actualización silenciosa");
+            // Actualizar Badge de Notificaciones
+            const badge = document.getElementById('update-badge');
+            if (updateCount > 0) {
+                badge.style.display = 'inline-block';
+                badge.innerText = updateCount;
+            } else {
+                badge.style.display = 'none';
+            }
+
+            if (pendingSection.innerHTML === "") {
+                pendingSection.innerHTML = `<div class="empty-msg">El sistema está actualizado.</div>`;
             }
         }
 
-        async function descargarEInstalar(url, id, nombre, versionNube, mostrarProgreso = false) {
-            const btn = document.getElementById(`btn-dl-${id}`);
-            const pCont = document.getElementById(`prog-cont-${id}`);
-            const pBar = document.getElementById(`prog-bar-${id}`);
+        function createCard(item, esLocal, esUpdate, esNuevo) {
+            const card = document.createElement('div');
+            card.className = 'project-card';
+            if (esUpdate) card.style.borderColor = "var(--gold)";
             
-            if(mostrarProgreso && btn) btn.style.display = "none";
-            if(mostrarProgreso && pCont) pCont.style.display = "block";
+            // ID único para barras de progreso en pestaña updates
+            const suffix = esNuevo ? 'new' : 'pending';
+            const progId = `prog-cont-${suffix}-${item.id}`;
+            const btnId = `btn-${suffix}-${item.id}`;
+            
+            let htmlStatus = esNuevo ? 'Disponible en Nube' : `<span style="color:var(--gold)">⚠ Actualización v${item.version}</span>`;
+            let btnText = esUpdate ? 'ACTUALIZAR DATOS' : 'DESCARGAR';
+            let btnClass = esUpdate ? 'btn-update' : 'btn-download';
+
+            card.innerHTML = `
+                <div class="v-name">${item.nombre}</div>
+                <div class="v-status">${htmlStatus}</div>
+                <div class="progress-container" id="${progId}">
+                    <div class="progress-bar" id="prog-bar-${suffix}-${item.id}"></div>
+                </div>
+                <button class="btn ${btnClass}" id="${btnId}" onclick="descargarEInstalar('${item.url}', '${item.id}', '${item.nombre}', '${item.version}', true)">${btnText}</button>
+            `;
+            return card;
+        }
+
+        async function descargarEInstalar(url, id, nombre, versionNube, mostrarProgreso = false) {
+            // Mapeamos todos los posibles lugares donde puede estar la barra de carga
+            const idsPosibles = [
+                { bar: `prog-bar-new-${id}`, cont: `prog-cont-new-${id}`, btn: `btn-new-${id}` }, 
+                { bar: `prog-bar-pending-${id}`, cont: `prog-cont-pending-${id}`, btn: `btn-pending-${id}` },
+                { bar: `prog-bar-local-${id}`, cont: `prog-cont-local-${id}`, btn: null } 
+            ];
+
+            // Activar UI
+            idsPosibles.forEach(ui => {
+                const elCont = document.getElementById(ui.cont);
+                const elBtn = ui.btn ? document.getElementById(ui.btn) : null;
+                if (elCont) elCont.style.display = "block";
+                if (elBtn) elBtn.style.display = "none";
+            });
+
+            // Ocultar botón update local
+            const cardLocal = document.getElementById(`card-local-${id}`);
+            const btnUpLocal = cardLocal ? cardLocal.querySelector('.btn-update') : null;
+            if(btnUpLocal) btnUpLocal.style.display = "none";
 
             try {
                 const response = await cargarRecursoSeguro(url);
@@ -283,20 +346,24 @@
                 if (mostrarProgreso) {
                     let progreso = 0;
                     const intervalo = setInterval(() => {
-                        progreso += 20;
-                        if(pBar) pBar.style.width = progreso + "%";
+                        progreso += 10;
+                        idsPosibles.forEach(ui => {
+                            const elBar = document.getElementById(ui.bar);
+                            if(elBar) elBar.style.width = progreso + "%";
+                        });
+
                         if (progreso >= 100) {
                             clearInterval(intervalo);
                             guardarYActualizar(id, nombre, codigo, versionNube);
                         }
-                    }, 100);
+                    }, 50);
                 } else {
                     guardarYActualizar(id, nombre, codigo, versionNube);
                 }
             } catch (error) { 
                 console.error(error);
-                if(mostrarProgreso) alert("Error de descarga. Verifica tu internet."); 
-                if(btn) btn.style.display = "block"; 
+                alert("Error de conexión.");
+                actualizarInterfaz();
             }
         }
 
@@ -304,6 +371,10 @@
             let locales = getVersionesLocales();
             locales[id] = { nombre: nombre, codigo: codigo, version: version, fecha: new Date().toLocaleString() };
             localStorage.setItem('bio_breach_v_data', JSON.stringify(locales));
+            
+            // Reseteamos el "ignorar" porque ya se actualizó
+            if(actualizacionesIgnoradas.has(id)) actualizacionesIgnoradas.delete(id);
+            
             actualizarInterfaz();
         }
 
@@ -325,51 +396,55 @@
                     const card = document.createElement('div');
                     card.className = 'project-card';
                     card.id = `card-local-${id}`;
-                    const dotClass = navigator.onLine ? 'active' : 'offline';
-
+                    
                     card.innerHTML = `
                         <div class="v-name">${v.nombre}</div>
-                        <div class="v-status"><div class="dot ${dotClass}"></div> Listo en Memoria</div>
+                        <div class="v-status">
+                            <div class="dot active"></div> 
+                            Instalado (v${v.version || '?'})
+                        </div>
                         <button class="btn btn-play" onclick="lanzarMotor('${id}')">INICIAR</button>
                     `;
                     lista.appendChild(card);
                 });
             } else {
-                lista.innerHTML = `<div class="empty-msg" style="text-align:center; padding:40px; color:#666;">Buscando contenido...</div>`;
+                lista.innerHTML = `<div class="empty-msg">Biblioteca vacía. Ve al Centro de Datos.</div>`;
             }
             sincroServidor();
         }
 
         function lanzarMotor(id) {
+            // Si el usuario juega, el botón de actualizar desaparece de ESTA vista
+            actualizacionesIgnoradas.add(id);
+            
+            // Limpieza visual inmediata en la tarjeta local
+            const card = document.getElementById(`card-local-${id}`);
+            if(card) {
+                const btnUpdate = card.querySelector('.btn-update');
+                if(btnUpdate) btnUpdate.remove();
+                const progCont = document.getElementById(`prog-cont-local-${id}`);
+                if(progCont) progCont.remove();
+            }
+
             const view = document.getElementById('game-view');
             const frame = document.getElementById('game-frame');
             const locales = getVersionesLocales();
             
-            if (!locales[id]) {
-                alert("Error: Datos dañados. Intenta borrar caché.");
-                return;
-            }
+            if (!locales[id]) return;
 
             view.style.display = "block";
             
-            // Inyección segura compatible con APKs
             try {
                 const doc = frame.contentDocument || frame.contentWindow.document;
                 doc.open();
                 doc.write(locales[id].codigo);
                 doc.close();
             } catch (e) {
-                console.error("Error lanzando motor:", e);
                 const blob = new Blob([locales[id].codigo], { type: 'text/html' });
                 frame.src = URL.createObjectURL(blob);
             }
         }
 
-        function cerrarMotor() {
-            document.getElementById('game-view').style.display = "none";
-            document.getElementById('game-frame').src = "about:blank";
-        }        
-        
         window.addEventListener('online', actualizarInterfaz);
         window.addEventListener('offline', actualizarInterfaz);
     </script>

@@ -3,12 +3,13 @@ const ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
-  "./Logo%20BIO-BREACH.png"
+  "./Logo%20BIO-BREACH.png",
+  "./NOTIFICACIONES%20BIO-BREACH.jpeg"
 ];
 
-// 1. INSTALACIÓN: Solo guardamos lo crítico local
+// 1. INSTALACIÓN
 self.addEventListener("install", (event) => {
-  self.skipWaiting(); // Forza la activación inmediata
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS);
@@ -16,7 +17,7 @@ self.addEventListener("install", (event) => {
   );
 });
 
-// 2. ACTIVACIÓN: Limpia versiones viejas
+// 2. ACTIVACIÓN
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -30,7 +31,7 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// 3. INTERCEPTOR: Estrategia "Network First"
+// 3. INTERCEPTOR
 self.addEventListener("fetch", (event) => {
   if (event.request.method === 'POST') {
     event.respondWith(Response.redirect('./index.html'));
@@ -46,47 +47,108 @@ self.addEventListener("fetch", (event) => {
 });
 
 // 4. FUNCIONES AVANZADAS (PWA BUILDER & SYNC)
-
-// Background Sync
 self.addEventListener('sync', (event) => {
   if (event.tag === 'sync-datos') {
-    console.log('SW: Ejecutando sincronización de fondo (sync-datos)');
-    // Aquí iría la lógica real de sincronización, por ahora solo valida la función
+    console.log('SW: Sincronización de fondo');
   }
 });
 
-// Periodic Sync
 self.addEventListener('periodicsync', (event) => {
   if (event.tag === 'sync-periodico') {
-    console.log('SW: Ejecutando sincronización periódica (sync-periodico)');
-    // Aquí se actualizaría contenido cada 12h-24h
+    console.log('SW: Sincronización periódica');
   }
 });
 
-// Push Notifications
+// 5. GESTIÓN DE NOTIFICACIONES INTELIGENTES
 self.addEventListener('push', (event) => {
   console.log('SW: Notificación Push recibida');
+
+  const ICON_DEFAULT = "./Logo%20BIO-BREACH.png"; 
+  // TODO: Reemplaza esto con tu URL real cuando la tengas
+  const ICON_UPDATE = "./NOTIFICACIONES%20BIO-BREACH.jpeg"; 
+
+  // Parseamos los datos que envías desde el servidor
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (e) {
+    // Si no es JSON, asumimos formato básico
+    data = { type: 'general', body: event.data ? event.data.text() : 'Aviso del Sistema' };
+  }
+
+  // --- LÓGICA DE FILTRADO ---
   
-  const options = {
-    body: event.data ? event.data.text() : 'BIO-BREACH HUB: Nueva versión disponible',
-    icon: "./Logo%20BIO-BREACH.png",
-    badge: "./Logo%20BIO-BREACH.png",
-    vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1
-    }
+  // Función para detectar si es un parche menor (X.Y.1, X.Y.2...)
+  // Retorna TRUE si es un parche, FALSE si es una versión mayor (X.Y.0)
+  const esParcheMenor = (version) => {
+      if (!version) return false; // Si no hay versión, asumimos que es importante
+      const partes = version.split('.'); // Divide "1.2.5" en ["1", "2", "5"]
+      if (partes.length < 3) return false; 
+      
+      // Si el último número (Parche) es mayor a 0, es un fix menor.
+      const parche = parseInt(partes[2]);
+      return parche > 0;
   };
-  
+
+  let title = 'BIO-BREACH HUB';
+  let options = {
+    body: data.body || 'Atención requerida.',
+    icon: ICON_DEFAULT,
+    badge: ICON_DEFAULT,
+    vibrate: [100, 50, 100],
+    data: { url: './index.html' },
+    tag: 'general'
+  };
+
+  // CASO A: ACTUALIZACIÓN (Update)
+  if (data.type === 'update') {
+      
+    // EL CEREBRO: Verifica si la versión enviada (ej: "1.0.4") es solo un parche
+    if (esParcheMenor(data.version) && !data.force) {
+        console.log(`SW: Versión ${data.version} detectada como parche menor. Notificación silenciada.`);
+        return; // DETIENE LA EJECUCIÓN AQUÍ. No muestra nada.
+    }
+
+    // Si pasa el filtro, configuramos la alerta visual
+    title = data.title || "¡NUEVA VERSIÓN DEL SISTEMA!";
+    options.body = data.body || `La versión ${data.version} incluye nuevo contenido.`;
+    options.icon = ICON_UPDATE;
+    options.image = ICON_UPDATE; // Imagen grande para Android
+    options.tag = 'app-update';
+    options.vibrate = [200, 100, 200, 100, 500]; // Vibración larga
+    options.requireInteraction = true; // No desaparece sola
+  }
+
+  // CASO B: REGRESO (Return / Engagement)
+  else if (data.type === 'return') {
+    title = "SISTEMA EN ESPERA";
+    options.body = "Agente, el sistema requiere supervisión.";
+    options.icon = ICON_DEFAULT; // Mantiene identidad visual clásica
+    options.tag = 'user-return';
+    options.vibrate = [50, 50]; // Muy sutil
+    options.actions = [
+        { action: 'open', title: 'Entrar' }
+    ];
+  }
+
   event.waitUntil(
-    self.registration.showNotification('BIO-BREACH HUB', options)
+    self.registration.showNotification(title, options)
   );
 });
 
-// Clic en notificación
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil(
-    clients.openWindow('./index.html')
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      for (let i = 0; i < windowClients.length; i++) {
+        const client = windowClients[i];
+        if (client.url.includes('index.html') && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow('./index.html');
+      }
+    })
   );
 });
