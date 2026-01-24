@@ -427,7 +427,7 @@
             opacity: 1;
         }
 
-        /* --- CONFIGURACIÓN Y MODALES --- */
+        /* --- CONFIGURACIÓN Y MODALES --- */        
         #settings-modal, #tutorial-screen, #abort-confirm, #overlay, #migration-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(10,10,10,0.98);
@@ -456,7 +456,7 @@
         .tutorial-box::-webkit-scrollbar { width: 6px; }
         .tutorial-box::-webkit-scrollbar-thumb { background: var(--dark-red); }
 
-        .mosaic-options { display: flex; gap: 15px; margin: 20px 0; flex-wrap: wrap; justify-content: center;}
+                .mosaic-options { display: flex; gap: 15px; margin: 20px 0; flex-wrap: wrap; justify-content: center;}
         .mosaic-btn {
             background: #ccc; border: 2px solid #555; color: #333;
             padding: 15px 25px; cursor: pointer; font-family: 'Courier New', monospace;
@@ -464,8 +464,32 @@
         }
         .mosaic-btn.active { border-color: #000; color: #000; background: var(--gold); box-shadow: 3px 3px 0px #000; }
 
+        /* --- NUEVO: PESTAÑAS Y AUDIO --- */
+        .settings-tabs {
+            display: flex; width: 100%; border-bottom: 2px solid #444; margin-bottom: 20px;
+        }
+        .tab-btn {
+            flex: 1; padding: 10px; background: #222; color: #666; 
+            border: none; cursor: pointer; font-family: 'Courier New', monospace; font-weight: bold;
+            transition: all 0.3s;
+        }
+        .tab-btn.active-tab {
+            background: #e6e6e6; color: #000; border-top: 2px solid var(--gold);
+        }
+        
+        .settings-content-panel { display: none; }
+        .settings-content-panel.active-panel { display: block; animation: fadeIn 0.3s; }
+        
+        .audio-control-row {
+            margin-bottom: 15px; text-align: left;
+        }
+        .audio-label {
+            font-size: 0.8rem; color: #555; font-weight: bold; display: flex; justify-content: space-between;
+        }
+        /* ------------------------------- */
+
         .step { margin-bottom: 20px; text-align: left; border-left: 4px solid var(--dark-red); padding-left: 15px; }
-        .step b { color: #000; display: block; margin-bottom: 5px; text-transform: uppercase; text-decoration: underline;}
+        .step b { color: #000; display: block; margin-bottom: 5px; text-transform: uppercase; text-decoration: underline;}        
 
         /* --- MURO DE CRIMINALES --- */
         #archives-screen {
@@ -792,7 +816,7 @@
             #queryInput { font-size: 0.9rem; }
             .btn-main { padding: 10px; font-size: 0.9rem; }
             #case-info-bar { flex-direction: row; gap: 5px; font-size: 0.65rem; }
-        }
+        }        
     </style>                                    
 </head>
 <body>
@@ -953,21 +977,58 @@
         </div>
     </div>
 
-    <div id="settings-modal">
-        <div class="tutorial-box">
-            <h2 style="color: var(--gold);">CONFIGURACIÓN DE MOSAICO</h2>
-            <p style="color:#aaa; font-size: 0.8rem;">Seleccione la densidad de visualización de objetivos.</p>
-            
-            <div class="mosaic-options">
-                <button class="mosaic-btn" id="btn-mode-2" onclick="selectMosaic(2)">2x2</button>
-                <button class="mosaic-btn" id="btn-mode-3" onclick="selectMosaic(3)">3x3</button>
-                <button class="mosaic-btn active" id="btn-mode-5" onclick="selectMosaic(5)">5x5</button>
+    <    <div id="settings-modal">
+        <div class="tutorial-box" style="padding: 0; overflow: hidden; background: #e6e6e6;">
+            <div class="settings-tabs">
+                <button class="tab-btn active-tab" onclick="switchSettingsTab('visual')">VISUAL</button>
+                <button class="tab-btn" onclick="switchSettingsTab('audio')">SONIDO</button>
             </div>
-            <p id="mosaic-desc" style="font-size: 0.7rem; color: var(--terminal-green); min-height: 20px;">ESTÁNDAR: Vista completa, sin deslizamiento.</p>
 
-            <button class="btn-main" onclick="saveSettings()">CONFIRMAR</button>
+            <div style="padding: 20px;">
+                <h2 style="color: var(--gold); margin-top: 0; text-shadow: 1px 1px 0 #000;">CONFIGURACIÓN</h2>
+                
+                <div id="panel-visual" class="settings-content-panel active-panel">
+                    <p style="color:#555; font-size: 0.8rem; margin-bottom: 10px;">DENSIDAD DE OBJETIVOS</p>
+                    <div class="mosaic-options">
+                        <button class="mosaic-btn" id="btn-mode-2" onclick="selectMosaic(2)">2x2</button>
+                        <button class="mosaic-btn" id="btn-mode-3" onclick="selectMosaic(3)">3x3</button>
+                        <button class="mosaic-btn active" id="btn-mode-5" onclick="selectMosaic(5)">5x5</button>
+                    </div>
+                    <p id="mosaic-desc" style="font-size: 0.7rem; color: #333; min-height: 20px; font-style: italic;">ESTÁNDAR: Vista completa, sin deslizamiento.</p>
+                </div>
+
+                <div id="panel-audio" class="settings-content-panel">
+                    
+                    <div class="audio-control-row">
+                        <div class="audio-label">
+                            <span>GENERAL</span>
+                            <span id="vol-display-master">100%</span>
+                        </div>
+                        <input type="range" id="slider-master" min="0" max="1" step="0.05" value="1" oninput="updateAudioSettings('master', this.value)">
+                    </div>
+
+                    <div class="audio-control-row">
+                        <div class="audio-label">
+                            <span>MÚSICA (AMBIENTE)</span>
+                            <span id="vol-display-music">60%</span>
+                        </div>
+                        <input type="range" id="slider-music" min="0" max="1" step="0.05" value="0.6" oninput="updateAudioSettings('music', this.value)">
+                    </div>
+
+                    <div class="audio-control-row">
+                        <div class="audio-label">
+                            <span>EFECTOS DE SONIDO</span>
+                            <span id="vol-display-sfx">100%</span>
+                        </div>
+                        <input type="range" id="slider-sfx" min="0" max="1" step="0.05" value="1" oninput="updateAudioSettings('sfx', this.value)">
+                    </div>
+                </div>
+
+                <hr style="border: 0; border-top: 1px dashed #999; margin: 20px 0;">
+                <button class="btn-main" onclick="saveSettings()">CERRAR / GUARDAR</button>
+            </div>
         </div>
-    </div>
+    </div>    
 
     <div id="tutorial-screen">
         <div class="tutorial-box">
@@ -987,7 +1048,7 @@
                 <button class="btn-main" style="background:#333; width: auto;" onclick="closeAbortModal()">CANCELAR</button>
             </div>
         </div>
-    </div>
+    </div>    
 
     <div id="overlay">
         <h1 id="overlay-title"></h1>
@@ -1070,10 +1131,12 @@
             musicMaster.gain.value = 0.6; 
 
             warmDistortion = actx.createWaveShaper();
-            warmDistortion.curve = makeDistortionCurve(10); 
+                        warmDistortion.curve = makeDistortionCurve(10); 
             warmDistortion.oversample = '4x';
 
             limiter.connect(musicMaster);
+            // Iniciar con el volumen guardado
+            musicMaster.gain.value = 0.6 * volMusic * volMaster;
             musicMaster.connect(actx.destination);
 
             createReverb();
@@ -1158,14 +1221,16 @@
             revGain.connect(limiter);
         }
 
-        function fadeToMode(newMode) {
+                function fadeToMode(newMode) {
             if (!isMusicRunning) return;
             const t = actx.currentTime;
             musicMaster.gain.cancelScheduledValues(t);
             musicMaster.gain.setTargetAtTime(0, t, 0.1); 
             setTimeout(() => {
                 setMusicModeData(newMode);
-                musicMaster.gain.setTargetAtTime(0.55, actx.currentTime, 0.2); 
+                // Calcular volumen objetivo basado en sliders
+                const targetVol = 0.55 * volMusic * volMaster;
+                musicMaster.gain.setTargetAtTime(targetVol, actx.currentTime, 0.2); 
             }, 300);
         }
         
@@ -1181,7 +1246,9 @@
             setMusicModeData(3);
             const t = actx.currentTime;
             musicMaster.gain.cancelScheduledValues(t);
-            musicMaster.gain.setTargetAtTime(0.55, t, 0.5);
+            // Calcular volumen objetivo basado en sliders
+            const targetVol = 0.55 * volMusic * volMaster;
+            musicMaster.gain.setTargetAtTime(targetVol, t, 0.5);
         }
 
         function setMusicModeData(m) {
@@ -1425,10 +1492,16 @@
         // === FIN MOTOR DE AUDIO ===
         // ==========================================
 
-        const CACHE_NAME = 'bio-breach-audio-v1';
+                const CACHE_NAME = 'bio-breach-audio-v1';
         let currentMosaicMode = parseInt(localStorage.getItem('bioBreachMosaic')) || 5; 
         let tempMosaicMode = currentMosaicMode; 
         
+        // --- VARIABLES DE AUDIO ---
+        let volMaster = parseFloat(localStorage.getItem('bioBreachVolMaster')) || 1.0;
+        let volMusic = (localStorage.getItem('bioBreachVolMusic') !== null) ? parseFloat(localStorage.getItem('bioBreachVolMusic')) : 0.6;
+        let volSFX = parseFloat(localStorage.getItem('bioBreachVolSFX')) || 1.0;
+        // --------------------------
+
         let DP = {}; 
         
                         // --- VARIABLES DE MODO DE JUEGO ---
@@ -1564,13 +1637,72 @@
             else desc.innerText = "ZOOM TÁCTICO: Tarjetas ampliadas, deslizamiento activo.";
         }
 
-        function saveSettings() {
+                function saveSettings() {
             playSFX('click');
             document.getElementById('settings-modal').style.display = 'none';
             if (tempMosaicMode !== currentMosaicMode) {
                 applyMosaicChange(tempMosaicMode);
             }
+            // Guardar volumen en localStorage
+            localStorage.setItem('bioBreachVolMaster', volMaster);
+            localStorage.setItem('bioBreachVolMusic', volMusic);
+            localStorage.setItem('bioBreachVolSFX', volSFX);
         }
+
+        // --- NUEVAS FUNCIONES DE UI ---
+        function switchSettingsTab(tab) {
+            playSFX('click');
+            // Botones
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab'));
+            event.target.classList.add('active-tab');
+            
+            // Paneles
+            document.querySelectorAll('.settings-content-panel').forEach(p => p.classList.remove('active-panel'));
+            document.getElementById(`panel-${tab}`).classList.add('active-panel');
+        }
+
+        function updateAudioSettings(type, val) {
+            val = parseFloat(val);
+            if (type === 'master') {
+                volMaster = val;
+                document.getElementById('vol-display-master').innerText = Math.round(val * 100) + "%";
+            } else if (type === 'music') {
+                volMusic = val;
+                document.getElementById('vol-display-music').innerText = Math.round(val * 100) + "%";
+            } else if (type === 'sfx') {
+                volSFX = val;
+                document.getElementById('vol-display-sfx').innerText = Math.round(val * 100) + "%";
+            }
+
+            // Aplicar cambios en tiempo real a la música
+            if (actx && musicMaster) {
+                // Si la música debería sonar, recalcula el volumen
+                // Nota: musicMaster.gain.value base suele ser alrededor de 0.6 o variable según fadeToMode
+                // Para simplificar y no romper fadeToMode, actualizamos el gain global si está estable
+                // O mejor, aplicamos la lógica en el bucle o funciones de reproducción.
+                // PERO, para efecto inmediato:
+                const baseMusicGain = 0.6; // Valor base aproximado
+                const currentTarget = isMusicRunning ? (baseMusicGain * volMusic * volMaster) : 0;
+                // Ajuste suave
+                musicMaster.gain.setTargetAtTime(currentTarget, actx.currentTime, 0.1);
+            }
+        }
+        
+        // Actualizar sliders al abrir (poner dentro de openSettings)
+        const _originalOpenSettings = openSettings;
+        openSettings = function() {
+            _originalOpenSettings();
+            // Cargar valores visuales
+            document.getElementById('slider-master').value = volMaster;
+            document.getElementById('vol-display-master').innerText = Math.round(volMaster * 100) + "%";
+            
+            document.getElementById('slider-music').value = volMusic;
+            document.getElementById('vol-display-music').innerText = Math.round(volMusic * 100) + "%";
+            
+            document.getElementById('slider-sfx').value = volSFX;
+            document.getElementById('vol-display-sfx').innerText = Math.round(volSFX * 100) + "%";
+        }
+        // ------------------------------
 
         function applyMosaicChange(newMode) {
             const loading = document.getElementById('loading-screen');
@@ -1644,13 +1776,13 @@
 
         const AUDIO_CONFIG = {
             paper: { src: 'https://assets.mixkit.co/active_storage/sfx/2047/2047-preview.mp3', vol: 0.6 },
-            fail: { src: 'https://assets.mixkit.co/active_storage/sfx/2805/2805-preview.mp3', vol: 0.4 }, 
-            error: { src: 'https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3', vol: 0.5 }, 
-            win: { src: 'https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3', vol: 0.5 },
-            click: { src: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3', vol: 0.4 },
-            type: { src: 'https://assets.mixkit.co/active_storage/sfx/2544/2544-preview.mp3', vol: 0.015 },
+            fail: { src: 'https://assets.mixkit.co/active_storage/sfx/759/759-preview.mp3', vol: 0.5 }, 
+            error: { src: 'https://assets.mixkit.co/active_storage/sfx/2858/2858-preview.mp3', vol: 0.5 }, 
+            win: { src: 'https://assets.mixkit.co/active_storage/sfx/478/478-preview.mp3', vol: 0.5 },
+            click: { src: 'https://assets.mixkit.co/active_storage/sfx/3049/3049-preview.mp3', vol: 0.55 },
+            type: { src: 'https://assets.mixkit.co/active_storage/sfx/1125/1125-preview.mp3', vol: 0.15 },
             newCase: { src: 'https://assets.mixkit.co/active_storage/sfx/2047/2047-preview.mp3', vol: 1 },
-            discard: { src: 'https://assets.mixkit.co/active_storage/sfx/2567/2567-preview.mp3', vol: 0.1 }
+            discard: { src: 'https://assets.mixkit.co/active_storage/sfx/1530/1530-preview.mp3', vol: 1 }
         };
 
         const SFX_CACHE = {};
@@ -1663,9 +1795,12 @@
             SFX_CACHE[key] = audio;
         });
 
-        async function playSFX(key, interrupt = false) {
+                async function playSFX(key, interrupt = false) {
             if (!SFX_CACHE[key]) return;
             
+            // Factor de silencio absoluto si master o sfx es 0
+            if (volMaster <= 0.01 || volSFX <= 0.01) return;
+
             if (interrupt || key === 'error' || key === 'fail' || key === 'win') {
                 activeSounds.forEach(s => {
                     s.pause();
@@ -1675,7 +1810,8 @@
             }
 
             const sound = SFX_CACHE[key].cloneNode();
-            sound.volume = AUDIO_CONFIG[key].vol;
+            // APLICAR VOLUMEN CALCULADO
+            sound.volume = AUDIO_CONFIG[key].vol * volSFX * volMaster;
             
             if (key === 'discard') { sound.currentTime = 0.05; }
             activeSounds.push(sound);
@@ -2339,7 +2475,7 @@
                     </div>
                     <div class="step">
                         <b>2. DESCARTE OBLIGATORIO</b>
-                        Haga clic en las tarjetas de los sospechosos para descartarlos en base a la respuesta que le dio la consola, debe descartar a todos los relacionados antes de volver a preguntar.
+                        Haga clic en las tarjetas de los presuntos sospechosos para descartarlos teniendo de base la respuesta que le otorgó la consola, debe descartar a todos los relacionados antes de volver a preguntar.
                     </div>
                     <div class="step">
                         <b>3. OBJETIVO ÚNICO</b>
