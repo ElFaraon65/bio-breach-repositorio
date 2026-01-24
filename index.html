@@ -139,7 +139,7 @@
         });
 
         if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("./sw.js?v=" + new Date().getTime(), { scope: "./" })
+            navigator.serviceWorker.register("./sw.js?v=" + new Date().getTime(), { scope: "/" })
                 .then(async reg => {
                     console.log("SW Registrado.");
                     if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });        
@@ -155,9 +155,9 @@
             // REEMPLAZA ESTOS DATOS CON LOS DE TU CONSOLA FIREBASE
             const firebaseConfig = {
                 apiKey: "AIzaSyBmn_I9e9RWS6nwk95o-MYR45DTepe3Gzw",
-                authDomain: "https://bio-breach-game.firebaseapp.com",
+                authDomain: "bio-breach-game.firebaseapp.com",
                 projectId: "bio-breach-game",
-                storageBucket: "https://bio-breach-game.firebasestorage.app",
+                storageBucket: "bio-breach-game.firebasestorage.app",
                 messagingSenderId: "446020506947",
                 appId: "1:446020506947:web:27e1b80ca7e8713b788bf6"
             };
