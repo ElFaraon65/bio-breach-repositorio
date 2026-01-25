@@ -5,7 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BIO-BREACH: ONLINE SURVIVAL V8.2 - WARFARE UPDATE</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <style>
+        <style>
+        /* === NUEVO: CORRECCIÓN DE INTERFAZ NATIVA === */
+        /* Esto elimina el color azul al tocar y el borde de selección */
+        * {
+            -webkit-tap-highlight-color: transparent; /* Elimina el flash azul al tocar */
+            outline: none; /* Elimina el borde de foco en inputs */
+            user-select: none; /* Evita que se seleccione texto accidentalmente (opcional, pero recomendado para juegos) */
+        }
+
+        /* Reactivar la selección de texto SOLO para inputs donde el usuario debe escribir */
+        input, textarea {
+            user-select: text;
+        }
+                    
         :root {
             /* PALETA NOIR / DETECTIVE 40s */
             --gold: #d6b066;          /* Amarillo Opaco (Carpeta Manila/Oro viejo) */
