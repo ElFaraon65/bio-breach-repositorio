@@ -37,7 +37,7 @@
                    script-src 'self' 'unsafe-inline' 'unsafe-eval' https: blob:; 
                    style-src 'self' 'unsafe-inline' https:; 
                    img-src 'self' data: https: blob:; 
-                   connect-src 'self' https: wss: blob: data:; 
+                   connect-src 'self' https: wss: blob: data: https://fcmregistrations.googleapis.com https://firebaseinstallations.googleapis.com; 
                    frame-src 'self' blob: data: https:;">
 
     <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), vr=(), accelerometer=(), gyroscope=(), magnetometer=()">
@@ -128,8 +128,33 @@
         <iframe id="game-frame"></iframe>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
+
     <script>
-        // --- GESTIÓN DE PWA / INSTALACIÓN ---
+        // --- GESTIÓN DE PWA / INSTALACIÓN / FIREBASE ---
+        
+        // Configuración entregada por el Agente
+        const firebaseConfig = {
+          apiKey: "AIzaSyBmn_I9e9RWS6nwk95o-MYR45DTepe3Gzw",
+          authDomain: "bio-breach-game.firebaseapp.com",
+          projectId: "bio-breach-game",
+          storageBucket: "bio-breach-game.firebasestorage.app",
+          messagingSenderId: "446020506947",
+          appId: "1:446020506947:web:27e1b80ca7e8713b788bf6",
+          measurementId: "G-19C40FDYJZ"
+        };
+
+        // Inicializar Firebase
+        let messaging;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            messaging = firebase.messaging();
+            console.log("Sistema Firebase: ONLINE");
+        } catch (e) {
+            console.error("Fallo en inicialización Firebase", e);
+        }
+
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -139,9 +164,27 @@
         if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register("./sw.js?v=" + new Date().getTime(), { scope: "./" })
                 .then(async reg => {
+                    console.log("Service Worker Registrado:", reg.scope);
+                    
                     if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-                    if ('Notification' in window && Notification.permission === 'default') {
-                        Notification.requestPermission();
+                    
+                    // SOLICITUD DE PERMISOS Y TOKEN
+                    if (messaging) {
+                        try {
+                            const permission = await Notification.requestPermission();
+                            if (permission === 'granted') {
+                                // Obtenemos el Token usando el SW que acabamos de registrar
+                                const token = await messaging.getToken({ serviceWorkerRegistration: reg });
+                                if (token) {
+                                    console.log("%c[TOKEN DE ACCESO]:", "color: #00ff41; font-weight: bold;", token);
+                                    // AQUÍ PODRÍAS ENVIAR EL TOKEN A TU SERVIDOR O COPIARLO DE LA CONSOLA
+                                } else {
+                                    console.log("No se obtuvo token de identificación.");
+                                }
+                            }
+                        } catch (err) {
+                            console.error("Error obteniendo permisos de notificación:", err);
+                        }
                     }
                 })
                 .catch(err => console.error("SW Error:", err));
