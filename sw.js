@@ -1,24 +1,3 @@
-// --- FIREBASE MESSAGING INTEGRATION ---
-importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js');
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBmn_I9e9RWS6nwk95o-MYR45DTepe3Gzw",
-  authDomain: "bio-breach-game.firebaseapp.com",
-  projectId: "bio-breach-game",
-  storageBucket: "bio-breach-game.firebasestorage.app",
-  messagingSenderId: "446020506947",
-  appId: "1:446020506947:web:27e1b80ca7e8713b788bf6",
-  measurementId: "G-19C40FDYJZ"
-};
-
-firebase.initializeApp(firebaseConfig);
-const messaging = firebase.messaging();
-
-// NOTA: Mantenemos tu listener 'push' personalizado para controlar 
-// la lógica de updates vs returns.
-
-// --- LÓGICA ORIGINAL ---
 const CACHE_NAME = "bio-breach-v5";
 const ASSETS = [
   "./",
@@ -92,8 +71,6 @@ self.addEventListener('push', (event) => {
   let data = {};
   try {
     data = event.data ? event.data.json() : {};
-    // Si viene de Firebase como "data payload", a veces está dentro de data.data
-    if (data.data) data = data.data; 
   } catch (e) {
     // Si no es JSON, asumimos formato básico
     data = { type: 'general', body: event.data ? event.data.text() : 'Aviso del Sistema' };
