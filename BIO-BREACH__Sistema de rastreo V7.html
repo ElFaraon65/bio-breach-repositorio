@@ -1492,15 +1492,16 @@
         // === FIN MOTOR DE AUDIO ===
         // ==========================================
 
-                const CACHE_NAME = 'bio-breach-audio-v1';
+                        const CACHE_NAME = 'bio-breach-audio-v1';
         let currentMosaicMode = parseInt(localStorage.getItem('bioBreachMosaic')) || 5; 
         let tempMosaicMode = currentMosaicMode; 
         
-        // --- VARIABLES DE AUDIO ---
-        let volMaster = parseFloat(localStorage.getItem('bioBreachVolMaster')) || 1.0;
+        // --- VARIABLES DE AUDIO CORREGIDAS ---
+        // Usamos una comprobación estricta (!== null) para permitir que el valor sea 0
+        let volMaster = (localStorage.getItem('bioBreachVolMaster') !== null) ? parseFloat(localStorage.getItem('bioBreachVolMaster')) : 1.0;
         let volMusic = (localStorage.getItem('bioBreachVolMusic') !== null) ? parseFloat(localStorage.getItem('bioBreachVolMusic')) : 0.6;
-        let volSFX = parseFloat(localStorage.getItem('bioBreachVolSFX')) || 1.0;
-        // --------------------------
+        let volSFX = (localStorage.getItem('bioBreachVolSFX') !== null) ? parseFloat(localStorage.getItem('bioBreachVolSFX')) : 1.0;
+        // -------------------------------------
 
         let DP = {}; 
         
@@ -3301,7 +3302,7 @@
                 // ==========================================
         // === NUEVO: CERRAR SUGERENCIAS AL CLIC ===
         // ==========================================
-        document.addEventListener('click', function(e) {
+                document.addEventListener('click', function(e) {
             const suggestions = document.getElementById('cmd-suggestions');
             const input = document.getElementById('queryInput');
             
@@ -3311,6 +3312,22 @@
                 if (!suggestions.contains(e.target) && e.target !== input) {
                     suggestions.style.display = 'none';
                 }
+            }
+        });
+
+        // ================================================
+        // === NUEVO: CONTROL DE AUDIO EN SEGUNDO PLANO ===
+        // ================================================
+        // Detecta si sales de la app (Home) o bloqueas la pantalla
+        document.addEventListener('visibilitychange', function() {
+            if (!actx) return; // Si el audio aún no se ha iniciado (botón rojo), no hacer nada
+
+            if (document.hidden) {
+                // El usuario minimizó o bloqueó -> CONGELAR AUDIO
+                actx.suspend();
+            } else {
+                // El usuario volvió a entrar -> REANUDAR AUDIO
+                actx.resume();
             }
         });
 
