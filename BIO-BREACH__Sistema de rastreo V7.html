@@ -1185,7 +1185,7 @@
             localStorage.setItem('bioBreachProfile', JSON.stringify(currentUser));
             document.getElementById('login-screen').style.display = 'none';
             updateProfileUI();
-            playSFX('win'); 
+            playSFX('login'); 
         }
 
         function updateProfileUI() {
@@ -1783,7 +1783,9 @@
             click: { src: 'https://assets.mixkit.co/active_storage/sfx/3049/3049-preview.mp3', vol: 0.55 },
             type: { src: 'https://assets.mixkit.co/active_storage/sfx/1125/1125-preview.mp3', vol: 0.15 },
             newCase: { src: 'https://assets.mixkit.co/active_storage/sfx/2047/2047-preview.mp3', vol: 1 },
-            discard: { src: 'https://assets.mixkit.co/active_storage/sfx/1530/1530-preview.mp3', vol: 1 }
+            discard: { src: 'https://assets.mixkit.co/active_storage/sfx/1530/1530-preview.mp3', vol: 1 },
+            login: { src:
+'https://assets.mixkit.co/active_storage/sfx/2839/2839-preview.mp3', vol: 0.5 }          
         };
 
         const SFX_CACHE = {};
