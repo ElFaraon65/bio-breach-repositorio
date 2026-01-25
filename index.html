@@ -145,7 +145,7 @@
                     }
                 })
                 .catch(err => console.error("SW Error:", err));
-        }       }        
+        }        
     </script>
 
     <script>
@@ -209,7 +209,7 @@
             }
         }
 
-        // LÓGICA SEMÁNTICA (Ignora parches 0.0.X)
+        // LÓGICA SEMÁNTICA (Major y Minor activan UI, Patch es silencioso)
         function hayActualizacionImportante(vNube, vLocal) {
             if (!vNube || !vLocal) return false;
             const [M_nube, m_nube] = vNube.split('.').map(n => parseInt(n) || 0);
@@ -250,6 +250,7 @@
                     const necesitaUpdate = hayActualizacionImportante(versionNube, versionLocal);
                     
                     if (necesitaUpdate) {
+                        // ACTUALIZACIÓN MAYOR O MENOR (REQUIERE ACCIÓN)
                         updateCount++;
                         // A) Poner en "Centro de Datos"
                         const pendingCard = createCard(item, false, true, false);
@@ -274,6 +275,11 @@
                                 localCard.insertBefore(progDiv, btnUpdate);
                             }
                         }
+                    } else if (versionNube !== versionLocal) {
+                        // PARCHE SILENCIOSO (Cambio menor, ej: 7.1.0 -> 7.1.1)
+                        // No mostramos nada, actualizamos en segundo plano
+                        console.log(`Aplicando parche silencioso para ${item.nombre}: v${versionNube}`);
+                        descargarEInstalar(item.url, item.id, item.nombre, versionNube, false);
                     }
                 }
             });
@@ -322,16 +328,19 @@
                 { bar: `prog-bar-local-${id}`, cont: `prog-cont-local-${id}`, btn: null } 
             ];
 
-            idsPosibles.forEach(ui => {
-                const elCont = document.getElementById(ui.cont);
-                const elBtn = ui.btn ? document.getElementById(ui.btn) : null;
-                if (elCont) elCont.style.display = "block";
-                if (elBtn) elBtn.style.display = "none";
-            });
+            // Solo alteramos la UI si NO es una actualización silenciosa
+            if (mostrarProgreso) {
+                idsPosibles.forEach(ui => {
+                    const elCont = document.getElementById(ui.cont);
+                    const elBtn = ui.btn ? document.getElementById(ui.btn) : null;
+                    if (elCont) elCont.style.display = "block";
+                    if (elBtn) elBtn.style.display = "none";
+                });
 
-            const cardLocal = document.getElementById(`card-local-${id}`);
-            const btnUpLocal = cardLocal ? cardLocal.querySelector('.btn-update') : null;
-            if(btnUpLocal) btnUpLocal.style.display = "none";
+                const cardLocal = document.getElementById(`card-local-${id}`);
+                const btnUpLocal = cardLocal ? cardLocal.querySelector('.btn-update') : null;
+                if(btnUpLocal) btnUpLocal.style.display = "none";
+            }
 
             try {
                 const response = await cargarRecursoSeguro(url);
@@ -352,12 +361,15 @@
                         }
                     }, 50);
                 } else {
+                    // Actualización directa sin barra de carga (Silent Patch)
                     guardarYActualizar(id, nombre, codigo, versionNube);
                 }
             } catch (error) { 
                 console.error(error);
-                alert("Error de conexión.");
-                actualizarInterfaz();
+                if (mostrarProgreso) {
+                    alert("Error de conexión.");
+                    actualizarInterfaz();
+                }
             }
         }
 
@@ -390,6 +402,7 @@
                     card.className = 'project-card';
                     card.id = `card-local-${id}`;
                     
+                    // Aquí se muestra la versión actualizada (vX.X.X) gracias al parche silencioso
                     card.innerHTML = `
                         <div class="v-name">${v.nombre}</div>
                         <div class="v-status">
