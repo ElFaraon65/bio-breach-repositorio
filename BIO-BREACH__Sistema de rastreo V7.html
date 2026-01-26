@@ -3109,11 +3109,15 @@
             }
         });
 
+                // ==========================================
+        // === LÓGICA DE PROCESAMIENTO DE TEXTO MODIFICADA ===
+        // ==========================================
+
         document.getElementById('queryInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter' && !isTyping) {
                 let rawValue = this.value.trim();
                 
-                // CHEQUEO DE COMANDO DE SABOTAJE
+                // CHEQUEO DE COMANDO DE SABOTAJE (Modo Competitivo)
                 if (isCompetitiveMode && rawValue.startsWith('/')) {
                     const cmd = rawValue.substring(1).toUpperCase();
                     if(SABOTAGE_DEFINITIONS[cmd]) {
@@ -3122,6 +3126,7 @@
                     }
                 }
 
+                // 1. VALIDACIÓN BÁSICA DE SINTAXIS (¿...?)
                 if (!rawValue.startsWith('¿') || !rawValue.endsWith('?')) {
                     playSFX('error');
                     document.getElementById('out').style.color = "var(--hazard)";
@@ -3133,68 +3138,59 @@
                 this.value = '';
                 let checkFunc = null; 
                 let validQuery = false;
+                let errorMessage = "DATOS NO RECONOCIDOS O AMBIGUOS.";
 
+                // Función auxiliar para buscar palabras exactas
                 const hasWord = (word) => {
                     const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); 
                     return new RegExp("(?:^|[\\s¿])" + escaped + "(?:$|[\\s?.,])").test(q);
                 };
 
-                const validateSyntax = (keyword, fullQuery) => {
-                    if (new RegExp(keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + "\\s*\\?+$").test(fullQuery)) return true;
-                    const validNextWords = ["ES", "TIENE", "USA", "LLEVA", "MIDE", "PESA", "ESTÁ", "ERA", "FUE", "DE", "EN", "EL", "LA", "CON", "POR", "QUE", "Y", "O"];
-                    const escapedKw = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); 
-                    const contextRegex = new RegExp(`(?:^|[\\s¿])${escapedKw}\\s+(${validNextWords.join('|')})\\b`);
-                    if (contextRegex.test(fullQuery)) return true;
-                    return false;
+                // Función para validar que EXISTAN los complementos necesarios
+                const requireContext = (keywords) => {
+                    return keywords.some(k => hasWord(k));
                 };
 
-                if (hasWord("ACCESORIO") || hasWord("OBJETO")) {
-                    validQuery = true;
-                    if (hasWord("CABEZA") || hasWord("PELO")) checkFunc = p => p.accUbi === "CABEZA";
-                    else if (hasWord("OJOS") || hasWord("CARA")) checkFunc = p => p.accUbi === "OJOS";
-                    else if (hasWord("MANO") || hasWord("BRAZO")) checkFunc = p => p.accUbi === "MANO";
+                // --- BLOQUE 1: ACCESORIOS (Mantenido y Reforzado) ---
+                if (hasWord("ACCESORIO") || hasWord("OBJETO") || hasWord("LLEVA") || hasWord("USA")) {
+                    // Aquí la "Clave" es el objeto, el "Complemento" es la ubicación o la acción (USA/LLEVA)
+                    
+                    if (hasWord("CABEZA") || hasWord("PELO")) {
+                        checkFunc = p => p.accUbi === "CABEZA"; validQuery = true;
+                    }
+                    else if (hasWord("OJOS") || hasWord("CARA") || hasWord("VISTA")) {
+                        checkFunc = p => p.accUbi === "OJOS"; validQuery = true;
+                    }
+                    else if (hasWord("MANO") || hasWord("BRAZO") || hasWord("MUÑECA")) {
+                        checkFunc = p => p.accUbi === "MANO"; validQuery = true;
+                    }
                     else {
                         const accList = ["GORRA", "CASCO", "SOMBRERO", "GAFAS", "MONÓCULO", "VISOR", "MALETÍN", "TABLETA", "RELOJ", "DIADEMA", "BOINA", "PASAMONTAÑAS", "PARCHE", "ANILLO", "GUANTE", "CELULAR", "BASTÓN"];
-                        const found = accList.find(a => hasWord(a) && validateSyntax(a, q));
-                        if(found) checkFunc = p => p.accName === found;
-                        else validQuery = false;
+                        const found = accList.find(a => hasWord(a));
+                        
+                        if(found) {
+                            // Validación: No basta con poner "¿Gorra?", debe tener sentido.
+                            // Aunque para accesorios, el nombre ya es muy específico, seremos flexibles pero preferimos "Usa" o "Tiene"
+                            checkFunc = p => p.accName === found;
+                            validQuery = true;
+                        } else if (validQuery === false) { 
+                            // Si entró por "Usa" pero no dijo qué
+                            errorMessage = "ESPECIFIQUE EL ACCESORIO O UBICACIÓN.";
+                        }
                     }
                 }
-                // MODIFICADO: Lógica expandida para Norte/Sur América y nuevos países
-                else if (q.match(/\b(EUROPA|EUROPEO|EUROPEA)\b/)) { checkFunc = p => p.cont === "EUROPA"; validQuery = true; }
-                else if (q.match(/\b(ASIA|ASIÁTICO|ASIÁTICA)\b/)) { checkFunc = p => p.cont === "ASIA"; validQuery = true; }
-                else if (q.match(/\b(NORTEAMÉRICA|NORTEAMERICANO|NORTEAMERICANA)\b/) || (hasWord("AMÉRICA") && hasWord("NORTE"))) { 
-                    checkFunc = p => p.cont === "AMÉRICA DEL NORTE"; validQuery = true; 
-                }
-                else if (q.match(/\b(SUDAMÉRICA|SUDAMERICANO|SUDAMERICANA|SURAMÉRICA|SURAMERICANO)\b/) || (hasWord("AMÉRICA") && hasWord("SUR"))) { 
-                    checkFunc = p => p.cont === "AMÉRICA DEL SUR"; validQuery = true; 
-                }
-                else if (q.match(/\b(AMÉRICA|AMERICANO|AMERICANA)\b/)) { 
-                    // Si solo preguntan por América (general), incluye Norte y Sur
-                    checkFunc = p => p.cont.includes("AMÉRICA"); validQuery = true; 
-                }
-                else if (q.match(/\b(OCEANÍA|OCEÁNICO|OCEÁNICA)\b/)) { checkFunc = p => p.cont === "OCEANÍA"; validQuery = true; }
-                else if (q.match(/\b(ÁFRICA|AFRICANO|AFRICANA)\b/)) { checkFunc = p => p.cont === "ÁFRICA"; validQuery = true; }
-                
+
+                // --- BLOQUE 2: PAÍSES, CONTINENTES Y GENTILICIOS (Lógica Corregida) ---
                 else {
                     const demonyms = {
                         "ALEMANIA": "ALEMÁN", "ESPAÑA": "ESPAÑOL", "FRANCIA": "FRANCÉS", "ITALIA": "ITALIANO", "SUIZA": "SUIZO", "RUSIA": "RUSO",
                         "CHINA": "CHINO", "JAPÓN": "JAPONÉS", "COREA": "COREANO", "INDIA": "INDIO", "TAILANDIA": "TAILANDÉS", "VIETNAM": "VIETNAMITA", 
-                        
-                        // AMÉRICA DEL NORTE
                         "MÉXICO": "MEXICANO", "USA": "AMERICANO", "EEUU": "AMERICANO", "ESTADOS UNIDOS": "AMERICANO", "CANADÁ": "CANADIENSE",
-                        
-                        // AMÉRICA DEL SUR
                         "BRASIL": "BRASILEÑO", "BOLIVIA": "BOLIVIANO", "COLOMBIA": "COLOMBIANO", "ECUADOR": "ECUATORIANO",
                         "PERÚ": "PERUANO", "ARGENTINA": "ARGENTINO", "CHILE": "CHILENO", "URUGUAY": "URUGUAYO", "VENEZUELA": "VENEZOLANO",
-                        
                         "AUSTRALIA": "AUSTRALIANO", "NUEVA ZELANDA": "NEOZELANDÉS",
-                        
-                        // ÁFRICA
                         "EGIPTO": "EGIPCIO", "SUDAFRICA": "SUDAFRICANO", "NIGERIA": "NIGERIANO", "MARRUECOS": "MARROQUÍ",
                         "KENIA": "KENIANO", "SENEGAL": "SENEGALÉS", "GHANA": "GHANÉS", "ETIOPÍA": "ETÍOPE",
-                        
-                        // EUROPA EXTRA
                         "PORTUGAL": "PORTUGUÉS", "INGLATERRA": "INGLÉS", "SUECIA": "SUECO", "NORUEGA": "NORUEGO", "PAÍSES BAJOS": "HOLANDÉS"
                     };
 
@@ -3206,74 +3202,183 @@
                         return word;
                     };
 
-                    const foundCountry = DP.P.find(c => {
+                    // Detectar si se menciona un País (Sustantivo) o un Gentilicio (Adjetivo)
+                    let foundCountryObj = null;
+                    let detectedTerm = "";
+                    let isAdjective = false;
+
+                    // 1. Buscamos coincidencia en la lista de países (Nombres y Gentilicios)
+                    for (let c of DP.P) {
                         const demo = demonyms[c.n];
-                        
-                        // Check exact country name
-                        if (hasWord(c.n) && validateSyntax(c.n, q)) return true;
-                        
-                        // Check logic for mapped demonyms/aliases
-                        if (c.n === "USA") { // Special aliases for USA
-                             if (hasWord("EEUU") || hasWord("ESTADOS UNIDOS")) return true;
-                        }
+                        const demoFem = demo ? getFem(demo) : null;
 
-                        if (demo && hasWord(demo) && validateSyntax(demo, q)) return true;
-                        if (demo) {
-                            const fem = getFem(demo);
-                            if (fem !== demo && hasWord(fem) && validateSyntax(fem, q)) return true;
+                        // Caso A: Nombre del País/Continente (Sustantivo)
+                        if (hasWord(c.n)) {
+                            foundCountryObj = c; detectedTerm = c.n; isAdjective = false; break;
                         }
-                        return false;
-                    });
+                        // Caso especial USA
+                        if (c.n === "USA" && (hasWord("EEUU") || hasWord("ESTADOS UNIDOS"))) {
+                            foundCountryObj = c; detectedTerm = "EEUU"; isAdjective = false; break;
+                        }
+                        // Caso B: Gentilicio (Adjetivo)
+                        if (demo && hasWord(demo)) {
+                            foundCountryObj = c; detectedTerm = demo; isAdjective = true; break;
+                        }
+                        if (demoFem && demoFem !== demo && hasWord(demoFem)) {
+                            foundCountryObj = c; detectedTerm = demoFem; isAdjective = true; break;
+                        }
+                    }
 
-                    if (foundCountry) {
-                        checkFunc = p => p.p === foundCountry.n;
-                        validQuery = true;
-                    } 
-                    else if (hasWord("INICIAL") || hasWord("EMPIEZA")) {
-                        const letra = q.match(/\b[A-Z]\b/); 
-                        if (letra) { 
-                            if (validateSyntax(letra[0], q)) {
-                                checkFunc = p => p.n.startsWith(letra[0]); 
-                                validQuery = true; 
-                            } else {
-                                validQuery = false; 
+                    // Chequeo especial para Continentes Generales (Sustantivos vs Adjetivos)
+                    if (!foundCountryObj) {
+                        const continents = [
+                            {n: "EUROPA", adj: "EUROPEO"}, {n: "ASIA", adj: "ASIÁTICO"}, 
+                            {n: "ÁFRICA", adj: "AFRICANO"}, {n: "OCEANÍA", adj: "OCEÁNICO"},
+                            {n: "AMÉRICA", adj: "AMERICANO"} // General
+                        ];
+                        
+                        for (let cont of continents) {
+                            const adjFem = getFem(cont.adj);
+                            if (hasWord(cont.n)) { 
+                                // Caso especial Norte/Sur América
+                                if (cont.n === "AMÉRICA") {
+                                    if (hasWord("NORTE") || hasWord("NORTEAMÉRICA")) { checkFunc = p => p.cont === "AMÉRICA DEL NORTE"; validQuery = true; detectedTerm = "AMÉRICA DEL NORTE"; break; }
+                                    if (hasWord("SUR") || hasWord("SUDAMÉRICA") || hasWord("SURAMÉRICA")) { checkFunc = p => p.cont === "AMÉRICA DEL SUR"; validQuery = true; detectedTerm = "AMÉRICA DEL SUR"; break; }
+                                    checkFunc = p => p.cont.includes("AMÉRICA"); validQuery = true; detectedTerm = "AMÉRICA"; break;
+                                }
+                                checkFunc = p => p.cont === cont.n; validQuery = true; detectedTerm = cont.n; isAdjective = false; break; 
+                            }
+                            if (hasWord(cont.adj) || hasWord(adjFem)) {
+                                if (cont.n === "AMÉRICA") {
+                                    // Adjetivos compuestos
+                                    if (hasWord("NORTEAMERICANO") || hasWord("NORTEAMERICANA")) { checkFunc = p => p.cont === "AMÉRICA DEL NORTE"; validQuery = true; break; }
+                                    if (hasWord("SUDAMERICANO") || hasWord("SUDAMERICANA")) { checkFunc = p => p.cont === "AMÉRICA DEL SUR"; validQuery = true; break; }
+                                }
+                                checkFunc = p => p.cont === cont.n; validQuery = true; detectedTerm = cont.adj; isAdjective = true; break;
                             }
                         }
-                        else { typeWriter("ESPECIFIQUE UNA LETRA.", "out", 10); return; }
                     }
-                    else if (hasWord("EDAD") || hasWord("MIDE") || hasWord("ALTO")) {
-                        const numMatch = q.match(/\d+(\.\d+)?/);
-                        if (numMatch) {
-                            validQuery = true;
-                            const val = parseFloat(numMatch[0]);
-                            const isAge = hasWord("EDAD");
-                            if (hasWord("MAYOR") || hasWord("MÁS")) checkFunc = p => (isAge ? p.edad : parseFloat(p.altura)) > val;
-                            else if (hasWord("MENOR") || hasWord("MENOS")) checkFunc = p => (isAge ? p.edad : parseFloat(p.altura)) < val;
-                            else checkFunc = p => Math.abs((isAge ? p.edad : parseFloat(p.altura)) - val) < 0.05;
+
+                    // --- VALIDACIÓN DE COHERENCIA GRAMATICAL PARA PAÍSES/CONTINENTES ---
+                    if (foundCountryObj || (validQuery && detectedTerm)) {
+                        const term = detectedTerm;
+                        const countryCode = foundCountryObj ? foundCountryObj.n : null;
+                        
+                        // REGLA 1: Si es Sustantivo (ej: "África", "Perú"), REQUIERE preposición.
+                        // Correcto: "¿Es de África?", "¿Su origen es Perú?"
+                        // Incorrecto: "¿Es África?" (Ambiguo/Raro), "¿Tiene África?"
+                        if (!isAdjective) {
+                            if (!requireContext(["DE", "DEL", "EN", "ORIGEN", "PROCEDENCIA", "NACIDO"])) {
+                                errorMessage = `ERROR GRAMATICAL: FALTA PREPOSICIÓN PARA EL LUGAR (EJ: 'ES DE ${term}' O 'ORIGEN ${term}').`;
+                                validQuery = false; // Invalidamos para forzar el error
+                            } else {
+                                if (countryCode) checkFunc = p => p.p === countryCode;
+                                validQuery = true;
+                            }
+                        } 
+                        // REGLA 2: Si es Adjetivo (ej: "Africana"), PROHIBIR "DE" inmediato.
+                        // Correcto: "¿Es Africana?", "¿Nacionalidad Africana?"
+                        // Incorrecto: "¿Es de Africana?" (Tu ejemplo específico)
+                        else {
+                            if (hasWord("DE") && !hasWord("NACIONALIDAD") && !hasWord("ORIGEN")) {
+                                errorMessage = `ERROR GRAMATICAL: NO USE 'DE' CON GENTILICIOS (EJ: CORRECTO '¿ES ${term}?', INCORRECTO '¿ES DE ${term}?').`;
+                                validQuery = false;
+                            } else {
+                                if (countryCode) checkFunc = p => p.p === countryCode;
+                                validQuery = true;
+                            }
                         }
                     }
-                    else if (q.match(/\b(HOMBRE|MASCULINO)\b/)) { checkFunc = p => p.g === "MASCULINO"; validQuery = true; }
-                    else if (q.match(/\b(MUJER|FEMENINO)\b/)) { checkFunc = p => p.g === "FEMENINO"; validQuery = true; }
-                    else {
-                        const colors = ["AZULES", "VERDES", "NEGROS", "CAFÉS", "GRISES", "MIEL"];
-                        const skins = ["PÁLIDA", "OLIVA", "BRONCE", "OSCURA", "ÉBANO"];                                                                                    
+
+                    // --- BLOQUE 3: RASGOS FÍSICOS (TEZ, OJOS, EDAD, ALTURA) ---
+                    // Aquí forzamos la diferencia entre "Clave" y "Complemento"
+                    else if (!validQuery) {
                         
-                        const cMatch = colors.find(c => hasWord(c) && validateSyntax(c, q));
-                        const sMatch = skins.find(s => hasWord(s) && validateSyntax(s, q));
+                        // 3.1 Iniciales
+                        if (hasWord("INICIAL") || hasWord("EMPIEZA") || hasWord("LETRA")) {
+                            const letra = q.match(/\b[A-Z]\b/); 
+                            if (letra) { 
+                                checkFunc = p => p.n.startsWith(letra[0]); validQuery = true; 
+                            } else { 
+                                errorMessage = "ESPECIFIQUE LA LETRA INICIAL."; 
+                            }
+                        }
                         
-                        if(cMatch) { checkFunc = p => p.o === cMatch; validQuery = true; }
-                        else if(sMatch) { checkFunc = p => p.t === sMatch; validQuery = true; }
+                        // 3.2 Edad y Altura (Números)
+                        else if (hasWord("EDAD") || hasWord("MIDE") || hasWord("ALTO") || hasWord("AÑOS") || hasWord("PESA") || hasWord("ALTURA")) {
+                            const numMatch = q.match(/\d+(\.\d+)?/);
+                            if (numMatch) {
+                                const val = parseFloat(numMatch[0]);
+                                const isAge = (hasWord("EDAD") || hasWord("AÑOS"));
+                                
+                                // Validación lógica: No preguntar "¿Tiene 1.80 años?"
+                                if (isAge && val < 10) { errorMessage = "DATOS IMPRECISOS PARA EDAD."; }
+                                else if (!isAge && val > 3) { errorMessage = "DATOS IMPRECISOS PARA ALTURA (USE METROS)."; }
+                                else {
+                                    validQuery = true;
+                                    if (hasWord("MAYOR") || hasWord("MÁS")) checkFunc = p => (isAge ? p.edad : parseFloat(p.altura)) > val;
+                                    else if (hasWord("MENOR") || hasWord("MENOS")) checkFunc = p => (isAge ? p.edad : parseFloat(p.altura)) < val;
+                                    else checkFunc = p => Math.abs((isAge ? p.edad : parseFloat(p.altura)) - val) < 0.05;
+                                }
+                            } else {
+                                errorMessage = "ESPECIFIQUE UN NÚMERO.";
+                            }
+                        }
+
+                        // 3.3 Género
+                        else if (hasWord("HOMBRE") || hasWord("MASCULINO") || hasWord("MUJER") || hasWord("FEMENINO")) {
+                            // Estos son suficientemente explícitos por sí mismos
+                            if (q.match(/\b(HOMBRE|MASCULINO)\b/)) { checkFunc = p => p.g === "MASCULINO"; validQuery = true; }
+                            else { checkFunc = p => p.g === "FEMENINO"; validQuery = true; }
+                        }
+
+                        // 3.4 COLORES (OJOS) Y TEZ (PIEL) - VALIDACIÓN ESTRICTA
+                        else {
+                            const colors = ["AZULES", "VERDES", "NEGROS", "CAFÉS", "GRISES", "MIEL", "MARRONES"];
+                            const skins = ["PÁLIDA", "OLIVA", "BRONCE", "OSCURA", "ÉBANO", "BLANCA", "MORENA"];                                                                                    
+                            
+                            const cMatch = colors.find(c => hasWord(c));
+                            const sMatch = skins.find(s => hasWord(s));
+                            
+                            if (cMatch) {
+                                // CLAVE: Color (ej: Azul) -> COMPLEMENTO REQUERIDO: Ojos, Color, Iris
+                                if (requireContext(["OJOS", "COLOR", "IRIS", "MIRADA"])) {
+                                    checkFunc = p => p.o === (cMatch === "MARRONES" ? "CAFÉS" : cMatch); 
+                                    validQuery = true;
+                                } else {
+                                    errorMessage = `AMBIGÜEDAD DETECTADA: ¿SE REFIERE A LOS OJOS COLOR ${cMatch}? ESPECIFÍQUELO.`;
+                                }
+                            }
+                            else if (sMatch) {
+                                // CLAVE: Tez (ej: Bronce) -> COMPLEMENTO REQUERIDO: Tez, Piel, Color
+                                let normalizedSkin = sMatch;
+                                if(sMatch === "BLANCA") normalizedSkin = "PÁLIDA";
+                                if(sMatch === "MORENA") normalizedSkin = "OSCURA";
+
+                                if (requireContext(["TEZ", "PIEL", "COLOR", "RASGOS"])) {
+                                    checkFunc = p => p.t === normalizedSkin; 
+                                    validQuery = true;
+                                } else {
+                                    errorMessage = `AMBIGÜEDAD DETECTADA: ¿SE REFIERE A LA TEZ ${sMatch}? ESPECIFÍQUELO.`;
+                                }
+                            }
+                        }
                     }
                 }
 
-                 if (validQuery && checkFunc) {
+                // ==========================================
+                // === EJECUCIÓN DE CONSULTA O ERROR ===
+                // ==========================================
+                
+                if (validQuery && checkFunc) {
                     playSFX('click');
-                    successfulQueriesCount++; // NUEVO: Sumamos una pregunta válida para desbloquear sabotajes
+                    successfulQueriesCount++;
                     document.getElementById('out').style.color = "var(--terminal-green)";
                     
                     const targetHasTrait = checkFunc(objetivo);
                     const respText = targetHasTrait ? "SÍ." : "NO.";
                     
+                    // Calcular descartes
                     pendingDiscards = personas.filter(p => {
                         const card = document.getElementById('card-' + p.n);
                         if (card.classList.contains('discarded')) return false; 
@@ -3285,6 +3390,7 @@
 
                     lastQueryText = `CONSULTA: ${q}<br>RESPUESTA: ${respText}`;
 
+                    // Cálculo de puntos
                     let earned = 0;
                     let count = pendingDiscards.length;
                     if(count > 0) {
@@ -3309,7 +3415,7 @@
                 } else {
                     playSFX('error');
                     document.getElementById('out').style.color = "var(--hazard)";
-                    typeWriter("DATOS NO RECONOCIDOS O AMBIGUOS.", "out", 10);
+                    typeWriter(`ERROR: ${errorMessage}`, "out", 10);
                 }
             }
         });
