@@ -7,6 +7,12 @@ const ASSETS = [
   "./NOTIFICACIONES%20BIO-BREACH.jpeg"
 ];
 
+// Variables de estado del Sistema (Simulación de Backend)
+let versionLocal = "0.0.0";
+let temporizadorRetorno = null;
+const TIEMPO_PRUEBA_RETORNO = 10000; // 10 segundos para probar (luego pon 3600000 para 1 hora)
+const INTERVALO_BUSQUEDA_UPDATE = 60000; // Revisar GitHub cada 60 segundos
+
 // 1. INSTALACIÓN
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -29,123 +35,152 @@ self.addEventListener("activate", (event) => {
     })
   );
   self.clients.claim();
+  
+  // Iniciar el ciclo de vida del "Servidor Local"
+  console.log("SW: Sistema de fondo activo.");
 });
 
-// 3. INTERCEPTOR
+// 3. INTERCEPTOR (Network First para JSON, Cache First para lo demás)
 self.addEventListener("fetch", (event) => {
   if (event.request.method === 'POST') {
     event.respondWith(Response.redirect('./index.html'));
     return;
   }
+
+  // Estrategia especial para versiones.json: Siempre buscar en red primero
+  if (event.request.url.includes('versiones.json')) {
+      event.respondWith(
+          fetch(event.request)
+            .then(response => response)
+            .catch(() => caches.match(event.request))
+      );
+      return;
+  }
   
   event.respondWith(
-    fetch(event.request)
-      .catch(() => {
-        return caches.match(event.request);
-      })
+    fetch(event.request).catch(() => caches.match(event.request))
   );
 });
 
-// 4. FUNCIONES AVANZADAS (PWA BUILDER & SYNC)
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-datos') {
-    console.log('SW: Sincronización de fondo');
-  }
-});
+// 4. PUENTE DE COMUNICACIÓN (El "Node.js" local)
+self.addEventListener('message', (event) => {
+    const data = event.data;
 
-self.addEventListener('periodicsync', (event) => {
-  if (event.tag === 'sync-periodico') {
-    console.log('SW: Sincronización periódica');
-  }
-});
-
-// 5. GESTIÓN DE NOTIFICACIONES INTELIGENTES
-self.addEventListener('push', (event) => {
-  console.log('SW: Notificación Push recibida');
-
-  const ICON_DEFAULT = "./Logo%20BIO-BREACH.png"; 
-  // TODO: Reemplaza esto con tu URL real cuando la tengas
-  const ICON_UPDATE = "./NOTIFICACIONES%20BIO-BREACH.jpeg"; 
-
-  // Parseamos los datos que envías desde el servidor
-  let data = {};
-  try {
-    data = event.data ? event.data.json() : {};
-  } catch (e) {
-    // Si no es JSON, asumimos formato básico
-    data = { type: 'general', body: event.data ? event.data.text() : 'Aviso del Sistema' };
-  }
-
-  // --- LÓGICA DE FILTRADO ---
-  
-  // Función para detectar si es un parche menor (X.Y.1, X.Y.2...)
-  // Retorna TRUE si es un parche, FALSE si es una versión mayor (X.Y.0)
-  const esParcheMenor = (version) => {
-      if (!version) return false; // Si no hay versión, asumimos que es importante
-      const partes = version.split('.'); // Divide "1.2.5" en ["1", "2", "5"]
-      if (partes.length < 3) return false; 
-      
-      // Si el último número (Parche) es mayor a 0, es un fix menor.
-      const parche = parseInt(partes[2]);
-      return parche > 0;
-  };
-
-  let title = 'BIO-BREACH HUB';
-  let options = {
-    body: data.body || 'Atención requerida.',
-    icon: ICON_DEFAULT,
-    badge: ICON_DEFAULT,
-    vibrate: [100, 50, 100],
-    data: { url: './index.html' },
-    tag: 'general'
-  };
-
-  // CASO A: ACTUALIZACIÓN (Update)
-  if (data.type === 'update') {
-      
-    // EL CEREBRO: Verifica si la versión enviada (ej: "1.0.4") es solo un parche
-    if (esParcheMenor(data.version) && !data.force) {
-        console.log(`SW: Versión ${data.version} detectada como parche menor. Notificación silenciada.`);
-        return; // DETIENE LA EJECUCIÓN AQUÍ. No muestra nada.
+    // A) Recibimos la versión actual instalada desde el index.html
+    if (data.type === 'SET_VERSION') {
+        versionLocal = data.version;
+        console.log(`SW: Versión local registrada: ${versionLocal}`);
+        // Iniciamos el escaneo de actualizaciones
+        iniciarRastreoActualizaciones();
     }
 
-    // Si pasa el filtro, configuramos la alerta visual
-    title = data.title || "¡NUEVA VERSIÓN DEL SISTEMA!";
-    options.body = data.body || `La versión ${data.version} incluye nuevo contenido.`;
-    options.icon = ICON_UPDATE;
-    options.image = ICON_UPDATE; // Imagen grande para Android
-    options.tag = 'app-update';
-    options.vibrate = [200, 100, 200, 100, 500]; // Vibración larga
-    options.requireInteraction = true; // No desaparece sola
-  }
+    // B) El usuario minimizó la app (Modo Retorno)
+    if (data.type === 'USER_IDLE') {
+        console.log("SW: Usuario inactivo. Iniciando cuenta regresiva de retorno...");
+        if (temporizadorRetorno) clearTimeout(temporizadorRetorno);
+        
+        temporizadorRetorno = setTimeout(() => {
+            lanzarNotificacionRetorno();
+        }, TIEMPO_PRUEBA_RETORNO); 
+    }
 
-  // CASO B: REGRESO (Return / Engagement)
-  else if (data.type === 'return') {
-    title = "SISTEMA EN ESPERA";
-    options.body = "Agente, el sistema requiere supervisión.";
-    options.icon = ICON_DEFAULT; // Mantiene identidad visual clásica
-    options.tag = 'user-return';
-    options.vibrate = [50, 50]; // Muy sutil
-    options.actions = [
-        { action: 'open', title: 'Entrar' }
-    ];
-  }
-
-  event.waitUntil(
-    self.registration.showNotification(title, options)
-  );
+    // C) El usuario volvió a la app (Cancelar Retorno)
+    if (data.type === 'USER_ACTIVE') {
+        console.log("SW: Usuario activo. Cancelando alertas de retorno.");
+        if (temporizadorRetorno) clearTimeout(temporizadorRetorno);
+    }
+    
+    if (data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 });
 
+// 5. LÓGICA DE NOTIFICACIONES PROPIAS
+
+function lanzarNotificacionRetorno() {
+    const title = "SISTEMA EN ESPERA";
+    const options = {
+        body: "Agente, el sistema requiere supervisión inmediata.",
+        icon: "./Logo%20BIO-BREACH.png",
+        badge: "./Logo%20BIO-BREACH.png",
+        vibrate: [50, 50, 50],
+        tag: 'user-return',
+        data: { url: './index.html' },
+        requireInteraction: true
+    };
+    self.registration.showNotification(title, options);
+}
+
+// Función para consultar GitHub periódicamente
+function iniciarRastreoActualizaciones() {
+    setInterval(() => {
+        // URL directa a tu JSON en crudo o GitHub Pages
+        fetch('https://elfaraon65.github.io/bio-breach-repositorio/versiones.json?t=' + new Date().getTime())
+        .then(res => res.json())
+        .then(data => {
+            // Buscamos la versión más alta en el JSON
+            // Ordenamos descendentemente por ID (V7, V6...)
+            data.sort((a, b) => {
+                const numA = parseInt(a.id.replace(/\D/g, '')) || 0;
+                const numB = parseInt(b.id.replace(/\D/g, '')) || 0;
+                return numB - numA;
+            });
+
+            const ultimaEnNube = data[0]; // La más nueva
+            
+            if (ultimaEnNube && hayActualizacionImportante(ultimaEnNube.version, versionLocal)) {
+                lanzarNotificacionUpdate(ultimaEnNube);
+            }
+        })
+        .catch(err => console.log("SW: Error buscando updates (Offline)", err));
+    }, INTERVALO_BUSQUEDA_UPDATE);
+}
+
+function lanzarNotificacionUpdate(item) {
+    const title = "¡NUEVA VERSIÓN DEL SISTEMA!";
+    const options = {
+        body: `La versión ${item.version} de ${item.nombre} está lista.`,
+        icon: "./NOTIFICACIONES%20BIO-BREACH.jpeg",
+        image: "./NOTIFICACIONES%20BIO-BREACH.jpeg",
+        badge: "./Logo%20BIO-BREACH.png",
+        vibrate: [200, 100, 200, 100, 500],
+        tag: 'app-update-' + item.version, // Tag único para no spamear la misma
+        data: { url: './index.html' },
+        requireInteraction: true
+    };
+    self.registration.showNotification(title, options);
+}
+
+// Utilidad de comparación de versiones
+function hayActualizacionImportante(vNube, vLocal) {
+    if (!vNube || !vLocal) return false;
+    const [M_n, m_n, p_n] = vNube.split('.').map(n => parseInt(n) || 0);
+    const [M_l, m_l, p_l] = vLocal.split('.').map(n => parseInt(n) || 0);
+
+    // Si Mayor es superior
+    if (M_n > M_l) return true;
+    // Si Mayor igual, pero Menor superior
+    if (M_n === M_l && m_n > m_l) return true;
+    // Si Mayor y Menor igual, pero Parche superior (Update silencioso o notificado según prefieras)
+    if (M_n === M_l && m_n === m_l && p_n > p_l) return true;
+    
+    return false;
+}
+
+// 6. GESTIÓN DE CLICS EN NOTIFICACIÓN
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Intentar enfocar ventana existente
       for (let i = 0; i < windowClients.length; i++) {
         const client = windowClients[i];
         if (client.url.includes('index.html') && 'focus' in client) {
+          client.postMessage({ type: 'USER_ACTIVE' }); // Avisar que volvió
           return client.focus();
         }
       }
+      // Si no hay ventana, abrir una nueva
       if (clients.openWindow) {
         return clients.openWindow('./index.html');
       }

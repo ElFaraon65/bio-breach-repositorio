@@ -44,7 +44,7 @@
 
     <link rel="manifest" href="./manifest.json?v=tabs_fix">
 
-    <style>
+    <style>        
         :root { --gold: #ffd700; --bg: #0a0a0a; --card: #161616; --blue: #0078d4; --green: #00ff41; --orange: #ff8c00; --red: #ff0040; --tab-active: #222; }
         
         html { height: 100%; overscroll-behavior: none; }
@@ -128,24 +128,81 @@
         <iframe id="game-frame"></iframe>
     </div>
 
-    <script>
-        // --- GESTIÓN DE PWA / INSTALACIÓN ---
+        <script>
+        // --- GESTIÓN DE PWA & NOTIFICACIONES ---
         let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-        });
+        
+        // 1. Obtener la versión más alta instalada localmente
+        function getVersionMasAlta() {
+            const locales = JSON.parse(localStorage.getItem('bio_breach_v_data')) || {};
+            const keys = Object.keys(locales).sort((a, b) => {
+                const numA = parseInt(a.replace(/\D/g, '')) || 0;
+                const numB = parseInt(b.replace(/\D/g, '')) || 0;
+                return numB - numA;
+            });
+            if (keys.length > 0) {
+                return locales[keys[0]].version || "0.0.0";
+            }
+            return "0.0.0";
+        }
 
         if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register("./sw.js?v=" + new Date().getTime(), { scope: "./" })
                 .then(async reg => {
-                    if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-                    if ('Notification' in window && Notification.permission === 'default') {
-                        Notification.requestPermission();
+                    console.log("SW Registrado");
+
+                    // SOLICITAR PERMISO DE NOTIFICACIÓN AL INICIAR
+                    if ('Notification' in window) {
+                        if (Notification.permission === 'default') {
+                            await Notification.requestPermission();
+                        }
                     }
+
+                    // ENVIAR DATOS INICIALES AL SW CUANDO ESTÉ LISTO
+                    const sendInitData = () => {
+                         if (reg.active) {
+                            reg.active.postMessage({
+                                type: 'SET_VERSION',
+                                version: getVersionMasAlta()
+                            });
+                        }
+                    };
+
+                    // Si ya está activo, enviar. Si no, esperar.
+                    if (reg.active) sendInitData();
+                    else reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'activated') sendInitData();
+                        });
+                    });
                 })
                 .catch(err => console.error("SW Error:", err));
+
+            // DETECTOR DE ESTADO (Para notificaciones de Retorno)
+            document.addEventListener("visibilitychange", () => {
+                if (navigator.serviceWorker.controller) {
+                    if (document.hidden) {
+                        // Usuario minimizó o cambió de pestaña
+                        navigator.serviceWorker.controller.postMessage({ type: 'USER_IDLE' });
+                    } else {
+                        // Usuario volvió
+                        navigator.serviceWorker.controller.postMessage({ type: 'USER_ACTIVE' });
+                        
+                        // Actualizar versión por si hubo update silencioso
+                        navigator.serviceWorker.controller.postMessage({
+                            type: 'SET_VERSION',
+                            version: getVersionMasAlta()
+                        });
+                    }
+                }
+            });
         }        
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
     </script>
 
     <script>
