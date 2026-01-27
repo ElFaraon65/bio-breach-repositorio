@@ -7,9 +7,12 @@ const ASSETS = [
   "./NOTIFICACIONES%20BIO-BREACH.jpeg"
 ];
 
-// CONFIGURACIÓN DE TIEMPO (24 horas)
-const TIEMPO_PARA_RETORNO = 24 * 60 * 60 * 1000; 
-//const TIEMPO_PARA_RETORNO = 10000; // Descomenta para pruebas de 10 segundos
+// INTERVALO BASE (4 HORAS)
+const TIEMPO_PARA_RETORNO = 4 * 60 * 60 * 1000; 
+
+// --- ZONA DE CONFIGURACIÓN NOCTURNA ---
+const HORA_DORMIR = 22; // 10 PM (22:00) - Inicio silencio
+const HORA_DESPERTAR = 8; // 8 AM (08:00) - Fin silencio
 
 // 1. INSTALACIÓN
 self.addEventListener("install", (event) => {
@@ -22,7 +25,7 @@ self.addEventListener("install", (event) => {
 // 2. ACTIVACIÓN
 self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
-  console.log("SW: Sistema de Disparo Programado Activo.");
+  console.log("SW: Sistema (4h) + Guardia Nocturna Activo.");
 });
 
 // 3. INTERCEPTOR DE RED (Tu lógica original intacta)
@@ -43,32 +46,55 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
-// 4. PUENTE DE COMUNICACIÓN (Aquí está la magia para app cerrada)
+// 4. SISTEMA DE ALARMA INTELIGENTE
 self.addEventListener('message', async (event) => {
     const data = event.data;
 
     // A) USUARIO SE VA -> PROGRAMAR LA BOMBA DE TIEMPO
     if (data.type === 'SCHEDULE_ALARM') {
-        const targetTime = Date.now() + TIEMPO_PARA_RETORNO;
-        console.log(`SW: Programando retorno para dentro de 24h.`);
+        let tiempoObjetivo = Date.now() + TIEMPO_PARA_RETORNO;
+        let fechaObjetivo = new Date(tiempoObjetivo);
+        let hora = fechaObjetivo.getHours();
+
+        console.log(`SW: Calculando disparo para: ${fechaObjetivo.toLocaleTimeString()}`);
+
+        // --- LÓGICA DE GUARDIA NOCTURNA ---
+        // Si cae entre las 22:00 (10 PM) y las 07:59 (8 AM casi)
+        if (hora >= HORA_DORMIR || hora < HORA_DESPERTAR) {
+            console.log("SW: Horario nocturno detectado. Reprogramando para la mañana.");
+            
+            // Creamos una fecha para "mañana a las 8:00 AM" o "hoy a las 8:00 AM"
+            let nuevaFecha = new Date(tiempoObjetivo);
+            
+            if (hora >= HORA_DORMIR) {
+                // Si son las 11 PM, pasamos al día siguiente
+                nuevaFecha.setDate(nuevaFecha.getDate() + 1);
+            }
+            // (Si es la madrugada, ya estamos en el día correcto)
+            
+            nuevaFecha.setHours(HORA_DESPERTAR, 0, 0, 0); // Fijar a las 08:00:00 exactas
+            tiempoObjetivo = nuevaFecha.getTime();
+            
+            console.log(`SW: Reprogramado para: ${nuevaFecha.toLocaleString()}`);
+        }
+        // ----------------------------------
 
         // Usamos TimestampTrigger para que Android maneje la notificación aunque el navegador muera
         const trigger = 'showTrigger' in Notification.prototype 
-            ? new TimestampTrigger(targetTime) 
+            ? new TimestampTrigger(tiempoObjetivo) 
             : null;
 
-        // Si el navegador soporta Triggers (Android moderno), lo programamos
         if (trigger) {
             self.registration.showNotification("SISTEMA EN ESPERA", {
                 body: "Tus casos han sido renovados, anímate, ¡Es hora de encontrar al culpable! ¡Qué no se te escape!",
                 icon: "./Logo%20BIO-BREACH.png",
                 badge: "./Logo%20BIO-BREACH.png",
-                tag: 'user-return-alarm', // Tag fijo para controlar duplicados
+                tag: 'user-return-alarm', // Tag fijo
                 data: { url: './index.html' },
-                showTrigger: trigger // <--- ESTO MANTIENE VIVA LA ALERTA
+                showTrigger: trigger 
             });
         } else {
-            // Fallback para navegadores antiguos (menos fiable si cierras la app, pero es lo que hay)
+            // Fallback para navegadores antiguos
             setTimeout(() => {
                  lanzarNotificacionRetorno();
             }, TIEMPO_PARA_RETORNO);
@@ -79,7 +105,6 @@ self.addEventListener('message', async (event) => {
     if (data.type === 'CANCEL_ALARM') {
         console.log("SW: Usuario activo. Cancelando alarmas pendientes.");
         
-        // Buscamos las notificaciones programadas y las borramos
         const notifications = await self.registration.getNotifications({
             tag: 'user-return-alarm',
             includeTriggered: true 
@@ -96,7 +121,7 @@ self.addEventListener('message', async (event) => {
     }
 });
 
-// 5. FUNCIONES AUXILIARES (Tus textos originales)
+// 5. FUNCIONES AUXILIARES (Tus textos originales recuperados)
 
 function lanzarNotificacionRetorno() {
     return self.registration.showNotification("SISTEMA EN ESPERA", {
@@ -109,8 +134,6 @@ function lanzarNotificacionRetorno() {
 }
 
 async function checkUpdates(versionLocal) {
-    // No chequeamos si el usuario está jugando activamente para no molestar,
-    // pero si acabamos de abrir la app (CANCEL_ALARM), sí chequeamos.
     try {
         const res = await fetch('https://elfaraon65.github.io/bio-breach-repositorio/versiones.json?t=' + Date.now());
         const data = await res.json();
