@@ -128,16 +128,10 @@
         <iframe id="game-frame"></iframe>
     </div>
 
-                <script>
-        // --- GESTIÓN DE PWA & NOTIFICACIONES (SISTEMA TRIGGER) ---
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault(); // Bloqueamos la barra de instalación nativa
-            deferredPrompt = e;
-        });
-
-        // Polyfill básico para evitar errores en consola si el navegador no conoce la clase
-        if (!window.TimestampTrigger) { window.TimestampTrigger = class { constructor(t) { this.timestamp = t; } }; }
+                        <script>
+        // --- GESTIÓN DE PWA: MODO AHORRO & SEÑAL ---
+        
+        window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); });
 
         function getVersionMasAlta() {
             const locales = JSON.parse(localStorage.getItem('bio_breach_v_data')) || {};
@@ -152,17 +146,28 @@
         if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register("./sw.js?v=" + new Date().getTime(), { scope: "./" })
                 .then(async reg => {
-                    console.log("SW: Conectado y listo.");
-                    
-                    // Pedir permisos de notificación al cargar (necesario para triggers)
+                    console.log("SW: Conectado (Modo Espera de Señal).");
+
                     if ('Notification' in window && Notification.permission === 'default') {
                         await Notification.requestPermission();
                     }
 
-                    // Al iniciar, asumimos que el usuario está ACTIVO -> Cancelar alarmas previas
+                    // REGISTRO DE TAREA PERIÓDICA (Chequeo de fondo a largo plazo)
+                    if ('periodicSync' in reg) {
+                        try {
+                            const status = await navigator.permissions.query({ name: 'periodic-background-sync' });
+                            if (status.state === 'granted') {
+                                await reg.periodicSync.register('smart-system-check', {
+                                    minInterval: 4 * 60 * 60 * 1000 // Intento cada 4h (aprox)
+                                });
+                            }
+                        } catch (e) { console.log("Sync periódico no soportado."); }
+                    }
+
+                    // AL ENTRAR: Limpiamos estado y alertas
                     if (reg.active) {
                         reg.active.postMessage({ 
-                            type: 'CANCEL_ALARM', 
+                            type: 'CLEAR_EXIT_TIME', 
                             version: getVersionMasAlta() 
                         });
                     }
@@ -172,15 +177,28 @@
             // DETECTOR DE SALIDA / ENTRADA
             document.addEventListener("visibilitychange", () => {
                 if (!navigator.serviceWorker.controller) return;
+                const vActual = getVersionMasAlta();
 
                 if (document.hidden) {
-                    // EL USUARIO SE VA: "SW, programa la alarma de 24h"
-                    navigator.serviceWorker.controller.postMessage({ type: 'SCHEDULE_ALARM' });
-                } else {
-                    // EL USUARIO VUELVE: "SW, cancela la alarma, ya estoy aquí"
+                    // AL SALIR:
+                    // 1. "SW, guarda la hora pero no hagas nada todavía"
                     navigator.serviceWorker.controller.postMessage({ 
-                        type: 'CANCEL_ALARM',
-                        version: getVersionMasAlta()
+                        type: 'SAVE_EXIT_TIME',
+                        version: vActual
+                    });
+
+                    // 2. "Navegador, cuando tengas red y batería, revisa si ya pasaron 4h"
+                    navigator.serviceWorker.ready.then(reg => {
+                        if ('sync' in reg) {
+                            reg.sync.register('sync-check-now').catch(() => {});
+                        }
+                    });
+
+                } else {
+                    // AL VOLVER:
+                    navigator.serviceWorker.controller.postMessage({ 
+                        type: 'CLEAR_EXIT_TIME',
+                        version: vActual
                     });
                 }
             });
