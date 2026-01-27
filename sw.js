@@ -1,4 +1,5 @@
 const CACHE_NAME = "bio-breach-v5";
+const DB_CACHE = "bio-breach-db-v1"; // Nueva caché exclusiva para datos
 const ASSETS = [
   "./",
   "./index.html",
@@ -7,183 +8,175 @@ const ASSETS = [
   "./NOTIFICACIONES%20BIO-BREACH.jpeg"
 ];
 
-// Variables de estado del Sistema (Simulación de Backend)
-let versionLocal = "0.0.0";
-let temporizadorRetorno = null;
-const TIEMPO_PRUEBA_RETORNO = 10000; // 10 segundos para probar (luego pon 3600000 para 1 hora)
-const INTERVALO_BUSQUEDA_UPDATE = 60000; // Revisar GitHub cada 60 segundos
+// --- ZONA DE CONFIGURACIÓN DE TIEMPO ---
+// 24 horas exactas en milisegundos
+const TIEMPO_PARA_RETORNO = 24 * 60 * 60 * 1000; 
 
 // 1. INSTALACIÓN
 self.addEventListener("install", (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
   );
 });
 
 // 2. ACTIVACIÓN
 self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) return caches.delete(key);
-        })
-      );
-    })
-  );
-  self.clients.claim();
-  
-  // Iniciar el ciclo de vida del "Servidor Local"
-  console.log("SW: Sistema de fondo activo.");
+  event.waitUntil(self.clients.claim());
+  console.log("SW: Sistema persistente activado.");
 });
 
-// 3. INTERCEPTOR (Network First para JSON, Cache First para lo demás)
+// 3. INTERCEPTOR DE RED
 self.addEventListener("fetch", (event) => {
   if (event.request.method === 'POST') {
     event.respondWith(Response.redirect('./index.html'));
     return;
   }
-
-  // Estrategia especial para versiones.json: Siempre buscar en red primero
+  // Permitimos que versiones.json siempre intente red primero
   if (event.request.url.includes('versiones.json')) {
       event.respondWith(
-          fetch(event.request)
-            .then(response => response)
-            .catch(() => caches.match(event.request))
+          fetch(event.request).catch(() => caches.match(event.request))
       );
       return;
   }
-  
   event.respondWith(
     fetch(event.request).catch(() => caches.match(event.request))
   );
 });
 
-// 4. PUENTE DE COMUNICACIÓN (El "Node.js" local)
-self.addEventListener('message', (event) => {
+// --- 4. PERSISTENCIA DE DATOS (Node.js style fs-like) ---
+// Estas funciones guardan la hora en el disco para que no se pierda al cerrar la app
+
+async function guardarEstado(datos) {
+    const cache = await caches.open(DB_CACHE);
+    // Guardamos un "archivo virtual" con tus datos
+    await cache.put('/estado_sistema.json', new Response(JSON.stringify(datos)));
+}
+
+async function leerEstado() {
+    const cache = await caches.open(DB_CACHE);
+    const respuesta = await cache.match('/estado_sistema.json');
+    if (respuesta) {
+        return await respuesta.json();
+    }
+    // Estado por defecto si es la primera vez
+    return { ultimoUso: Date.now(), version: '0.0.0', notificadoRetorno: false };
+}
+
+// --- 5. PUENTE DE COMUNICACIÓN ---
+self.addEventListener('message', async (event) => {
     const data = event.data;
-
-    // A) Recibimos la versión actual instalada desde el index.html
-    if (data.type === 'SET_VERSION') {
-        versionLocal = data.version;
-        console.log(`SW: Versión local registrada: ${versionLocal}`);
-        // Iniciamos el escaneo de actualizaciones
-        iniciarRastreoActualizaciones();
-    }
-
-    // B) El usuario minimizó la app (Modo Retorno)
-    if (data.type === 'USER_IDLE') {
-        console.log("SW: Usuario inactivo. Iniciando cuenta regresiva de retorno...");
-        if (temporizadorRetorno) clearTimeout(temporizadorRetorno);
-        
-        temporizadorRetorno = setTimeout(() => {
-            lanzarNotificacionRetorno();
-        }, TIEMPO_PRUEBA_RETORNO); 
-    }
-
-    // C) El usuario volvió a la app (Cancelar Retorno)
-    if (data.type === 'USER_ACTIVE') {
-        console.log("SW: Usuario activo. Cancelando alertas de retorno.");
-        if (temporizadorRetorno) clearTimeout(temporizadorRetorno);
-    }
     
-    if (data.type === 'SKIP_WAITING') {
-        self.skipWaiting();
+    // Leemos el estado actual antes de modificarlo
+    let estado = await leerEstado();
+
+    if (data.type === 'SET_VERSION') {
+        estado.version = data.version;
+        await guardarEstado(estado);
+        // Al abrir la app, intentamos buscar updates de una vez
+        checkUpdates(estado.version);
+    }
+
+    if (data.type === 'USER_ACTIVE') {
+        // Usuario volvió: reseteamos la marca de tiempo y la bandera de notificación
+        estado.notificadoRetorno = false;
+        estado.ultimoUso = Date.now(); // "Para siempre" empieza a contar desde que te vas
+        await guardarEstado(estado);
+        console.log("SW: Usuario activo. Cronómetro reseteado.");
+    }
+
+    if (data.type === 'USER_IDLE') {
+        // Usuario se fue: Guardamos la hora exacta
+        estado.ultimoUso = Date.now();
+        await guardarEstado(estado);
+        console.log(`SW: Usuario salió. Hora registrada: ${new Date(estado.ultimoUso).toLocaleTimeString()}`);
+        
+        // Disparo de respaldo por si el navegador no mata el proceso inmediatamente
+        setTimeout(() => verificarTodo(), TIEMPO_PARA_RETORNO);
     }
 });
 
-// 5. LÓGICA DE NOTIFICACIONES PROPIAS
+// --- 6. EL MOTOR DE FONDO (PERIODIC SYNC) ---
+// Esto se ejecuta cuando el navegador decide despertar al SW en segundo plano
 
-function lanzarNotificacionRetorno() {
-    const title = "SISTEMA EN ESPERA";
-    const options = {
-        body: "Agente, el sistema requiere supervisión inmediata.",
-        icon: "./Logo%20BIO-BREACH.png",
-        badge: "./Logo%20BIO-BREACH.png",
-        vibrate: [50, 50, 50],
-        tag: 'user-return',
-        data: { url: './index.html' },
-        requireInteraction: true
-    };
-    self.registration.showNotification(title, options);
-}
+self.addEventListener('periodicsync', (event) => {
+    if (event.tag === 'ciclo-sistema') {
+        console.log("SW: Ejecutando mantenimiento periódico en segundo plano...");
+        event.waitUntil(verificarTodo());
+    }
+});
 
-// Función para consultar GitHub periódicamente
-function iniciarRastreoActualizaciones() {
-    setInterval(() => {
-        // URL directa a tu JSON en crudo o GitHub Pages
-        fetch('https://elfaraon65.github.io/bio-breach-repositorio/versiones.json?t=' + new Date().getTime())
-        .then(res => res.json())
-        .then(data => {
-            // Buscamos la versión más alta en el JSON
-            // Ordenamos descendentemente por ID (V7, V6...)
-            data.sort((a, b) => {
-                const numA = parseInt(a.id.replace(/\D/g, '')) || 0;
-                const numB = parseInt(b.id.replace(/\D/g, '')) || 0;
-                return numB - numA;
-            });
-
-            const ultimaEnNube = data[0]; // La más nueva
-            
-            if (ultimaEnNube && hayActualizacionImportante(ultimaEnNube.version, versionLocal)) {
-                lanzarNotificacionUpdate(ultimaEnNube);
-            }
-        })
-        .catch(err => console.log("SW: Error buscando updates (Offline)", err));
-    }, INTERVALO_BUSQUEDA_UPDATE);
-}
-
-function lanzarNotificacionUpdate(item) {
-    const title = "¡NUEVA VERSIÓN DEL SISTEMA!";
-    const options = {
-        body: `La versión ${item.version} de ${item.nombre} está lista.`,
-        icon: "./NOTIFICACIONES%20BIO-BREACH.jpeg",
-        image: "./NOTIFICACIONES%20BIO-BREACH.jpeg",
-        badge: "./Logo%20BIO-BREACH.png",
-        vibrate: [200, 100, 200, 100, 500],
-        tag: 'app-update-' + item.version, // Tag único para no spamear la misma
-        data: { url: './index.html' },
-        requireInteraction: true
-    };
-    self.registration.showNotification(title, options);
-}
-
-// Utilidad de comparación de versiones
-function hayActualizacionImportante(vNube, vLocal) {
-    if (!vNube || !vLocal) return false;
-    const [M_n, m_n, p_n] = vNube.split('.').map(n => parseInt(n) || 0);
-    const [M_l, m_l, p_l] = vLocal.split('.').map(n => parseInt(n) || 0);
-
-    // Si Mayor es superior
-    if (M_n > M_l) return true;
-    // Si Mayor igual, pero Menor superior
-    if (M_n === M_l && m_n > m_l) return true;
-    // Si Mayor y Menor igual, pero Parche superior (Update silencioso o notificado según prefieras)
-    if (M_n === M_l && m_n === m_l && p_n > p_l) return true;
+// Función Maestra de Verificación
+async function verificarTodo() {
+    const estado = await leerEstado();
+    const ahora = Date.now();
     
+    // A) VERIFICAR RETORNO (24 HORAS)
+    // Si pasaron 24h Y todavía no hemos notificado, Y el usuario no está jugando ahora
+    if ((ahora - estado.ultimoUso > TIEMPO_PARA_RETORNO) && !estado.notificadoRetorno) {
+        if (!(await estaElUsuarioJugando())) {
+            await lanzarNotificacionRetorno();
+            // Marcamos como notificado para no spamear
+            estado.notificadoRetorno = true; 
+            await guardarEstado(estado);
+        }
+    }
+
+    // B) VERIFICAR ACTUALIZACIONES
+    // Esto corre siempre que el sistema despierta
+    await checkUpdates(estado.version);
+}
+
+// --- UTILIDADES ---
+
+async function checkUpdates(versionLocal) {
+    if(await estaElUsuarioJugando()) return; // No molestar si juega
+
+    try {
+        const res = await fetch('https://elfaraon65.github.io/bio-breach-repositorio/versiones.json?t=' + Date.now());
+        const data = await res.json();
+        data.sort((a, b) => parseInt(b.id.replace(/\D/g, '')) - parseInt(a.id.replace(/\D/g, '')));
+        
+        if (data[0] && data[0].version !== versionLocal) {
+            self.registration.showNotification("¡NUEVA VERSIÓN!", {
+                body: `La versión ${data[0].version} de ${data[0].nombre} está lista.`,
+                icon: "./NOTIFICACIONES%20BIO-BREACH.jpeg",
+                tag: 'update-' + data[0].version,
+                data: { url: './index.html' }
+            });
+        }
+    } catch (e) { console.log("SW: Sin red para updates."); }
+}
+
+async function estaElUsuarioJugando() {
+    const clientes = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of clientes) {
+        if (c.visibilityState === 'visible' && c.focused) return true;
+    }
     return false;
 }
 
-// 6. GESTIÓN DE CLICS EN NOTIFICACIÓN
+function lanzarNotificacionRetorno() {
+    return self.registration.showNotification("SISTEMA EN ESPERA", {
+        body: "Han pasado 24 horas. El sistema requiere supervisión.",
+        icon: "./Logo%20BIO-BREACH.png",
+        tag: 'user-return',
+        data: { url: './index.html' },
+        requireInteraction: true
+    });
+}
+
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      // Intentar enfocar ventana existente
-      for (let i = 0; i < windowClients.length; i++) {
-        const client = windowClients[i];
+    clients.matchAll({ type: 'window' }).then((clientList) => {
+      for (const client of clientList) {
         if (client.url.includes('index.html') && 'focus' in client) {
-          client.postMessage({ type: 'USER_ACTIVE' }); // Avisar que volvió
-          return client.focus();
+            client.postMessage({ type: 'USER_ACTIVE' }); // Avisar inmediatamente
+            return client.focus();
         }
       }
-      // Si no hay ventana, abrir una nueva
-      if (clients.openWindow) {
-        return clients.openWindow('./index.html');
-      }
+      if (clients.openWindow) return clients.openWindow('./index.html');
     })
   );
 });
