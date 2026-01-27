@@ -25,10 +25,10 @@ self.addEventListener("install", (event) => {
 // 2. ACTIVACIÓN
 self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
-  console.log("SW: Sistema (4h) + Guardia Nocturna Activo.");
+  console.log("SW: Sistema (4h) + Guardia Nocturna + Filtro Smart Activo.");
 });
 
-// 3. INTERCEPTOR DE RED (Tu lógica original intacta)
+// 3. INTERCEPTOR DE RED
 self.addEventListener("fetch", (event) => {
   if (event.request.method === 'POST') {
     event.respondWith(Response.redirect('./index.html'));
@@ -59,20 +59,16 @@ self.addEventListener('message', async (event) => {
         console.log(`SW: Calculando disparo para: ${fechaObjetivo.toLocaleTimeString()}`);
 
         // --- LÓGICA DE GUARDIA NOCTURNA ---
-        // Si cae entre las 22:00 (10 PM) y las 07:59 (8 AM casi)
         if (hora >= HORA_DORMIR || hora < HORA_DESPERTAR) {
             console.log("SW: Horario nocturno detectado. Reprogramando para la mañana.");
             
-            // Creamos una fecha para "mañana a las 8:00 AM" o "hoy a las 8:00 AM"
             let nuevaFecha = new Date(tiempoObjetivo);
             
             if (hora >= HORA_DORMIR) {
-                // Si son las 11 PM, pasamos al día siguiente
                 nuevaFecha.setDate(nuevaFecha.getDate() + 1);
             }
-            // (Si es la madrugada, ya estamos en el día correcto)
             
-            nuevaFecha.setHours(HORA_DESPERTAR, 0, 0, 0); // Fijar a las 08:00:00 exactas
+            nuevaFecha.setHours(HORA_DESPERTAR, 0, 0, 0); 
             tiempoObjetivo = nuevaFecha.getTime();
             
             console.log(`SW: Reprogramado para: ${nuevaFecha.toLocaleString()}`);
@@ -121,7 +117,7 @@ self.addEventListener('message', async (event) => {
     }
 });
 
-// 5. FUNCIONES AUXILIARES (Tus textos originales recuperados)
+// 5. FUNCIONES AUXILIARES
 
 function lanzarNotificacionRetorno() {
     return self.registration.showNotification("SISTEMA EN ESPERA", {
@@ -133,15 +129,30 @@ function lanzarNotificacionRetorno() {
     });
 }
 
+// Lógica de comparación inteligente (Igual que en tu HTML)
+function hayActualizacionImportante(vNube, vLocal) {
+    if (!vNube || !vLocal) return false;
+    const [M_n, m_n] = vNube.split('.').map(n => parseInt(n) || 0);
+    const [M_l, m_l] = vLocal.split('.').map(n => parseInt(n) || 0);
+
+    // Solo notificamos si cambia el PRIMERO (Major) o el SEGUNDO (Minor) número
+    if (M_n > M_l) return true;
+    if (M_n === M_l && m_n > m_l) return true;
+
+    // Si solo cambia el tercero (Parche), devolvemos false (Silencio)
+    return false;
+}
+
 async function checkUpdates(versionLocal) {
     try {
         const res = await fetch('https://elfaraon65.github.io/bio-breach-repositorio/versiones.json?t=' + Date.now());
         const data = await res.json();
-        // Ordenar por ID descendente
         data.sort((a, b) => parseInt(b.id.replace(/\D/g, '')) - parseInt(a.id.replace(/\D/g, '')));
         
         const ultima = data[0];
-        if (ultima && ultima.version !== versionLocal) {
+        
+        // AQUÍ ESTÁ EL CAMBIO CLAVE: Usamos el filtro inteligente
+        if (ultima && hayActualizacionImportante(ultima.version, versionLocal)) {
             self.registration.showNotification("¡NUEVA VERSIÓN DISPONIBLE!", {
                 body: `La versión ${ultima.version} de ${ultima.nombre} está lista.`,
                 icon: "./NOTIFICACIONES%20BIO-BREACH.jpeg",
