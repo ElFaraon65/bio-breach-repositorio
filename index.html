@@ -128,9 +128,17 @@
         <iframe id="game-frame"></iframe>
     </div>
 
-            <script>
-        // --- GESTIÓN AVANZADA DE PWA & BACKGROUND SYNC ---
-        
+                <script>
+        // --- GESTIÓN DE PWA & NOTIFICACIONES (SISTEMA TRIGGER) ---
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault(); // Bloqueamos la barra de instalación nativa
+            deferredPrompt = e;
+        });
+
+        // Polyfill básico para evitar errores en consola si el navegador no conoce la clase
+        if (!window.TimestampTrigger) { window.TimestampTrigger = class { constructor(t) { this.timestamp = t; } }; }
+
         function getVersionMasAlta() {
             const locales = JSON.parse(localStorage.getItem('bio_breach_v_data')) || {};
             const keys = Object.keys(locales).sort((a, b) => {
@@ -144,65 +152,39 @@
         if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register("./sw.js?v=" + new Date().getTime(), { scope: "./" })
                 .then(async reg => {
-                    console.log("SW: Conectado");
-
-                    // 1. SOLICITAR PERMISOS DE NOTIFICACIÓN
+                    console.log("SW: Conectado y listo.");
+                    
+                    // Pedir permisos de notificación al cargar (necesario para triggers)
                     if ('Notification' in window && Notification.permission === 'default') {
                         await Notification.requestPermission();
                     }
 
-                    // 2. REGISTRAR TAREA PERIÓDICA (BACKGROUND SYNC)
-                    // Esto es lo que permite verificar las 24h con la app cerrada
-                    if ('periodicSync' in reg) {
-                        try {
-                            const status = await navigator.permissions.query({
-                                name: 'periodic-background-sync',
-                            });
-                            if (status.state === 'granted') {
-                                await reg.periodicSync.register('ciclo-sistema', {
-                                    minInterval: 12 * 60 * 60 * 1000 // Intentar despertar cada 12h para verificar
-                                });
-                                console.log("SW: Sincronización periódica activada.");
-                            }
-                        } catch (e) {
-                            console.log("SW: Periodic Sync no soportado en este navegador/dispositivo.");
-                        }
-                    }
-
-                    // 3. ENVIAR ESTADO INICIAL
-                    const sendInit = () => {
-                        if (reg.active) {
-                            reg.active.postMessage({
-                                type: 'SET_VERSION',
-                                version: getVersionMasAlta()
-                            });
-                            // Si acabamos de abrir la app, el usuario está activo
-                            reg.active.postMessage({ type: 'USER_ACTIVE' }); 
-                        }
-                    };
-
-                    if (reg.active) sendInit();
-                    else reg.addEventListener('updatefound', () => {
-                        const newWorker = reg.installing;
-                        newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'activated') sendInit();
+                    // Al iniciar, asumimos que el usuario está ACTIVO -> Cancelar alarmas previas
+                    if (reg.active) {
+                        reg.active.postMessage({ 
+                            type: 'CANCEL_ALARM', 
+                            version: getVersionMasAlta() 
                         });
-                    });
-                });
-
-            // DETECTOR DE MINIMIZADO/CIERRE
-            document.addEventListener("visibilitychange", () => {
-                if (navigator.serviceWorker.controller) {
-                    if (document.hidden) {
-                        // Al salir, enviamos la señal para guardar la hora
-                        navigator.serviceWorker.controller.postMessage({ type: 'USER_IDLE' });
-                    } else {
-                        // Al volver, cancelamos alertas
-                        navigator.serviceWorker.controller.postMessage({ type: 'USER_ACTIVE' });
                     }
+                })
+                .catch(err => console.error("SW Error:", err));
+
+            // DETECTOR DE SALIDA / ENTRADA
+            document.addEventListener("visibilitychange", () => {
+                if (!navigator.serviceWorker.controller) return;
+
+                if (document.hidden) {
+                    // EL USUARIO SE VA: "SW, programa la alarma de 24h"
+                    navigator.serviceWorker.controller.postMessage({ type: 'SCHEDULE_ALARM' });
+                } else {
+                    // EL USUARIO VUELVE: "SW, cancela la alarma, ya estoy aquí"
+                    navigator.serviceWorker.controller.postMessage({ 
+                        type: 'CANCEL_ALARM',
+                        version: getVersionMasAlta()
+                    });
                 }
             });
-        }
+        }        
     </script>
 
     <script>
