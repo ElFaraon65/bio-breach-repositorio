@@ -138,7 +138,7 @@ async function checkUpdates(versionLocal) {
         data.sort((a, b) => parseInt(b.id.replace(/\D/g, '')) - parseInt(a.id.replace(/\D/g, '')));
         
         if (data[0] && data[0].version !== versionLocal) {
-            self.registration.showNotification("¡NUEVA VERSIÓN!", {
+            self.registration.showNotification("¡NUEVA VERSIÓN DISPONIBLE!", {
                 body: `La versión ${data[0].version} de ${data[0].nombre} está lista.`,
                 icon: "./NOTIFICACIONES%20BIO-BREACH.jpeg",
                 tag: 'update-' + data[0].version,
@@ -158,7 +158,7 @@ async function estaElUsuarioJugando() {
 
 function lanzarNotificacionRetorno() {
     return self.registration.showNotification("SISTEMA EN ESPERA", {
-        body: "Han pasado 24 horas. El sistema requiere supervisión.",
+        body: "Tus casos han sido renovados, anímate, ¡Es hora de encontrar al culpable! ¡Qué no se te escape!",
         icon: "./Logo%20BIO-BREACH.png",
         tag: 'user-return',
         data: { url: './index.html' },
