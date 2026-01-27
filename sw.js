@@ -8,8 +8,8 @@ const ASSETS = [
 ];
 
 // CONFIGURACIÓN DE TIEMPO (24 horas)
-//const TIEMPO_PARA_RETORNO = 24 * 60 * 60 * 1000; 
-const TIEMPO_PARA_RETORNO = 10000; // Descomenta para pruebas de 10 segundos
+const TIEMPO_PARA_RETORNO = 24 * 60 * 60 * 1000; 
+//const TIEMPO_PARA_RETORNO = 10000; // Descomenta para pruebas de 10 segundos
 
 // 1. INSTALACIÓN
 self.addEventListener("install", (event) => {
