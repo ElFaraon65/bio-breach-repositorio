@@ -376,7 +376,7 @@
             border-color: #fff;
         }
 
-        .mode-img-placeholder {
+                .mode-img-placeholder {
             width: 100%; height: 140px;
             background: #111;
             display: flex; justify-content: center; align-items: center;
@@ -384,6 +384,19 @@
             font-size: 3rem;
             border-bottom: 2px solid var(--gold);
             filter: grayscale(100%);
+            overflow: hidden; /* Mantiene la imagen dentro de los bordes */
+        }
+
+        /* === NUEVO: CLASE PARA LAS IMÁGENES DE MODO === */
+        .mode-icon-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* O 'contain' si quieres que se vea la imagen completa sin recortar */
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+        .mode-card:hover .mode-icon-img {
+            opacity: 1;
         }
 
         .mode-info { padding: 20px; text-align: center; }
@@ -895,10 +908,10 @@
     <div id="gamemode-screen">
         <h2 style="color: var(--gold); text-shadow: 0 0 15px rgba(255,215,0,0.5); font-size: 2rem; margin-bottom: 40px; text-transform: uppercase;">Seleccionar Protocolo</h2>
         
-        <div class="mode-container">
+                <div class="mode-container">
             <div class="mode-card" onclick="selectMode('classic')">
                 <div class="mode-img-placeholder">
-                    <span>★</span>
+                    <img src="https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/refs/heads/main/MODO%20CLASICO.png" alt="Modo Clásico" class="mode-icon-img">
                 </div>
                 <div class="mode-info">
                     <div class="mode-title">Modo Clásico</div>
@@ -907,8 +920,8 @@
             </div>
 
             <div class="mode-card" style="border-color: var(--ranking-blue);" onclick="openOnlineMenu()">
-                <div class="mode-img-placeholder" style="color: var(--ranking-blue);">
-                    <span>⚡</span>
+                <div class="mode-img-placeholder" style="border-color: var(--ranking-blue);">
+                    <img src="https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/refs/heads/main/MODO%20COMPETITIVO.png" alt="Modo Online" class="mode-icon-img">
                 </div>
                 <div class="mode-info">
                     <div class="mode-title" style="color: var(--ranking-blue);">Modo Supervivencia (ONLINE)</div>
