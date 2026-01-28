@@ -55,7 +55,7 @@
             left: 10px;
             width: calc(100% - 20px);
             background: #1a1a1a;
-            border: 2px solid var(--gold); /* Borde sólido, no neón */
+            border: 2px solid var(--gold); /* Borde sólido, no neón */            
             z-index: 6000;
             display: none;
             flex-direction: column;
@@ -360,7 +360,7 @@
 
         .mode-card {
             background: #1a1a1a;
-            border: 2px solid var(--gold);
+            border: none; /* CAMBIO: Eliminamos el borde */
             width: 100%; max-width: 300px;
             padding: 0;
             cursor: pointer;
@@ -382,12 +382,11 @@
             display: flex; justify-content: center; align-items: center;
             color: #444;
             font-size: 3rem;
-            border-bottom: 2px solid var(--gold);
-            filter: grayscale(100%);
-            overflow: hidden; /* Mantiene la imagen dentro de los bordes */
+            border-bottom: none; /* CAMBIO: Eliminamos la línea inferior */
+            overflow: hidden; 
         }
 
-        /* === NUEVO: CLASE PARA LAS IMÁGENES DE MODO === */
+                /* === NUEVO: CLASE PARA LAS IMÁGENES DE MODO === */
         .mode-icon-img {
             width: 100%;
             height: 100%;
@@ -397,6 +396,72 @@
         }
         .mode-card:hover .mode-icon-img {
             opacity: 1;
+        }
+        
+        /* ESTILOS BOTÓN SUPERPUESTO (MODIFICACIÓN: SIEMPRE ROJO) */
+        .btn-mode-overlay {
+            position: absolute;
+            bottom: 15px; 
+            left: 50%;
+            transform: translateX(-50%);
+            /* CAMBIO: Usamos var(--dark-red) para cumplir la regla de "Rojo Sangre Seca" */
+            background: var(--dark-red) !important;
+            color: #fff !important; 
+            border: 2px solid #330000; /* Borde oscuro para contraste */
+            padding: 16px 30px;
+            font-size: 1.7rem;
+            width: 330px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+            cursor: pointer;
+            z-index: 20;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.8);
+            white-space: nowrap;
+            transition: transform 0.2s;
+        }
+
+        /* Sobreescribimos cualquier estilo azul antiguo para forzar el rojo */
+        .btn-mode-overlay.blue {
+            background: var(--dark-red) !important;
+            color: #fff !important;
+        }
+        
+        .btn-mode-overlay:hover {
+            transform: translateX(-50%) scale(1.1);
+            background: #800000 !important; /* Un rojo un poco más claro al hover */
+        }
+
+        /* === NUEVO: MODOS BLOQUEADOS === */
+        .mode-card.locked {
+            pointer-events: none; /* No se puede interactuar */
+        }
+
+        /* Filtro de escala de grises al 100% para la imagen/contenedor */
+        .mode-card.locked .mode-img-placeholder {
+            filter: grayscale(100%);
+            position: relative; /* Necesario para posicionar el candado */
+        }
+
+        /* Capa oscura para que el candado resalte */
+        .mode-card.locked .mode-img-placeholder::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 5;
+        }
+
+        /* El Candado (Emoji o Icono) */
+        .mode-card.locked .mode-img-placeholder::after {
+            content: "🔒"; /* Icono de candado */
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4rem; /* Tamaño grande */
+            z-index: 10;
+            text-shadow: 0 5px 10px rgba(0,0,0,1); /* Sombra fuerte */
+            opacity: 0.9;
         }
 
         .mode-info { padding: 20px; text-align: center; }
@@ -436,7 +501,6 @@
             pointer-events: none;
             opacity: 0.5;
             position: relative;
-            filter: grayscale(100%);
         }
         .locked-settings::after {
             content: "RESTRINGIDO";
@@ -905,32 +969,56 @@
         <div id="preload-status">SISTEMA: EN LÍNEA</div>
     </div>
 
-    <div id="gamemode-screen">
+        <div id="gamemode-screen">
         <h2 style="color: var(--gold); text-shadow: 0 0 15px rgba(255,215,0,0.5); font-size: 2rem; margin-bottom: 40px; text-transform: uppercase;">Seleccionar Protocolo</h2>
         
                 <div class="mode-container">
-            <div class="mode-card" onclick="selectMode('classic')">
-                <div class="mode-img-placeholder">
+            <div class="mode-card" style="height: 180px; position: relative; border: none;">
+                <div class="mode-img-placeholder" style="height: 100%; border: none;">
                     <img src="https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/refs/heads/main/MODO%20CLASICO.png" alt="Modo Clásico" class="mode-icon-img">
                 </div>
-                <div class="mode-info">
-                    <div class="mode-title">Modo Clásico</div>
-                    <div class="mode-desc">Operación estándar. Sin límite de tiempo. Resolución paciente de casos individuales.</div>
-                </div>
+                <button class="btn-mode-overlay" onclick="openModeDetail('classic')">MODO CLÁSICO</button>
             </div>
 
-            <div class="mode-card" style="border-color: var(--ranking-blue);" onclick="openOnlineMenu()">
-                <div class="mode-img-placeholder" style="border-color: var(--ranking-blue);">
-                    <img src="https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/refs/heads/main/MODO%20COMPETITIVO.png" alt="Modo Online" class="mode-icon-img">
+            <div class="mode-card" style="height: 180px; position: relative; border: none;">
+                <div class="mode-img-placeholder" style="border: none; height: 100%;">
+                    <img src="https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/refs/heads/main/MODO%20COMPETITIVO.png" alt="Modo Competitivo" class="mode-icon-img">
                 </div>
-                <div class="mode-info">
-                    <div class="mode-title" style="color: var(--ranking-blue);">Modo Supervivencia (ONLINE)</div>
-                    <div class="mode-desc">Resuelve infinitos casos contra un rival. Comandos de sabotaje habilitados.</div>
+                <button class="btn-mode-overlay" onclick="openModeDetail('competitive')">MODO COMPETITIVO</button>
+            </div>
+
+            <div class="mode-card locked" style="height: 180px; position: relative; border: none;">
+                <div class="mode-img-placeholder" style="border: none; height: 100%;">
+                    <img src="https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/refs/heads/main/MODO%20NUBLADO.png" alt="Bloqueado" class="mode-icon-img">
                 </div>
+                <button class="btn-mode-overlay">MODO NUBLADO</button>
+            </div>
+
+            <div class="mode-card locked" style="height: 180px; position: relative; border: none;">
+                <div class="mode-img-placeholder" style="border: none; height: 100%;">
+                    <img src="https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/refs/heads/main/MODO%20AVENTURA.png" alt="Bloqueado" class="mode-icon-img">
+                </div>
+                <button class="btn-mode-overlay">MODO AVENTURA</button>
             </div>
         </div>
-        <button class="btn-exit" onclick="closeGameModeSelection()" style="margin-top: 30px; margin-bottom: 50px; position:relative; z-index:3500; width: 100%; max-width: 300px; background: #333; color: white; border: 1px solid #666;">CANCELAR</button>
+        
+        <button class="btn-exit" onclick="closeGameModeSelection()" style="margin-top: 50px; position:relative; z-index:3500; width: 100%; max-width: 300px; background: #333; color: white; border: 1px solid #666;">CANCELAR</button>
     </div>
+
+        <div id="mode-detail-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 6000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+    <div class="tutorial-box" style="max-width: 450px; border-color: #333; position: relative;">
+        <h2 id="md-title" style="color: #1a1a1a; text-transform: uppercase; margin-top: 0; border-bottom: 2px solid #999; padding-bottom: 10px;">TÍTULO MODO</h2>
+        
+        <p id="md-desc" style="color: #1a1a1a; font-size: 0.95rem; margin: 20px 0; line-height: 1.5; font-family: 'Courier New', monospace; font-weight: normal;">
+            Descripción...
+        </p>
+        
+        <div style="margin-top: 30px;">
+            <button class="btn-main" onclick="confirmModeStart()">INVESTIGAR DE ESTE MODO</button>
+            <button class="btn-exit" onclick="closeModeDetail()" style="margin-top: 15px; width: 100%;">VOLVER ATRÁS</button>
+        </div>
+    </div>        
+</div>
 
     <div id="online-lobby">
         <div class="tutorial-box" style="width:100%; max-width:600px; border-color: var(--ranking-blue);">
@@ -1003,7 +1091,7 @@
         </div>
     </div>
 
-    <    <div id="settings-modal">
+    <div id="settings-modal">
         <div class="tutorial-box" style="padding: 0; overflow: hidden; background: #e6e6e6;">
             <div class="settings-tabs">
                 <button class="tab-btn active-tab" onclick="switchSettingsTab('visual')">VISUAL</button>
@@ -1567,6 +1655,64 @@
             'ENCRYPTEDFILES': { desc: 'CIFRAR TEXTO DE TARJETAS (SÍMBOLOS)' },
             'CHROMATIC': { desc: 'ALTERAR ESPECTRO DE COLOR VISUAL' }
         };
+        
+                // ==========================================
+        // === NUEVA LÓGICA DE SELECCIÓN DE MODOS ===
+        // ==========================================
+        let selectedModeTarget = '';
+
+        function openModeDetail(mode) {
+            playSFX('click');
+            const modal = document.getElementById('mode-detail-modal');
+            const title = document.getElementById('md-title');
+            const desc = document.getElementById('md-desc');
+            const box = modal.querySelector('.tutorial-box');
+            const btnConfirm = modal.querySelector('.btn-main'); // Botón Investigar
+
+            selectedModeTarget = mode;
+
+            if (mode === 'classic') {
+                title.innerText = "MODO CLÁSICO";
+                title.style.color = "var(--gold)";
+                box.style.borderColor = "var(--gold)";
+                btnConfirm.style.background = "var(--gold)";
+                btnConfirm.style.color = "#000";
+                
+                desc.innerHTML = "Operación estándar de rastreo.<br><br>" +
+                                 "Sin límite de tiempo. Resolución paciente de casos individuales. " +
+                                 "Ideal para perfeccionar tus habilidades de detective sin presión externa.";
+            } 
+            else if (mode === 'competitive') {
+                title.innerText = "MODO COMPETITIVO"; // Nombre corregido
+                title.style.color = "var(--ranking-blue)";
+                box.style.borderColor = "var(--ranking-blue)";
+                btnConfirm.style.background = "var(--ranking-blue)";
+                btnConfirm.style.color = "#fff";
+
+                desc.innerHTML = "Enfréntate a un rival en tiempo real mediante conexión encriptada.<br><br>" +
+                                 "Resuelve infinitos casos compitiendo por puntaje. " +
+                                 "Habilita comandos de sabotaje y guerra cibernética contra el oponente.";
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function closeModeDetail() {
+            playSFX('click');
+            document.getElementById('mode-detail-modal').style.display = 'none';
+        }
+
+        function confirmModeStart() {
+            playSFX('click');
+            document.getElementById('mode-detail-modal').style.display = 'none';
+            
+            // Redirige a la función original correspondiente
+            if (selectedModeTarget === 'classic') {
+                selectMode('classic');
+            } else if (selectedModeTarget === 'competitive') {
+                openOnlineMenu();
+            }
+        }
 
                 function initSabotageSystem() {
             // Reiniciar estado de comandos
