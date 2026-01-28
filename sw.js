@@ -8,12 +8,12 @@ const ASSETS = [
   "./NOTIFICACIONES%20BIO-BREACH.jpeg"
 ];
 
-// INTERVALO BASE (4 HORAS)
-const TIEMPO_PARA_RETORNO = 4 * 60 * 60 * 1000; 
+// INTERVALO BASE (12 HORAS)
+const TIEMPO_PARA_RETORNO = 12 * 60 * 60 * 1000; 
 
 // --- ZONA DE CONFIGURACIÓN NOCTURNA ---
 const HORA_DORMIR = 22; // 10 PM (22:00)
-const HORA_DESPERTAR = 7; // 8 AM (07:00)
+const HORA_DESPERTAR = 7; // 7 AM (07:00)
 
 // 1. INSTALACIÓN
 self.addEventListener("install", (event) => {
