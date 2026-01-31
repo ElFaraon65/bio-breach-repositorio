@@ -747,7 +747,7 @@
         .board-grid.mode-3 .suspect-card { height: auto; min-height: 140px; }
         .board-grid.mode-3 .card-header { font-size: 0.9rem; margin-bottom: 6px; }
         .board-grid.mode-3 .card-body { font-size: 0.65rem; line-height: 1.4; }
-        .board-grid.mode-3 .suspect-card.discarded { display: none; }
+        /*.board-grid.mode-3 .suspect-card.discarded { display: none; }
 
         /* CONFIGURACIÓN 2x2 */
         .board-grid.mode-2 {
@@ -757,7 +757,7 @@
         .board-grid.mode-2 .suspect-card { height: auto; min-height: 180px; }
         .board-grid.mode-2 .card-header { font-size: 1.2rem; margin-bottom: 10px; }
         .board-grid.mode-2 .card-body { font-size: 0.8rem; line-height: 1.5; }
-        .board-grid.mode-2 .suspect-card.discarded { display: none; }
+        /*.board-grid.mode-2 .suspect-card.discarded { display: none; }
 
         /* --- TARJETAS DE SOSPECHOSOS --- */
         .suspect-card {
@@ -785,6 +785,39 @@
         .gender-ribbon { position: absolute; top: 0; left: 0; width: 100%; height: 5px; opacity: 0.8; }
         .ribbon-male { background: var(--ribbon-male); }
         .ribbon-female { background: var(--ribbon-female); }
+        
+
+/* Estandarte de género para modo miniatura */
+.gender-banner {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 10px;
+    height: 14px;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%);
+    z-index: 5;
+}
+.gender-banner.ribbon-male {
+    background: var(--ribbon-male);
+}
+.gender-banner.ribbon-female {
+    background: var(--ribbon-female);
+}
+
+/* Líneas horizontales para modo miniatura */
+.card-body .line {
+    height: 1px;
+    background: #888;
+    margin-bottom: 4px;
+    border-radius: 2px;
+    width: 100%;
+}
+
+/* Ajuste para header en modo miniatura */
+.card-header {
+    position: relative;
+    padding-right: 15px; /* Espacio para el estandarte */
+}
 
         .card-header { 
             font-size: 0.65rem; font-weight: bold; 
@@ -906,7 +939,164 @@
             #queryInput { font-size: 0.9rem; }
             .btn-main { padding: 10px; font-size: 0.9rem; }
             #case-info-bar { flex-direction: row; gap: 5px; font-size: 0.65rem; }
-        }        
+        }
+        
+        /* === NUEVO: INTERRUPTOR RETRO (SWITCH) === */
+.switch-container {
+    position: relative;
+    display: inline-block;
+    width: 70px;
+    height: 32px;
+}
+
+.switch-container input { 
+    opacity: 0; 
+    width: 0; 
+    height: 0; 
+}
+
+.slider-switch {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #333; /* Color OFF (Derecha) */
+    transition: .4s;
+    border: 2px solid #555;
+    box-shadow: inset 0 0 5px #000;
+}
+
+.slider-switch:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 3px;
+    background-color: #888;
+    transition: .4s;
+    border: 1px solid #000;
+    box-shadow: 2px 2px 0px #000;
+}
+
+/* ESTADO ACTIVADO (OFF) - IZQUIERDA */
+/* Cuando está checked, el fondo es Oro y el botón se queda a la IZQUIERDA (o vuelve a ella) */
+input:checked + .slider-switch {
+    background-color: var(--gold);
+}
+
+input:checked + .slider-switch:before {
+    transform: translateX(18px); /* Se mantiene a la izquierda */
+    background-color: #fff;
+}
+
+/* ESTADO DESACTIVADO (ON) - DERECHA */
+/* Cuando NO está checked, movemos el botón a la derecha */
+input:not(:checked) + .slider-switch:before {
+    transform: translateX(-3px); /* Se desliza a la derecha */
+}
+
+/* === ESTILOS PARA MODAL DE ZOOM === */
+#zoom-modal {
+    transition: opacity 0.3s ease;
+    opacity: 0;
+}
+
+#zoom-content {
+    animation: zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+@keyframes zoomIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+#zoom-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+#zoom-content::-webkit-scrollbar-thumb {
+    background: var(--dark-red);
+}
+/* Estandarte de género para modal de zoom */
+#zoom-gender-banner {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%);
+}
+
+/* Prevenir scroll en el modal */
+#zoom-modal {
+    overflow: hidden !important;
+}
+
+#zoom-content > div:first-of-type {
+    scrollbar-width: thin;
+    scrollbar-color: var(--dark-red) #f0f0f0;
+}
+
+#zoom-content > div:first-of-type::-webkit-scrollbar {
+    width: 4px;
+}
+
+#zoom-content > div:first-of-type::-webkit-scrollbar-thumb {
+    background: var(--dark-red);
+    border-radius: 2px;
+}
+
+#zoom-content > div:first-of-type::-webkit-scrollbar-track {
+    background: #f0f0f0;
+}
+
+/* Animación para botones de zoom */
+#zoom-buttons-container {
+    transition: opacity 0.3s ease;
+    opacity: 0;
+}
+
+/* Posicionamiento responsivo de botones */
+@media (max-width: 600px) {
+    #zoom-buttons-container {
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        bottom: 20px !important;
+        gap: 20px !important;
+    }
+    
+    .bookmark-btn {
+        width: 70px !important;
+        height: 70px !important;
+        font-size: 3rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    #zoom-buttons-container {
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        bottom: 15px !important;
+        gap: 15px !important;
+    }
+    
+    .bookmark-btn {
+        width: 60px !important;
+        height: 60px !important;
+        font-size: 2.5rem !important;
+    }
+}
+
+.zoom-buttons-fixed {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    z-index: 10;
+    left: 50%;
+    top: auto;
+    bottom: 50px;
+    transform: translateX(-50%);
+    margin-left: 140px; /* Mueve a la derecha */
+    /* margin-left: -50px; Para mover a la izquierda */
+} 
     </style>                                    
 </head>
 <body>
@@ -1091,17 +1281,33 @@
         </div>
     </div>
 
-    <div id="settings-modal">
+        <div id="settings-modal">
         <div class="tutorial-box" style="padding: 0; overflow: hidden; background: #e6e6e6;">
+                <div id="custom-confirm" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10000; align-items: center; justify-content: center;">
+        <div style="background: #1a1a1a; border: 2px solid var(--gold); padding: 20px; width: 80%; max-width: 300px; text-align: center; box-shadow: 0 0 20px rgba(214, 176, 102, 0.3);">
+            <h3 style="color: var(--gold); font-family: 'Courier New', monospace; margin-top: 0; font-size: 0.9rem; letter-spacing: 2px;">ADVERTENCIA DE ORGANIZACIÓN DE DATOS</h3>
+            <p style="color: #ccc; font-family: 'Courier New', monospace; font-size: 0.8rem; margin: 20px 0; line-height: 1.4;">
+                ¿ESTÁS SEGUR@ DE APLICAR LOS SIGUIENTES CAMBIOS? EL MODO LEGADO PUEDE ALTERAR LA ESTABILIDAD VISUAL.
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button id="confirm-yes" class="btn-main" style="padding: 10px 15px; font-size: 0.7rem; background: var(--gold); color: #000;">PROCEDER</button>
+                <button id="confirm-no" class="btn-main" style="padding: 10px 15px; font-size: 0.7rem; background: #333; color: var(--gold); border-color: var(--gold);">DENEGAR</button>
+            </div>
+        </div>
+    </div>    
+            
             <div class="settings-tabs">
-                <button class="tab-btn active-tab" onclick="switchSettingsTab('visual')">VISUAL</button>
+                <button id="tab-btn-visual" class="tab-btn" style="display: none;" onclick="switchSettingsTab('visual')">VISUAL</button>
+                
                 <button class="tab-btn" onclick="switchSettingsTab('audio')">SONIDO</button>
+                
+                <button id="tab-btn-extra" class="tab-btn active-tab" onclick="switchSettingsTab('extra')">AJUSTES ADICIONALES</button>
             </div>
 
             <div style="padding: 20px;">
                 <h2 style="color: var(--gold); margin-top: 0; text-shadow: 1px 1px 0 #000;">CONFIGURACIÓN</h2>
                 
-                <div id="panel-visual" class="settings-content-panel active-panel">
+                <div id="panel-visual" class="settings-content-panel">
                     <p style="color:#555; font-size: 0.8rem; margin-bottom: 10px;">DENSIDAD DE OBJETIVOS</p>
                     <div class="mosaic-options">
                         <button class="mosaic-btn" id="btn-mode-2" onclick="selectMosaic(2)">2x2</button>
@@ -1112,7 +1318,6 @@
                 </div>
 
                 <div id="panel-audio" class="settings-content-panel">
-                    
                     <div class="audio-control-row">
                         <div class="audio-label">
                             <span>GENERAL</span>
@@ -1120,7 +1325,6 @@
                         </div>
                         <input type="range" id="slider-master" min="0" max="1" step="0.05" value="1" oninput="updateAudioSettings('master', this.value)">
                     </div>
-
                     <div class="audio-control-row">
                         <div class="audio-label">
                             <span>MÚSICA (AMBIENTE)</span>
@@ -1128,13 +1332,31 @@
                         </div>
                         <input type="range" id="slider-music" min="0" max="1" step="0.05" value="0.6" oninput="updateAudioSettings('music', this.value)">
                     </div>
-
                     <div class="audio-control-row">
                         <div class="audio-label">
                             <span>EFECTOS DE SONIDO</span>
                             <span id="vol-display-sfx">100%</span>
                         </div>
                         <input type="range" id="slider-sfx" min="0" max="1" step="0.05" value="1" oninput="updateAudioSettings('sfx', this.value)">
+                    </div>
+                </div>
+
+                <div id="panel-extra" class="settings-content-panel active-panel">
+                    <div style="margin-bottom: 20px; border: 2px dashed #999; padding: 15px; background: #ddd;">
+                        <div style="margin-bottom: 20px; border: 2px dashed #999; padding: 15px; background: #ddd; display: flex; align-items: center; justify-content: space-between;">
+    <div>
+        <span style="color: #000; font-weight: bold; font-family: 'Courier New', monospace; display: block;">USAR MOSAICOS (LEGADO)</span>
+        </span>
+    </div>
+    
+    <label class="switch-container">
+        <input type="checkbox" id="toggle-legacy-mosaic" onchange="toggleLegacyMode(this)">
+        <span class="slider-switch"></span>
+    </label>
+</div>
+<p style="font-size: 0.7rem; color: #555; margin-top: 10px; line-height: 1.2;">
+    Al activar esta opción desbloqueas la pestaña "VISUAL" para cambiar la densidad del tablero.
+</p>
                     </div>
                 </div>
 
@@ -1603,18 +1825,42 @@
             }
         }
         // ==========================================
+                // ==========================================
         // === FIN MOTOR DE AUDIO ===
         // ==========================================
-
-                        const CACHE_NAME = 'bio-breach-audio-v1';
-        let currentMosaicMode = parseInt(localStorage.getItem('bioBreachMosaic')) || 5; 
-        let tempMosaicMode = currentMosaicMode; 
+        const CACHE_NAME = 'bio-breach-audio-v1';
         
-        // --- VARIABLES DE AUDIO CORREGIDAS ---
-        // Usamos una comprobación estricta (!== null) para permitir que el valor sea 0
-        let volMaster = (localStorage.getItem('bioBreachVolMaster') !== null) ? parseFloat(localStorage.getItem('bioBreachVolMaster')) : 1.0;
-        let volMusic = (localStorage.getItem('bioBreachVolMusic') !== null) ? parseFloat(localStorage.getItem('bioBreachVolMusic')) : 0.6;
-        let volSFX = (localStorage.getItem('bioBreachVolSFX') !== null) ? parseFloat(localStorage.getItem('bioBreachVolSFX')) : 1.0;
+        // === CORRECCIÓN DE GUARDADO ===
+// Recuperamos si el usuario tenía activado el modo 'Mosaicos Antiguos'
+let isLegacyMosaicActive = localStorage.getItem('bioBreachLegacyMosaic') === 'true';
+
+// Si está activo, intentamos cargar su modo (2, 3 o 5), si no, forzamos 5
+let savedMode = localStorage.getItem('bioBreachMosaicMode');
+let currentMosaicMode = (isLegacyMosaicActive && savedMode) ? parseInt(savedMode) : 5;
+let tempMosaicMode = currentMosaicMode;
+
+// === INICIALIZACIÓN DE INTERFAZ DE AJUSTES ===
+// Esto asegura que el checkbox aparezca marcado si se guardó así
+setTimeout(() => {
+    const legacyCheck = document.getElementById('toggle-legacy-mosaic');
+    const visualTab = document.getElementById('tab-btn-visual');
+    
+    if(legacyCheck && visualTab) {
+        legacyCheck.checked = isLegacyMosaicActive;
+        // Mostrar/Ocultar pestaña visual según el estado guardado
+        visualTab.style.display = isLegacyMosaicActive ? 'block' : 'none';
+    }
+}, 500); // Pequeño retraso para asegurar que el DOM cargó
+
+        // --- VARIABLES DE AUDIO CORREGIDAS (modificadas para modo "temporal" durante ajustes) ---
+let volMaster = (localStorage.getItem('bioBreachVolMaster') !== null) ? parseFloat(localStorage.getItem('bioBreachVolMaster')) : 1.0;
+let volMusic  = (localStorage.getItem('bioBreachVolMusic') !== null) ? parseFloat(localStorage.getItem('bioBreachVolMusic')) : 0.6;
+let volSFX    = (localStorage.getItem('bioBreachVolSFX') !== null) ? parseFloat(localStorage.getItem('bioBreachVolSFX')) : 1.0;
+
+// Variables temporales que modificará la UI mientras el usuario ajusta y que SE APLICARÁN al salvar
+let tempVolMaster = volMaster;
+let tempVolMusic  = volMusic;
+let tempVolSFX    = volSFX;
         // -------------------------------------
 
         let DP = {}; 
@@ -1811,16 +2057,103 @@
         }
 
                 function saveSettings() {
-            playSFX('click');
-            document.getElementById('settings-modal').style.display = 'none';
-            if (tempMosaicMode !== currentMosaicMode) {
-                applyMosaicChange(tempMosaicMode);
+    // Referencias a la pantalla de carga
+    const loadingScreen = document.getElementById('loading-screen');
+    const loaderBar = document.getElementById('loader-progress');
+    const loadingText = document.querySelector('.loading-text');
+
+    // Leer estado previamente guardado (para comparación)
+    const prevMaster = (localStorage.getItem('bioBreachVolMaster') !== null) ? parseFloat(localStorage.getItem('bioBreachVolMaster')) : volMaster;
+    const prevMusic  = (localStorage.getItem('bioBreachVolMusic') !== null) ? parseFloat(localStorage.getItem('bioBreachVolMusic')) : volMusic;
+    const prevSfx    = (localStorage.getItem('bioBreachVolSFX') !== null) ? parseFloat(localStorage.getItem('bioBreachVolSFX')) : volSFX;
+
+    const prevLegacy = localStorage.getItem('bioBreachLegacyMosaic') === 'true';
+    const prevMosaic = parseInt(localStorage.getItem('bioBreachMosaicMode') || '5');
+
+    const legacyCheckbox = document.getElementById('toggle-legacy-mosaic');
+    const newLegacy = !!(legacyCheckbox && legacyCheckbox.checked);
+
+    // Temp mosaic seleccionado desde selectMosaic()
+    // (tempMosaicMode ya existe en tu código)
+    const newMosaic = tempMosaicMode || 5;
+
+    // Detectar cambios: audio, legacy flag, y mosaic mode (si aplica)
+    const audioChanged = (Math.abs(prevMaster - tempVolMaster) > 0.0001) ||
+                         (Math.abs(prevMusic  - tempVolMusic)  > 0.0001) ||
+                         (Math.abs(prevSfx    - tempVolSFX)    > 0.0001);
+
+    const legacyChanged = (prevLegacy !== newLegacy);
+    const mosaicChanged = (newLegacy && (prevMosaic !== newMosaic)) || (!newLegacy && prevMosaic !== 5);
+
+    // Si NO hubo cambios, cerramos sin mostrar la barra de carga
+    // Si NO hubo cambios, cerramos sin sonido ni barra de carga
+if (!audioChanged && !legacyChanged && !mosaicChanged) {
+    document.getElementById('settings-modal').style.display = 'none';
+    return;
+}
+
+    // Mostrar pantalla de carga porque hay cambios reales
+    loadingScreen.style.display = 'flex';
+    loadingText.innerText = "GUARDANDO PREFERENCIAS...";
+    loaderBar.style.width = '0%';
+    setTimeout(() => { loaderBar.style.width = '50%'; }, 300);
+    setTimeout(() => { loaderBar.style.width = '100%'; }, 800);
+
+    // Aplicar y guardar cambios tras la animación (mismo tiempo que antes)
+    setTimeout(() => {
+        // --- A) GUARDAR Y APLICAR AUDIO ---
+        // Movemos los temp -> reales
+        volMaster = tempVolMaster;
+        volMusic  = tempVolMusic;
+        volSFX    = tempVolSFX;
+
+        localStorage.setItem('bioBreachVolMaster', String(volMaster));
+        localStorage.setItem('bioBreachVolMusic', String(volMusic));
+        localStorage.setItem('bioBreachVolSFX', String(volSFX));
+
+        // Si el motor de audio está disponible, aplicamos con suavizado
+        if (actx && typeof musicMaster !== 'undefined' && musicMaster && musicMaster.gain) {
+            const baseMusicGain = 0.6;
+            const target = isMusicRunning ? (baseMusicGain * volMusic * volMaster) : 0;
+            try {
+                musicMaster.gain.setTargetAtTime(target, actx.currentTime, 0.1);
+            } catch (e) {
+                // si no existe la propiedad gain o falla, no interrumpimos el guardado
             }
-            // Guardar volumen en localStorage
-            localStorage.setItem('bioBreachVolMaster', volMaster);
-            localStorage.setItem('bioBreachVolMusic', volMusic);
-            localStorage.setItem('bioBreachVolSFX', volSFX);
         }
+
+        // --- B) GUARDAR AJUSTES ADICIONALES (MOSAICOS) ---
+        localStorage.setItem('bioBreachLegacyMosaic', String(newLegacy));
+
+        // AGREGA JUSTO DESPUÉS:
+isLegacyMosaicActive = newLegacy;
+
+// Y en la sección que actualiza el tablero:
+if (newLegacy) {
+    // Aplicar el modo elegido temporalmente
+    currentMosaicMode = newMosaic;
+    localStorage.setItem('bioBreachMosaicMode', String(currentMosaicMode));
+} else {
+    // Si se desactiva, forzamos 5 Y activamos modo miniatura
+    currentMosaicMode = 5;
+    localStorage.setItem('bioBreachMosaicMode', '5');
+    // Nota: isLegacyMosaicActive ya se actualizó arriba a false
+}
+
+        // --- C) ACTUALIZAR TABLERO VISUALMENTE ---
+        const board = document.getElementById('board');
+        if (board) {
+            board.classList.remove('mode-2', 'mode-3', 'mode-5');
+            board.classList.add('mode-' + currentMosaicMode);
+        }
+
+        // 4. Finalizar: Ocultar modal y carga
+        document.getElementById('settings-modal').style.display = 'none';
+        loadingScreen.style.display = 'none';
+
+        if (typeof playSFX === 'function') playSFX('login'); // sonido de confirmación
+    }, 1500); // mismo tiempo que tenías antes
+}
 
         // --- NUEVAS FUNCIONES DE UI ---
         function switchSettingsTab(tab) {
@@ -1835,70 +2168,121 @@
         }
 
         function updateAudioSettings(type, val) {
-            val = parseFloat(val);
-            if (type === 'master') {
-                volMaster = val;
-                document.getElementById('vol-display-master').innerText = Math.round(val * 100) + "%";
-            } else if (type === 'music') {
-                volMusic = val;
-                document.getElementById('vol-display-music').innerText = Math.round(val * 100) + "%";
-            } else if (type === 'sfx') {
-                volSFX = val;
-                document.getElementById('vol-display-sfx').innerText = Math.round(val * 100) + "%";
-            }
+    // Ahora actualizamos variables TEMPORALES y la UI.
+    // Los cambios reales (volMaster, volMusic, volSFX) se aplicarán cuando se pulse "CERRAR / GUARDAR"
+    val = parseFloat(val);
+    if (type === 'master') {
+        tempVolMaster = val;
+        document.getElementById('vol-display-master').innerText = Math.round(val * 100) + "%";
+        // mantener el control visual del slider sincronizado
+        const s = document.getElementById('slider-master');
+        if (s) s.value = val;
+    } else if (type === 'music') {
+        tempVolMusic = val;
+        document.getElementById('vol-display-music').innerText = Math.round(val * 100) + "%";
+        const s = document.getElementById('slider-music');
+        if (s) s.value = val;
+    } else if (type === 'sfx') {
+        tempVolSFX = val;
+        document.getElementById('vol-display-sfx').innerText = Math.round(val * 100) + "%";
+        const s = document.getElementById('slider-sfx');
+        if (s) s.value = val;
+    }
 
-            // Aplicar cambios en tiempo real a la música
-            if (actx && musicMaster) {
-                // Si la música debería sonar, recalcula el volumen
-                // Nota: musicMaster.gain.value base suele ser alrededor de 0.6 o variable según fadeToMode
-                // Para simplificar y no romper fadeToMode, actualizamos el gain global si está estable
-                // O mejor, aplicamos la lógica en el bucle o funciones de reproducción.
-                // PERO, para efecto inmediato:
-                const baseMusicGain = 0.6; // Valor base aproximado
-                const currentTarget = isMusicRunning ? (baseMusicGain * volMusic * volMaster) : 0;
-                // Ajuste suave
-                musicMaster.gain.setTargetAtTime(currentTarget, actx.currentTime, 0.1);
-            }
-        }
+    // Nota: No aplicamos al motor de audio (actx/musicMaster) aquí.
+    // Se aplicará cuando el usuario confirme (saveSettings) para respetar tu petición
+    // de que los cambios se apliquen DESPUÉS de la barra de carga.
+}                                    
         
         // Actualizar sliders al abrir (poner dentro de openSettings)
         const _originalOpenSettings = openSettings;
-        openSettings = function() {
-            _originalOpenSettings();
-            // Cargar valores visuales
-            document.getElementById('slider-master').value = volMaster;
-            document.getElementById('vol-display-master').innerText = Math.round(volMaster * 100) + "%";
-            
-            document.getElementById('slider-music').value = volMusic;
-            document.getElementById('vol-display-music').innerText = Math.round(volMusic * 100) + "%";
-            
-            document.getElementById('slider-sfx').value = volSFX;
-            document.getElementById('vol-display-sfx').innerText = Math.round(volSFX * 100) + "%";
-        }
+openSettings = function() {
+    _originalOpenSettings();
+    // Cargar valores visuales en sliders con las variables TEMPORALES
+    // (tempVol* contienen lo que se mostrará/editará en la UI)
+    const masterSlider = document.getElementById('slider-master');
+    if (masterSlider) masterSlider.value = tempVolMaster;
+    const volDisplayMaster = document.getElementById('vol-display-master');
+    if (volDisplayMaster) volDisplayMaster.innerText = Math.round(tempVolMaster * 100) + "%";
+
+    const musicSlider = document.getElementById('slider-music');
+    if (musicSlider) musicSlider.value = tempVolMusic;
+    const volDisplayMusic = document.getElementById('vol-display-music');
+    if (volDisplayMusic) volDisplayMusic.innerText = Math.round(tempVolMusic * 100) + "%";
+
+    const sfxSlider = document.getElementById('slider-sfx');
+    if (sfxSlider) sfxSlider.value = tempVolSFX;
+    const volDisplaySfx = document.getElementById('vol-display-sfx');
+    if (volDisplaySfx) volDisplaySfx.innerText = Math.round(tempVolSFX * 100) + "%";
+
+    // También sincronizamos la pestaña visual con tempMosaicMode (si corresponde)
+    selectMosaic(tempMosaicMode);
+};
         // ------------------------------
+        
+                // ==========================================
+        // === NUEVO: LOGICA DE AJUSTES EXTRAS ===
+        // ==========================================
+                // Variable temporal para guardar la referencia del checkbox
+        let pendingLegacyCheckbox = null;
+
+        function toggleLegacyMode(checkbox) {
+            const visualTabBtn = document.getElementById('tab-btn-visual');
+            const confirmModal = document.getElementById('custom-confirm');
+
+            if (checkbox.checked) {
+                playSFX('click');
+                // Guardamos el checkbox en una variable para usarlo tras la confirmación
+                pendingLegacyCheckbox = checkbox;
+                confirmModal.style.display = 'flex';
+                
+                // Configuramos los botones del modal una sola vez
+                document.getElementById('confirm-yes').onclick = function() {
+                    playSFX('click');
+                    visualTabBtn.style.display = 'block';
+                    confirmModal.style.display = 'none';
+                };
+
+                document.getElementById('confirm-no').onclick = function() {
+                    playSFX('click');
+                    pendingLegacyCheckbox.checked = false; // Desmarcamos
+                    confirmModal.style.display = 'none';
+                };
+
+            } else {
+                playSFX('click');
+                visualTabBtn.style.display = 'none';
+                // Si estamos en la pestaña visual, saltamos a la de Extras
+                const visualPanel = document.getElementById('panel-visual');
+                if (visualPanel.classList.contains('active-panel')) {
+                    switchSettingsTab('extra');
+                }
+            }
+        }
 
         function applyMosaicChange(newMode) {
-            const loading = document.getElementById('loading-screen');
-            const bar = document.getElementById('loader-progress');
-            loading.style.display = 'flex';
-            bar.style.width = "0%";
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += Math.random() * 15;
-                if(progress > 100) progress = 100;
-                bar.style.width = progress + "%";
-                if(progress === 100) {
-                    clearInterval(interval);
-                    setTimeout(() => {
-                        currentMosaicMode = newMode;
-                        localStorage.setItem('bioBreachMosaic', newMode);
-                        updateBoardClass();
-                        loading.style.display = 'none';
-                        if(gameActive) renderBoard(); 
-                    }, 500);
-                }
-            }, 100);
+    const loading = document.getElementById('loading-screen');
+    const bar = document.getElementById('loader-progress');
+    loading.style.display = 'flex';
+    bar.style.width = "0%";
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += Math.random() * 15;
+        if(progress > 100) progress = 100;
+        bar.style.width = progress + "%";
+        if(progress === 100) {
+            clearInterval(interval);
+            setTimeout(() => {
+                currentMosaicMode = newMode;
+                // GUARDAR con la misma clave que el resto del sistema
+                localStorage.setItem('bioBreachMosaicMode', String(newMode));
+                updateBoardClass();
+                loading.style.display = 'none';
+                if(gameActive) renderBoard();
+            }, 500);
         }
+    }, 100);
+}
 
         function updateBoardClass() {
             const board = document.getElementById('board');
@@ -2971,91 +3355,335 @@
         }
 
         function renderBoard() {
-            const board = document.getElementById('board');
-            board.innerHTML = '';
-            board.className = 'board-grid'; 
-            board.classList.add(`mode-${currentMosaicMode}`);
+    const board = document.getElementById('board');
+    board.innerHTML = '';
+    board.className = 'board-grid'; 
+    board.classList.add(`mode-${currentMosaicMode}`);
 
-            personas.forEach(p => {
-                const card = document.createElement('div');
-                card.className = 'suspect-card';
-                card.id = `card-${p.n}`;
-                
-                card.onclick = () => { 
-                    if(gameActive) { 
-                        const cardEl = document.getElementById(`card-${p.n}`);
-                        if(cardEl.classList.contains('discarded')) return;
+    personas.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'suspect-card';
+        card.id = `card-${p.n}`;
+        
+        card.onclick = () => { 
+            if(gameActive) { 
+                const cardEl = document.getElementById(`card-${p.n}`);
+                if(cardEl.classList.contains('discarded')) return;
+
+                // Si el modo mosaico está activo (legacy), comportamiento original
+                if (isLegacyMosaicActive) {
+                    if (pendingDiscards.length > 0) {
+                        playSFX('discard');
+                        
+                        const rect = cardEl.getBoundingClientRect();
+                        const centerX = rect.left + rect.width / 2;
+                        const centerY = rect.top + rect.height / 2;
+
+                        let ptsToGive = 0;
+                        if (pointsPool > 0) {
+                            const remainingDiscards = pendingDiscards.length; 
+                            ptsToGive = Math.ceil(pointsPool / remainingDiscards);
+                            if (ptsToGive > pointsPool) ptsToGive = pointsPool;
+                            pointsPool -= ptsToGive;
+                        }
+                        
+                        let winDelay = 0;
+                        if (ptsToGive > 0) {
+                            spawnFloatingPoint(centerX, centerY, ptsToGive);
+                            winDelay = 900; 
+                        }
+
+                        discardVisual(cardEl);
+                        
+                        if (pendingDiscards.includes(p.n)) {
+                            pendingDiscards = pendingDiscards.filter(id => id !== p.n);
+                        }
+
+                        if (p.n === objetivo.n) {
+                            checkStatus(0); 
+                            return;
+                        }
 
                         if (pendingDiscards.length > 0) {
-                            playSFX('discard');
-                            
-                            const rect = cardEl.getBoundingClientRect();
-                            const centerX = rect.left + rect.width / 2;
-                            const centerY = rect.top + rect.height / 2;
+                            document.getElementById('out').innerHTML = `> ${lastQueryText}<br><span style="color:var(--hazard)">OBJETIVOS RESTANTES: ${pendingDiscards.length}</span>`;
+                        } else {
+                            playSFX('click'); 
+                            document.getElementById('out').innerHTML = `> ${lastQueryText}<br><span style="color:var(--terminal-green)">DESCARTE COMPLETADO. SISTEMA HABILITADO.</span>`;
+                            document.getElementById('queryInput').disabled = false;
+                            document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA (¿...?)...";
+                            document.getElementById('queryInput').focus();
 
-                            let ptsToGive = 0;
-                            if (pointsPool > 0) {
-                                const remainingDiscards = pendingDiscards.length; 
-                                ptsToGive = Math.ceil(pointsPool / remainingDiscards);
-                                if (ptsToGive > pointsPool) ptsToGive = pointsPool;
-                                pointsPool -= ptsToGive;
+                            if(isCompetitiveMode && currentBatchTotal > 0) {
+                                if(isHost) broadcastExcluding(myPeerId, {type: 'RIVAL_BATCH_DISCARD', count: currentBatchTotal});
+                                else if(conn) conn.send({type: 'RIVAL_BATCH_DISCARD', count: currentBatchTotal});
+                                currentBatchTotal = 0;
                             }
-                            
-                            let winDelay = 0;
-                            if (ptsToGive > 0) {
-                                spawnFloatingPoint(centerX, centerY, ptsToGive);
-                                winDelay = 900; 
-                            }
-
-                            discardVisual(cardEl);
-                            
-                            if (pendingDiscards.includes(p.n)) {
-                                pendingDiscards = pendingDiscards.filter(id => id !== p.n);
-                            }
-
-                            if (p.n === objetivo.n) {
-                                checkStatus(0); 
-                                return;
-                            }
-
-                            if (pendingDiscards.length > 0) {
-                                document.getElementById('out').innerHTML = `> ${lastQueryText}<br><span style="color:var(--hazard)">OBJETIVOS RESTANTES: ${pendingDiscards.length}</span>`;
-                            } else {
-                                playSFX('click'); 
-                                document.getElementById('out').innerHTML = `> ${lastQueryText}<br><span style="color:var(--terminal-green)">DESCARTE COMPLETADO. SISTEMA HABILITADO.</span>`;
-                                document.getElementById('queryInput').disabled = false;
-                                document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA (¿...?)...";
-                                document.getElementById('queryInput').focus();
-
-                                if(isCompetitiveMode && currentBatchTotal > 0) {
-                                    if(isHost) broadcastExcluding(myPeerId, {type: 'RIVAL_BATCH_DISCARD', count: currentBatchTotal});
-                                    else if(conn) conn.send({type: 'RIVAL_BATCH_DISCARD', count: currentBatchTotal});
-                                    currentBatchTotal = 0;
-                                }
-                            }
-                            
-                            checkStatus(winDelay);
-
-                        } 
-                        else if (lastQueryText !== "") {
-                            playSFX('discard');
-                            discardVisual(cardEl);
-                            if (p.n === objetivo.n) { checkStatus(0); return; }
-                            checkStatus(0);
                         }
-                        else {
-                            playSFX('error');
-                            document.getElementById('out').style.color = "var(--hazard)";
-                            typeWriter("ERROR: REALICE UNA CONSULTA PARA IDENTIFICAR OBJETIVOS.", "out", 10);
-                        }
+                        
+                        checkStatus(winDelay);
+
                     } 
-                };
+                    else if (lastQueryText !== "") {
+                        playSFX('discard');
+                        discardVisual(cardEl);
+                        if (p.n === objetivo.n) { checkStatus(0); return; }
+                        checkStatus(0);
+                    }
+                    else {
+                        playSFX('error');
+                        document.getElementById('out').style.color = "var(--hazard)";
+                        typeWriter("ERROR: REALICE UNA CONSULTA PARA IDENTIFICAR OBJETIVOS.", "out", 10);
+                    }
+                } else {
+                    // MODO MINIATURA: Abrir zoom dinámico
+                    openZoomModal(p);
+                }
+            } 
+        };
 
-                const rib = p.g === "MASCULINO" ? "ribbon-male" : "ribbon-female";
-                card.innerHTML = `<div class="gender-ribbon ${rib}"></div><div class="card-header">${p.n}</div><div class="card-body"><b>ORG:</b> ${p.p}<br><b>TEZ:</b> ${p.t}<br><b>OJO:</b> ${p.o}<br><b>EDA:</b> ${p.edad}<br><b>ALT:</b> ${p.altura}M<br><b>ACC:</b> ${p.accName}</div>`;
-                board.appendChild(card);
-            });
+        // REEMPLÁZALA CON:
+const rib = p.g === "MASCULINO" ? "ribbon-male" : "ribbon-female";
+
+if (isLegacyMosaicActive) {
+    // Modo legacy/mosaicos activado - mostrar datos completos
+    card.innerHTML = `<div class="gender-ribbon ${rib}"></div><div class="card-header">${p.n}</div><div class="card-body"><b>ORG:</b> ${p.p}<br><b>TEZ:</b> ${p.t}<br><b>OJO:</b> ${p.o}<br><b>EDA:</b> ${p.edad}<br><b>ALT:</b> ${p.altura}M<br><b>ACC:</b> ${p.accName}</div>`;
+} else {
+    // Modo miniatura (default) - mostrar solo líneas horizontales
+    card.innerHTML = `
+        <div class="card-header">
+            <span class="card-name">${p.n}</span>
+            <div class="gender-banner ${rib}"></div>
+        </div>
+        <div class="card-body">
+            <div style="height: 5px;"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+        </div>
+    `;
+}
+        board.appendChild(card);
+    });
+}
+
+// ==========================================
+// === SISTEMA DE ZOOM DINÁMICO ===
+// ==========================================
+
+let currentZoomSuspect = null;
+
+function openZoomModal(suspect) {
+    currentZoomSuspect = suspect;
+    const modal = document.getElementById('zoom-modal');
+    const nameEl = document.getElementById('zoom-name');
+    const infoEl = document.getElementById('zoom-info');
+    const bannerEl = document.getElementById('zoom-gender-banner');
+    const buttonsContainer = document.getElementById('zoom-buttons-container');
+    
+    // Mostrar ambos elementos
+modal.style.display = 'flex';
+if (buttonsContainer) {
+    buttonsContainer.style.display = 'flex';
+    
+    // Cambiar clase
+    buttonsContainer.className = 'zoom-buttons-fixed';
+    
+    // Obtener posición de la tarjeta
+    const card = document.getElementById('zoom-content');
+    if (card) {
+        const cardRect = card.getBoundingClientRect();
+        const buttonsLeft = cardRect.right + 10; // +10px para separación
+        
+        buttonsContainer.style.left = `${buttonsLeft}px`;
+        buttonsContainer.style.top = `${cardRect.top + (cardRect.height * 0.25)}px`;
+    }
+}
+    
+    setTimeout(() => {
+        modal.style.opacity = '1';
+        if (buttonsContainer) buttonsContainer.style.opacity = '1';
+    }, 10);
+    
+    // Configurar estandarte de género (gender-banner)
+    if (bannerEl) {
+        bannerEl.className = 'gender-banner';
+        if (suspect.g === "MASCULINO") {
+            bannerEl.classList.add('ribbon-male');
+            bannerEl.style.background = "var(--ribbon-male)";
+        } else {
+            bannerEl.classList.add('ribbon-female');
+            bannerEl.style.background = "var(--ribbon-female)";
         }
+        bannerEl.style.clipPath = "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)";
+    }
+    
+    // Nombre
+    if (nameEl) {
+        nameEl.innerText = suspect.n;
+    }
+    
+    // Información completa (muy compacta)
+    if (infoEl) {
+    infoEl.innerHTML = `
+        <div style="font-size: 1.1rem; line-height: 1.6; padding: 15px 20px; text-align: left;">
+            <!-- Cada fila como una tabla de 2 columnas -->
+            <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: bold; color: #000; text-align: right;">GÉNERO:</span>
+                <span style="color: #111; text-transform: uppercase; font-size: 1.2rem;">${suspect.g}</span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: bold; color: #000; text-align: right;">ORIGEN:</span>
+                <span style="color: #111; font-size: 1.2rem;">${suspect.p}</span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: bold; color: #000; text-align: right;">TEZ:</span>
+                <span style="color: #111; text-transform: uppercase; font-size: 1.2rem;">${suspect.t}</span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: bold; color: #000; text-align: right;">OJOS:</span>
+                <span style="color: #111; text-transform: uppercase; font-size: 1.2rem;">${suspect.o}</span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: bold; color: #000; text-align: right;">EDAD:</span>
+                <span style="color: #111; font-size: 1.2rem;">${suspect.edad} <span style="font-size: 0.9rem; color: #555;">AÑOS</span></span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: bold; color: #000; text-align: right;">ALTURA:</span>
+                <span style="color: #111; font-size: 1.2rem;">${suspect.altura} <span style="font-size: 0.9rem; color: #555;">M</span></span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: bold; color: #000; text-align: right;">ACCESORIO:</span>
+                <span style="color: #111; text-transform: uppercase; font-size: 1.2rem;">${suspect.accName}</span>
+            </div>
+        </div>
+    `;
+}
+    
+    // Configurar botones (usando las funciones existentes)
+    const keepBtn = document.getElementById('zoom-keep-btn');
+    const discardBtn = document.getElementById('zoom-discard-btn');
+    
+    if (keepBtn) {
+        keepBtn.onclick = keepSuspect;
+    }
+    
+    if (discardBtn) {
+        discardBtn.onclick = discardFromZoom;
+    }
+    
+    // Asegurar que los botones tengan los eventos correctos
+    setTimeout(() => {
+        if (keepBtn) keepBtn.onclick = keepSuspect;
+        if (discardBtn) discardBtn.onclick = discardFromZoom;
+    }, 50);
+}
+
+function closeZoomModal() {
+    const modal = document.getElementById('zoom-modal');
+    const buttons = document.getElementById('zoom-buttons-container');
+    
+    modal.style.opacity = '0';
+    if (buttons) buttons.style.opacity = '0';
+    
+    setTimeout(() => {
+        modal.style.display = 'none';
+        if (buttons) buttons.style.display = 'none';
+        currentZoomSuspect = null;
+    }, 300);
+    playSFX('click');
+}
+
+function keepSuspect() {
+    closeZoomModal();
+    playSFX('click');
+}
+
+function discardFromZoom() {
+    if (!currentZoomSuspect) return;
+    
+    // Validar que se haya hecho una pregunta
+    if (lastQueryText === "") {
+        playSFX('error');
+        typeWriter("ERROR: REALICE UNA CONSULTA ANTES DE DESCARTAR UN SOSPECHOSO.", "out", 10);
+        return;
+    }
+    
+    // Lógica de descarte (similar a la original)
+    const cardEl = document.getElementById(`card-${currentZoomSuspect.n}`);
+    if (cardEl.classList.contains('discarded')) {
+        closeZoomModal();
+        return;
+    }
+    
+    playSFX('discard');
+    
+    // Si hay descartes pendientes en lote
+    if (pendingDiscards.length > 0 && pendingDiscards.includes(currentZoomSuspect.n)) {
+        // Lógica de descarte en lote (misma que la original)
+        const rect = cardEl.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        let ptsToGive = 0;
+        if (pointsPool > 0) {
+            const remainingDiscards = pendingDiscards.length; 
+            ptsToGive = Math.ceil(pointsPool / remainingDiscards);
+            if (ptsToGive > pointsPool) ptsToGive = pointsPool;
+            pointsPool -= ptsToGive;
+        }
+        
+        if (ptsToGive > 0) {
+            spawnFloatingPoint(centerX, centerY, ptsToGive);
+        }
+        
+        discardVisual(cardEl);
+        pendingDiscards = pendingDiscards.filter(id => id !== currentZoomSuspect.n);
+        
+        if (currentZoomSuspect.n === objetivo.n) {
+            closeZoomModal();
+            checkStatus(900);
+            return;
+        }
+
+        if (pendingDiscards.length > 0) {
+            document.getElementById('out').innerHTML = `> ${lastQueryText}<br><span style="color:var(--hazard)">OBJETIVOS RESTANTES: ${pendingDiscards.length}</span>`;
+        } else {
+            playSFX('click'); 
+            document.getElementById('out').innerHTML = `> ${lastQueryText}<br><span style="color:var(--terminal-green)">DESCARTE COMPLETADO. SISTEMA HABILITADO.</span>`;
+            document.getElementById('queryInput').disabled = false;
+            document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA (¿...?)...";
+            document.getElementById('queryInput').focus();
+
+            if(isCompetitiveMode && currentBatchTotal > 0) {
+                if(isHost) broadcastExcluding(myPeerId, {type: 'RIVAL_BATCH_DISCARD', count: currentBatchTotal});
+                else if(conn) conn.send({type: 'RIVAL_BATCH_DISCARD', count: currentBatchTotal});
+                currentBatchTotal = 0;
+            }
+        }
+    } 
+    // Descarte individual (sin lote pendiente)
+    else if (lastQueryText !== "") {
+        discardVisual(cardEl);
+        if (currentZoomSuspect.n === objetivo.n) { 
+            closeZoomModal();
+            checkStatus(0); 
+            return; 
+        }
+    }
+    
+    closeZoomModal();
+    checkStatus(0);
+}
 
         function discardVisual(card) {
             card.classList.add('discarded'); 
@@ -3613,5 +4241,38 @@
 
         updateWalletUI();
     </script>
+    
+    <!-- MODAL DE ZOOM DINÁMICO -->
+<div id="zoom-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9000; display: none; justify-content: center; align-items: center; padding: 20px; overflow: hidden;">
+    <!-- La tarjeta del sospechoso -->
+    <div id="zoom-content" style="background: #e6e0d4; border: 2px solid #000; max-width: 420px; width: 100%; position: relative; box-shadow: 10px 10px 0px rgba(0,0,0,0.5); min-height: 550px; display: flex; flex-direction: column; overflow: hidden; margin-right: 0;">
+        <!-- Estandarte de género en el modal -->
+        <div id="zoom-gender-banner" class="gender-banner" style="position: absolute; top: 15px; right: 25px; width: 20px; height: 28px; z-index: 5; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%);"></div>
+        
+        <!-- Contenido de la tarjeta ampliada -->
+        <div style="padding: 15px 15px 15px 20px; flex-grow: 1; overflow: hidden; display: flex; flex-direction: column;">
+            <h3 id="zoom-name" style="color: #000; text-align: center; border-bottom: 3px solid #000; padding-bottom: 10px; margin-top: 0; margin-bottom: 15px; font-family: 'Courier New', monospace; font-size: 1.6rem; text-transform: uppercase; letter-spacing: 2px; flex-shrink: 0; font-weight: bold;"></h3>
+            
+            <div id="zoom-info" style="color: #111; font-family: 'Courier New', monospace; font-size: 1rem; line-height: 1.3; flex-grow: 1; overflow: hidden;">
+                <!-- Los datos se llenarán dinámicamente -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Botones MANTENER y DESCARTAR como banderitas adhesivas (FUERA de la tarjeta) -->
+    <div id="zoom-buttons-container" class="zoom-buttons-absolute" style="display: none;">
+        <!-- Banderita MANTENER -->
+        <button id="zoom-keep-btn" class="bookmark-btn" 
+        style="background: var(--victory); color: #000; padding: 0; border: none; font-family: 'Courier New', monospace; font-weight: bold; cursor: pointer; width: 80px; height: 80px; font-size: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 10px; box-shadow: 5px 5px 0px rgba(0,0,0,0.5);">
+    📥
+</button>
+        
+        <!-- Banderita DESCARTAR -->
+        <button id="zoom-discard-btn" class="bookmark-btn" 
+        style="background: var(--hazard); color: #fff; padding: 0; border: none; font-family: 'Courier New', monospace; font-weight: bold; cursor: pointer; width: 80px; height: 80px; font-size: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 10px; box-shadow: 5px 5px 0px rgba(0,0,0,0.5);">
+    🗑️
+</button>
+    </div>
+</div>
 </body>
 </html>
