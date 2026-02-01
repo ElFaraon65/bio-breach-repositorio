@@ -189,9 +189,9 @@
         /* --- PANTALLA DE INTERACCIÓN INICIAL --- */
         #interaction-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(10, 10, 10, 0.9);
-            backdrop-filter: grayscale(100%) contrast(1.2);
-            -webkit-backdrop-filter: grayscale(100%) contrast(1.2);
+            background: rgba(10, 10, 10, 0.5);
+            backdrop-filter: blur(8px) grayscale(100%) contrast(1.2);
+-webkit-backdrop-filter: blur(8px) grayscale(100%) contrast(1.2);
             z-index: 9999;
             display: flex; justify-content: center; align-items: center;
             transition: opacity 0.8s ease, backdrop-filter 0.8s ease;
@@ -514,7 +514,7 @@
         
         #settings-modal { z-index: 3500; }
         #migration-modal { z-index: 4500; } 
-        #overlay, #abort-confirm { background: rgba(0, 0, 0, 0.9); z-index: 2000; text-align: center; }
+        #overlay, #abort-confirm { background: rgba(0, 0, 0, 0.7); z-index: 2000; text-align: center; }
         #overlay.active, #abort-confirm.active { display: flex; opacity: 1; }
 
         .tutorial-box {
@@ -1088,7 +1088,7 @@ input:not(:checked) + .slider-switch:before {
 <body>
 
     <div id="interaction-overlay" onclick="initAudioSystem()">
-        <div class="interaction-text">TOCAR PARA INICIAR SISTEMA</div>
+        <div class="interaction-text">REGISTRE SU IDENTIDAD</div>
     </div>
 
     <div id="rival-alert">EL RIVAL HA DESCARTADO</div>
@@ -1363,11 +1363,16 @@ input:not(:checked) + .slider-switch:before {
 
     <div id="abort-confirm">
         <div class="tutorial-box">
-            <h2 style="color: var(--hazard);">¿ESTÁS SEGURO?</h2>
-            <p>Perderás el monto de <span id="penalty-amount" style="color:var(--gold)">0</span> S/ del contrato actual.</p>
+            <h2 style="color: var(--hazard); 
+           -webkit-text-stroke: 1px var(--hazard); 
+           text-stroke: 1px var(--hazard);
+           font-size: 1.8rem;
+           line-height: 1.2;
+           margin: 15px 0;">¿ESTÁS SEGURO?</h2>
+            <p>Perderás el monto de <span style="color:#32CD32; font-weight: bold;">S/</span><span id="penalty-amount" style="color:#32CD32; font-weight: bold; text-shadow: 0 0 8px rgba(50,205,50,0.6);">0</span> del contrato actual.</p>
             <div style="display: flex; gap: 10px; justify-content: center;">
-                <button class="btn-main" style="background:var(--hazard); width: auto;" onclick="confirmAbort()">ESTOY SEGURO</button>
-                <button class="btn-main" style="background:#333; width: auto;" onclick="closeAbortModal()">CANCELAR</button>
+                <button class="btn-main" style="background:var(--hazard); width: auto; color: #fff;" onclick="confirmAbort()">ESTOY SEGURO</button>
+                <button class="btn-main" style="background:#333; width: auto; color: #fff;" onclick="closeAbortModal()">CANCELAR</button>
             </div>
         </div>
     </div>    
@@ -2543,6 +2548,12 @@ openSettings = function() {
                     broadcastExcluding(c.peer, {type: 'RIVAL_BATCH_DISCARD', count: data.count});
                     triggerRivalAlert(data.count); 
                 }
+                else if (data.type === 'RIVAL_CASE_COMPLETED') {
+    // Reenviar a todos los demás jugadores (broadcast excluyendo al que lo envió)
+    broadcastExcluding(c.peer, {type: 'RIVAL_CASE_COMPLETED'});
+    // Mostrar alerta local
+    triggerRivalCaseCompletedAlert();
+}
                                 else if (data.type === 'SABOTAGE') {
                     // Host recibe un ataque y lo procesa si es para él, o lo ignora (aquí asumimos 1v1 el peer que envía es el atacante)
                     // Si el juego fuera multi-jugador >2, habría que definir target. Asumimos 1v1.
@@ -2689,6 +2700,9 @@ openSettings = function() {
                 else if (data.type === 'RIVAL_BATCH_DISCARD') {
                     triggerRivalAlert(data.count);
                 }
+                else if (data.type === 'RIVAL_CASE_COMPLETED') {
+    triggerRivalCaseCompletedAlert();
+}
                 else if (data.type === 'SABOTAGE') {
                     applySabotageEffect(data.effect);
                 }
@@ -2842,6 +2856,14 @@ openSettings = function() {
             void el.offsetWidth; 
             el.classList.add('active-alert');
         }
+        
+        function triggerRivalCaseCompletedAlert() {
+    const el = document.getElementById('rival-alert');
+    el.innerText = `EL RIVAL HA COMPLETADO UN CASO`;
+    el.classList.remove('active-alert');
+    void el.offsetWidth; // Trigger reflow para reiniciar animación
+    el.classList.add('active-alert');
+}
 
         // --- SISTEMA DE SABOTAJE - LÓGICA DE APLICACIÓN ---
         function applySabotageEffect(effectName) {
@@ -3750,6 +3772,13 @@ function discardFromZoom() {
                     compRound++; 
                     
                     if(!isHost && conn) conn.send({type: 'PLAYER_SCORE_UPDATE', score: compTotalScore});
+                    
+                    // Notificar a los rivales que se completó un caso
+if(isHost) {
+    broadcastExcluding(myPeerId, {type: 'RIVAL_CASE_COMPLETED'});
+} else if(conn) {
+    conn.send({type: 'RIVAL_CASE_COMPLETED'});
+}
                     
                     initGame();
                 } else {
