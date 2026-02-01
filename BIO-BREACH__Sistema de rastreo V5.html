@@ -1091,7 +1091,7 @@ input:not(:checked) + .slider-switch:before {
     gap: 15px;
     z-index: 10;
     left: 50%;
-    top: auto;
+    top: 275px;
     bottom: 50px;
     transform: translateX(-50%);
     margin-left: 140px; /* Mueve a la derecha */
@@ -3490,18 +3490,7 @@ if (buttonsContainer) {
     buttonsContainer.style.display = 'flex';
     
     // Cambiar clase
-    buttonsContainer.className = 'zoom-buttons-fixed';
-    
-    // Obtener posición de la tarjeta
-    const card = document.getElementById('zoom-content');
-    if (card) {
-        const cardRect = card.getBoundingClientRect();
-        const buttonsLeft = cardRect.right + 10; // +10px para separación
-        
-        buttonsContainer.style.left = `${buttonsLeft}px`;
-        buttonsContainer.style.top = `${cardRect.top + (cardRect.height * 0.25)}px`;
-    }
-}
+    buttonsContainer.className = 'zoom-buttons-fixed'; }
     
     setTimeout(() => {
         modal.style.opacity = '1';
@@ -4245,7 +4234,7 @@ function discardFromZoom() {
     <!-- MODAL DE ZOOM DINÁMICO -->
 <div id="zoom-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9000; display: none; justify-content: center; align-items: center; padding: 20px; overflow: hidden;">
     <!-- La tarjeta del sospechoso -->
-    <div id="zoom-content" style="background: #e6e0d4; border: 2px solid #000; max-width: 420px; width: 100%; position: relative; box-shadow: 10px 10px 0px rgba(0,0,0,0.5); min-height: 550px; display: flex; flex-direction: column; overflow: hidden; margin-right: 0;">
+    <div id="zoom-content" style="background: #e6e0d4; border: 2px solid #000; max-width: 420px; width: 100%; position: relative; box-shadow: 10px 10px 0px rgba(0,0,0,0.5); min-height: 200px; display: flex; flex-direction: column; overflow: hidden; margin-right: 0;">
         <!-- Estandarte de género en el modal -->
         <div id="zoom-gender-banner" class="gender-banner" style="position: absolute; top: 15px; right: 25px; width: 20px; height: 28px; z-index: 5; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%);"></div>
         
