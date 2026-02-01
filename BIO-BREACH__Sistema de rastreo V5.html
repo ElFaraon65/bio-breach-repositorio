@@ -502,20 +502,6 @@
             opacity: 0.5;
             position: relative;
         }
-        .locked-settings::after {
-            content: "RESTRINGIDO";
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            color: #000;
-            font-size: 0.9rem;
-            font-weight: bold;
-            border: 2px solid #000;
-            padding: 5px 10px;
-            background: var(--gold);
-            transform: translate(-50%, -50%) rotate(-10deg);
-            opacity: 1;
-        }
 
         /* --- CONFIGURACIÓN Y MODALES --- */        
         #settings-modal, #tutorial-screen, #abort-confirm, #overlay, #migration-modal {
@@ -1218,7 +1204,7 @@ input:not(:checked) + .slider-switch:before {
                 <button class="btn-main" style="margin-bottom:10px;" onclick="createRoom()">CREAR SALA NUEVA (HOST)</button>
                 <div style="display:flex; gap:10px; margin-bottom:20px;">
                     <input type="text" id="join-room-input" class="login-input" style="margin:0; font-size:1rem;" placeholder="CÓDIGO DE SALA" maxlength="6">
-                    <button class="btn-main" style="width:auto; background:#222; border-color:var(--gold);" onclick="joinRoom()">UNIRSE</button>
+                    <button class="btn-main" style="width:auto; background:#222; border-color:var(--gold); color:#fff;" onclick="joinRoom()">UNIRSE</button>
                 </div>
             </div>
 
