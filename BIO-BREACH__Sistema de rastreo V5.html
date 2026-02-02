@@ -1082,10 +1082,59 @@ input:not(:checked) + .slider-switch:before {
     transform: translateX(-50%);
     margin-left: 140px; /* Mueve a la derecha */
     /* margin-left: -50px; Para mover a la izquierda */
+}
+
+/* Overlay de Caso Completado por Rival */
+#rival-case-completed-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 9999;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+}
+
+#rival-case-completed-overlay img {
+    animation: stampAppear 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes stampAppear {
+    0% { transform: scale(0.5) rotate(-10deg); opacity: 0; }
+    70% { transform: scale(1.1) rotate(2deg); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
 } 
     </style>                                    
 </head>
 <body>
+    
+    <!-- Overlay para Caso Completado por Rival -->
+<div id="rival-case-completed-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); z-index: 9999; display: none; justify-content: center; align-items: center; flex-direction: column;">
+    <div style="max-width: 600px; width: 90%; text-align: center; position: relative;">
+        <!-- Imagen de Sello Principal -->
+        <img src="https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/refs/heads/main/FILE_RIVAL_ALERT.png" 
+             alt="Caso Completado" 
+             style="width: 100%; max-width: 500px; margin: 0 auto 30px; display: block; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.7));">
+        
+        <!-- Mensaje de Texto -->
+        <div style="color: var(--hazard); font-size: 2.8rem; font-weight: bold; text-transform: uppercase; letter-spacing: 4px; font-family: 'Impact', sans-serif; text-shadow: 0 0 15px rgba(255, 0, 0, 0.8); margin-top: 20px;">
+            ¡RIVAL HA COMPLETADO UN CASO!
+        </div>
+        
+        <!-- Subtítulo -->
+        <div style="color: var(--gold); font-size: 1.2rem; font-family: 'Courier New', monospace; margin-top: 15px; letter-spacing: 2px;">
+            SE ACERCA A LA VICTORIA FINAL
+        </div>
+        
+        <!-- Contador de tiempo -->
+        <div id="rival-alert-timer" style="color: var(--terminal-green); font-size: 1rem; margin-top: 20px; font-family: 'Courier New', monospace;">
+            DESAPARECE EN <span style="color: var(--hazard); font-weight: bold;">3</span> SEGUNDOS
+        </div>
+    </div>
+</div>
 
     <div id="interaction-overlay" onclick="initAudioSystem()">
         <div class="interaction-text">REGISTRE SU IDENTIDAD</div>
@@ -2858,10 +2907,40 @@ openSettings = function() {
         }
         
         function triggerRivalCaseCompletedAlert() {
+    const overlay = document.getElementById('rival-case-completed-overlay');
+    const timerElement = document.getElementById('rival-alert-timer');
+    
+    // Mostrar el overlay
+    overlay.style.display = 'flex';
+    
+    // Efecto de entrada
+    setTimeout(() => {
+        overlay.style.opacity = '1';
+    }, 10);
+    
+    // Contador regresivo
+    let secondsLeft = 3;
+    const countdownInterval = setInterval(() => {
+        if (timerElement) {
+            timerElement.innerHTML = `DESAPARECE EN <span style="color: var(--hazard); font-weight: bold;">${secondsLeft}</span> SEGUNDOS`;
+        }
+        secondsLeft--;
+        
+        if (secondsLeft < 0) {
+            clearInterval(countdownInterval);
+            // Efecto de salida
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 500);
+        }
+    }, 1000);
+    
+    // También mantener la alerta original más pequeña (opcional)
     const el = document.getElementById('rival-alert');
     el.innerText = `EL RIVAL HA COMPLETADO UN CASO`;
     el.classList.remove('active-alert');
-    void el.offsetWidth; // Trigger reflow para reiniciar animación
+    void el.offsetWidth;
     el.classList.add('active-alert');
 }
 
