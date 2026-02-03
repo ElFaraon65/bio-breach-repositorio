@@ -1106,6 +1106,101 @@ input:not(:checked) + .slider-switch:before {
     0% { transform: scale(0.5) rotate(-10deg); opacity: 0; }
     70% { transform: scale(1.1) rotate(2deg); }
     100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+// CSS ADICIONAL CRÍTICO (agregar al final del <style> existente)
+/* ========================================== */
+/* === CONTROL DE TECLADO MEJORADO === */
+/* ========================================== */
+
+/* Estado cuando el teclado está activo */
+body.keyboard-active {
+    position: fixed !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    touch-action: none !important;
+}
+
+/* Input optimizado para móvil */
+#queryInput {
+    -webkit-user-select: text !important;
+    user-select: text !important;
+    -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
+    tap-highlight-color: rgba(0,0,0,0) !important;
+    font-size: 16px !important; /* Previene zoom en iOS */
+    min-height: 44px !important; /* Tamaño mínimo táctil */
+}
+
+/* Ajustar board cuando hay teclado */
+.keyboard-active .board-grid {
+    max-height: 50vh !important;
+    overflow-y: auto !important;
+    padding-bottom: 70px !important; /* Espacio para el teclado */
+}
+
+/* Terminal fija cuando hay teclado */
+.keyboard-active .terminal-zone {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: #222 !important;
+    border-top: 3px solid var(--gold) !important;
+    z-index: 10000 !important;
+    padding: 10px !important;
+    margin: 0 !important;
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.9) !important;
+}
+
+/* Ocultar elementos no esenciales cuando hay teclado */
+.keyboard-active #case-info-bar {
+    opacity: 0.7 !important;
+    transform: translateY(-5px) !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Para iOS específicamente */
+@supports (-webkit-touch-callout: none) {
+    body.keyboard-active {
+        height: -webkit-fill-available !important;
+    }
+    
+    #queryInput {
+        font-size: 16px !important; /* Forzar tamaño para evitar zoom */
+        transform: translateZ(0) !important; /* Aceleración hardware */
+    }
+    
+    /* Prevenir bounce scroll en iOS */
+    .keyboard-active .board-grid {
+        -webkit-overflow-scrolling: touch !important;
+    }
+}
+
+/* Para Android específicamente */
+@media (hover: none) and (pointer: coarse) {
+    .keyboard-active {
+        overscroll-behavior: none !important;
+    }
+    
+    #queryInput {
+        caret-color: var(--gold) !important; /* Mejor visibilidad */
+    }
+}
+
+/* Transición suave para todo */
+* {
+    scroll-behavior: smooth !important;
+}
+
+/* Cuando se está terminando el juego */
+body.game-ending {
+    overflow: hidden !important;
+}
+
+.game-ending .terminal-zone {
+    transform: translateY(100%) !important;
+    transition: transform 0.4s ease !important;
 } 
     </style>                                    
 </head>
@@ -3300,6 +3395,11 @@ openSettings = function() {
         }
 
         function initGame() {
+        
+        // === NUEVO: OCULTAR TECLADO AL INICIAR ===
+    if (typeof hideKeyboardSmoothly === 'function') {
+        hideKeyboardSmoothly();
+    }
             document.getElementById('overlay').classList.remove('active');
             document.getElementById('main-ui').classList.remove('blur-effect');
             document.getElementById('out').style.color = "var(--terminal-green)";
@@ -3346,6 +3446,41 @@ openSettings = function() {
             renderBoard();
             updateWalletUI();
         }
+        
+        // Inicializar cuando se cargue el juego
+document.addEventListener('DOMContentLoaded', () => {
+    // Esperar a que la UI esté lista
+    setTimeout(() => {
+        setupKeyboardDetection();
+        
+        // También inicializar cuando se muestre la UI principal
+        const mainUI = document.getElementById('main-ui');
+        if (mainUI) {
+            const observer = new MutationObserver(() => {
+                if (mainUI.style.display !== 'none') {
+                    setupKeyboardDetection();
+                }
+            });
+            
+            observer.observe(mainUI, {
+                attributes: true,
+                attributeFilter: ['style']
+            });
+        }
+    }, 1500);
+});
+
+// Manejar cambios de orientación
+window.addEventListener('orientationchange', () => {
+    hideKeyboardSmoothly();
+    
+    setTimeout(() => {
+        window.scrollTo(0, 0);
+        if (keyboardActive) {
+            handleKeyboardShow();
+        }
+    }, 500);
+});
 
         function generateNewSquad() {
             personas = [];
@@ -3840,9 +3975,176 @@ function discardFromZoom() {
 
                 fadeToMode(1);
             };
-        }        
+        }
+        
+        // // ==========================================
+// === CONTROL ACTIVO DE TECLADO MÓVIL - VERSIÓN INDEPENDIENTE ===
+// ==========================================
 
-        function endGame(win) {
+let keyboardActive = false;
+let gameEnding = false;
+
+// Función PRINCIPAL para ocultar teclado (debe existir siempre)
+function handleKeyboardHide() {
+    if (!keyboardActive) return;
+    
+    keyboardActive = false;
+    document.body.classList.remove('keyboard-active');
+    
+    // Restaurar estilos
+    const board = document.getElementById('board');
+    const terminal = document.querySelector('.terminal-zone');
+    
+    if (board) {
+        board.style.maxHeight = '';
+        board.style.overflowY = '';
+        board.style.paddingBottom = '';
+    }
+    
+    if (terminal) {
+        terminal.style.position = '';
+        terminal.style.bottom = '';
+        terminal.style.left = '';
+        terminal.style.right = '';
+        terminal.style.zIndex = '';
+        terminal.style.borderTop = '';
+        terminal.style.boxShadow = '';
+    }
+    
+    // Desplazar suavemente al top si estamos terminando juego
+    if (gameEnding) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+// Función para mostrar teclado
+function handleKeyboardShow() {
+    if (keyboardActive) return;
+    
+    keyboardActive = true;
+    document.body.classList.add('keyboard-active');
+    
+    // Ajustar elementos cuando el teclado aparece
+    const board = document.getElementById('board');
+    const terminal = document.querySelector('.terminal-zone');
+    
+    if (board) {
+        board.style.maxHeight = '45vh';
+        board.style.overflowY = 'auto';
+        board.style.paddingBottom = '10px';
+    }
+    
+    if (terminal) {
+        terminal.style.position = 'fixed';
+        terminal.style.bottom = '0';
+        terminal.style.left = '0';
+        terminal.style.right = '0';
+        terminal.style.zIndex = '1000';
+        terminal.style.borderTop = '3px solid var(--gold)';
+        terminal.style.boxShadow = '0 -5px 20px rgba(0,0,0,0.9)';
+    }
+}
+
+// Función mejorada para forzar cierre SUAVE del teclado
+function hideKeyboardSmoothly() {
+    const input = document.getElementById('queryInput');
+    if (!input) return;
+    
+    // 1. Quitar foco inmediatamente
+    input.blur();
+    
+    // 2. Deshabilitar temporalmente para evitar reapertura
+    input.disabled = true;
+    
+    // 3. Método universal para cerrar teclado
+    setTimeout(() => {
+        // Crear y enfocar elemento dummy
+        const dummy = document.createElement('button');
+        dummy.style.cssText = 'position:absolute;opacity:0;height:0;width:0;border:none;padding:0;';
+        document.body.appendChild(dummy);
+        dummy.focus();
+        
+        // Limpiar y restaurar
+        setTimeout(() => {
+            document.body.removeChild(dummy);
+            input.disabled = false;
+            handleKeyboardHide();
+        }, 50);
+    }, 100);
+}
+
+// Función para PREPARAR pantalla de fin de juego
+async function prepareForGameEnd() {
+    if (gameEnding) return;
+    
+    gameEnding = true;
+    
+    // 1. Ocultar teclado inmediatamente
+    hideKeyboardSmoothly();
+    
+    // 2. Desplazar vista al top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // 3. Esperar a que el teclado se oculte completamente
+    return new Promise(resolve => {
+        setTimeout(() => {
+            gameEnding = false;
+            resolve();
+        }, 350);
+    });
+}
+
+// Detección de teclado optimizada
+function setupKeyboardDetection() {
+    const input = document.getElementById('queryInput');
+    if (!input) return;
+    
+    let viewportHeight = window.innerHeight;
+    
+    // Detectar por cambio de altura (Android)
+    window.addEventListener('resize', () => {
+        const newHeight = window.innerHeight;
+        const threshold = viewportHeight * 0.3;
+        
+        if (Math.abs(newHeight - viewportHeight) > threshold) {
+            if (newHeight < viewportHeight) {
+                handleKeyboardShow();
+            } else if (!gameEnding) {
+                handleKeyboardHide();
+            }
+            viewportHeight = newHeight;
+        }
+    });
+    
+    // Detectar por focus (iOS)
+    input.addEventListener('focus', () => {
+        setTimeout(handleKeyboardShow, 100);
+    });
+    
+    input.addEventListener('blur', () => {
+        if (!gameEnding) {
+            setTimeout(handleKeyboardHide, 100);
+        }
+    });
+    
+    // Ocultar teclado al tocar fuera
+    document.addEventListener('touchstart', (e) => {
+        if (keyboardActive && e.target !== input && !input.contains(e.target)) {
+            hideKeyboardSmoothly();
+        }
+    }, { passive: true });
+    
+    // Prevenir zoom automático en iOS
+    input.addEventListener('touchstart', () => {
+        if (window.getComputedStyle(input).fontSize === '16px') return;
+        input.style.fontSize = '16px';
+    }, { passive: true });
+}        
+
+        async function endGame(win) {
+        
+        await prepareForGameEnd();
+        
             if (isCompetitiveMode) {
                 if (win) {
                     playSFX('win', true);
