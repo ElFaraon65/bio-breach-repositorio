@@ -1109,52 +1109,100 @@ input:not(:checked) + .slider-switch:before {
 }
 
 // CSS ADICIONAL CRÍTICO (agregar al final del <style> existente)
+/* // ==========================================
+// === CONTROL DE TECLADO MÓVIL - VERSIÓN SIMPLE ===
+// ==========================================
+
+let keyboardActive = false;
+let gameEnding = false;
+
+// Función SUPER SIMPLE para ocultar teclado
+function hideKeyboardSmoothly() {
+    const input = document.getElementById('queryInput');
+    if (!input) return;
+    
+    // Método más simple y confiable
+    input.blur();
+    
+    // Solo deshabilitar momentáneamente para evitar reapertura
+    input.disabled = true;
+    setTimeout(() => {
+        input.disabled = false;
+        
+        // Desplazar un poco hacia arriba si es necesario
+        if (keyboardActive) {
+            window.scrollTo({ top: Math.max(0, window.scrollY - 50), behavior: 'smooth' });
+        }
+    }, 100);
+}
+
+// Función preparar fin de juego (sin tocar UI)
+async function prepareForGameEnd() {
+    if (gameEnding) return;
+    
+    gameEnding = true;
+    
+    // 1. Ocultar teclado inmediatamente
+    hideKeyboardSmoothly();
+    
+    // 2. Pequeña pausa para que se oculte
+    return new Promise(resolve => {
+        setTimeout(() => {
+            gameEnding = false;
+            resolve();
+        }, 300);
+    });
+}
+
+// Detección MUY básica - solo para registro
+function setupKeyboardDetection() {
+    const input = document.getElementById('queryInput');
+    if (!input) return;
+    
+    // Solo monitorear, no modificar UI
+    input.addEventListener('focus', () => {
+        keyboardActive = true;
+        console.log('Teclado activo');
+    });
+    
+    input.addEventListener('blur', () => {
+        keyboardActive = false;
+        console.log('Teclado inactivo');
+    });
+}
+
+// === REEMPLAZAR las funciones de endGame e initGame como antes ===
+
+// CSS MINIMALISTA (agregar al final del <style> existente)
 /* ========================================== */
-/* === CONTROL DE TECLADO MEJORADO === */
+/* === CORRECCIÓN ESPACIO NEGRO - MÓVILES === */
 /* ========================================== */
 
-/* Input optimizado para móvil */
+/* ELIMINAR TODOS los estilos que modifican posición/altura */
+/* Solo mantener esto: */
+
+body.keyboard-active {
+    /* NO hacer nada especial - dejar que el navegador maneje el teclado */
+}
+
+/* Asegurar que los inputs sean fácilmente tocables */
 #queryInput {
-    -webkit-user-select: text !important;
-    user-select: text !important;
-    -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
-    tap-highlight-color: rgba(0,0,0,0) !important;
     font-size: 16px !important; /* Previene zoom en iOS */
     min-height: 44px !important; /* Tamaño mínimo táctil */
+    padding: 12px 8px !important;
 }
 
-/* Ocultar elementos no esenciales cuando hay teclado */
-.keyboard-active #case-info-bar {
-    opacity: 0.7 !important;
-    transform: translateY(-5px) !important;
-    transition: all 0.3s ease !important;
+/* Pequeño ajuste para tablets */
+@media (max-height: 800px) {
+    .board-grid.mode-5 .card-body {
+        font-size: 0.7rem !important;
+    }
 }
 
-/* Para iOS específicamente */
+/* Para iOS - prevenir bounce scroll cuando hay teclado */
 @supports (-webkit-touch-callout: none) {
-    body.keyboard-active {
-        height: -webkit-fill-available !important;
-    }
-    
-    #queryInput {
-        font-size: 16px !important; /* Forzar tamaño para evitar zoom */
-        transform: translateZ(0) !important; /* Aceleración hardware */
-    }
-    
-    /* Prevenir bounce scroll en iOS */
-    .keyboard-active .board-grid {
-        -webkit-overflow-scrolling: touch !important;
-    }
-}
-
-/* Para Android específicamente */
-@media (hover: none) and (pointer: coarse) {
-    .keyboard-active {
-        overscroll-behavior: none !important;
-    }
-    
-    #queryInput {
-        caret-color: var(--gold) !important; /* Mejor visibilidad */
+    body {
+        overscroll-behavior-y: contain !important;
     }
 }
 
@@ -3418,26 +3466,30 @@ openSettings = function() {
         }
         
         // Inicializar cuando se cargue el juego
+// Al final del script existente, reemplaza la inicialización:
 document.addEventListener('DOMContentLoaded', () => {
-    // Esperar a que la UI esté lista
-    setTimeout(() => {
-        setupKeyboardDetection();
-        
-        // También inicializar cuando se muestre la UI principal
-        const mainUI = document.getElementById('main-ui');
-        if (mainUI) {
-            const observer = new MutationObserver(() => {
-                if (mainUI.style.display !== 'none') {
-                    setupKeyboardDetection();
-                }
-            });
-            
-            observer.observe(mainUI, {
-                attributes: true,
-                attributeFilter: ['style']
-            });
-        }
-    }, 1500);
+    // Configuración muy simple - solo para el input
+    const input = document.getElementById('queryInput');
+    if (input) {
+        input.addEventListener('focus', () => {
+            // Pequeño scroll para asegurar visibilidad
+            setTimeout(() => {
+                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        });
+    }
+    
+    // También inicializar cuando el juego comience
+    if (typeof initGame === 'function') {
+        const originalInit = initGame;
+        window.initGame = function() {
+            // Ocultar teclado primero
+            if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+                document.activeElement.blur();
+            }
+            return originalInit.apply(this, arguments);
+        };
+    }
 });
 
 // Manejar cambios de orientación
