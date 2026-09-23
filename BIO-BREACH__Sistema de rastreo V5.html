@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BIO-BREACH: ONLINE SURVIVAL V8.2 - WARFARE UPDATE</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Special+Elite&display=swap" rel="stylesheet">
         <style>
         /* === NUEVO: CORRECCIÓN DE INTERFAZ NATIVA === */
         /* Esto elimina el color azul al tocar y el borde de selección */
@@ -20,6 +23,12 @@
         }
                     
         :root {
+            /* TIPOGRAFÍA: una máquina de escribir gastada para el cuerpo/terminal,
+               un titular de rotativo para lo dramático. Si la fuente web no carga,
+               cae de vuelta en las mismas familias que ya tenía el proyecto. */
+            --font-mono: 'Special Elite', 'Courier New', Courier, monospace;
+            --font-display: 'Oswald', 'Impact', 'Arial Narrow Bold', sans-serif;
+
             /* PALETA NOIR / DETECTIVE 40s */
             --gold: #d6b066;          /* Amarillo Opaco (Carpeta Manila/Oro viejo) */
             --dark-red: #660000;      /* Rojo Sangre Seca */
@@ -73,7 +82,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
         }
         .cmd-item:hover {
             background: var(--gold);
@@ -103,7 +112,7 @@
             z-index: 8000; display: none;
             text-transform: uppercase;
             letter-spacing: 3px;
-            font-family: 'Impact', sans-serif; /* Estilo titular periódico */
+            font-family: var(--font-display); /* Estilo titular periódico */
             pointer-events: none;
             box-shadow: 0 10px 20px rgba(0,0,0,0.8);
             animation: glitch-anim 0.2s infinite;
@@ -125,7 +134,7 @@
             /* Patrón de "Ruido de película" o papel viejo sutil */
             background-image: repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255, 255, 255, 0.03) 1px, rgba(255, 255, 255, 0.03) 2px);
             margin: 0; padding: 10px;
-            font-family: 'Courier New', Courier, monospace; /* Tipografía Mecanografía */
+            font-family: var(--font-mono); /* Tipografía Mecanografía */
             color: #ddd;
             display: flex; flex-direction: column; align-items: center;
             overflow-x: hidden;
@@ -138,7 +147,7 @@
         .flying-point {
             position: fixed;
             color: var(--gold);
-            font-family: 'Impact', sans-serif;
+            font-family: var(--font-display);
             font-weight: normal;
             font-size: 1.8rem;
             pointer-events: none;
@@ -169,7 +178,7 @@
             z-index: 2000; display: none; opacity: 0;
             box-shadow: 5px 5px 0px rgba(0,0,0,0.5);
             pointer-events: none;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             text-transform: uppercase;
         }
         
@@ -204,7 +213,7 @@
             text-transform: uppercase;
             animation: pulseText 3s infinite;
             text-shadow: 2px 2px 0px #000;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             border-bottom: 2px solid var(--gold);
             padding-bottom: 5px;
             pointer-events: none;
@@ -233,7 +242,7 @@
             color: var(--gold); font-size: 1.2rem; letter-spacing: 3px;
             animation: blink 0.8s infinite;
             margin-top: 15px;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
         }
 
         /* --- PANTALLA DE LOGIN --- */
@@ -251,7 +260,7 @@
             border: 2px solid #555; 
             color: #000; /* Tinta negra */
             padding: 15px; 
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             font-weight: bold;
             font-size: 1.2rem;
             text-align: center; 
@@ -286,18 +295,35 @@
         }
         
         .currency { color: var(--gold); font-size: 1.2rem; font-weight: bold; }
-        .agent-id { color: #888; font-size: 0.7rem; letter-spacing: 1px; font-family: 'Courier New', monospace;}
+        .agent-id { color: #888; font-size: 0.7rem; letter-spacing: 1px; font-family: var(--font-mono);}
         .agent-name { color: var(--terminal-green); font-size: 1rem; font-weight: bold; text-transform: uppercase;}
 
         #main-menu {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            /* Estilo Noir: Sombra dramática */
-            background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+            /* Estilo Noir: Sombra dramática + un halo tenue detrás del título */
+            background:
+                radial-gradient(ellipse 60% 45% at 50% 40%, rgba(214,176,102,0.08) 0%, transparent 70%),
+                linear-gradient(135deg, #000 0%, #1a1a1a 100%);
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
             z-index: 3000;
             transition: opacity 0.5s ease;
+            overflow: hidden;
+        }
+        #main-menu::before {
+            /* mismo grano de película que el resto de la app: el menú no debe sentirse más plano que el juego */
+            content: '';
+            position: absolute; inset: 0; z-index: -1;
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255,255,255,0.025) 1px, rgba(255,255,255,0.025) 2px);
+            pointer-events: none;
+        }
+        #main-menu::after {
+            /* viñeta: oscurece los bordes para dar sensación de foco y profundidad */
+            content: '';
+            position: absolute; inset: 0; z-index: -1;
+            box-shadow: inset 0 0 160px 40px rgba(0,0,0,0.8);
+            pointer-events: none;
         }
 
         .menu-title {
@@ -307,7 +333,7 @@
             margin-bottom: 50px; text-align: center; letter-spacing: 5px;
             line-height: 1.2;
             padding: 0 20px;
-            font-family: 'Impact', 'Arial Black', sans-serif;
+            font-family: var(--font-display);
             text-transform: uppercase;
         }
 
@@ -322,7 +348,7 @@
             padding: 20px 60px; font-size: 1.5rem; font-weight: bold;
             cursor: pointer; text-transform: uppercase; letter-spacing: 3px;
             transition: all 0.2s; width: 100%;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             box-shadow: 6px 6px 0px #000; /* Botón físico */
         }
         .btn-play:active { transform: translate(2px, 2px); box-shadow: 4px 4px 0px #000; }
@@ -332,7 +358,7 @@
             padding: 10px 40px; font-size: 1rem; font-weight: bold;
             cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
             transition: all 0.2s;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             box-shadow: 4px 4px 0px #000;
         }
         .btn-exit:hover { background: #444; color: white; }
@@ -412,7 +438,7 @@
             font-size: 1.7rem;
             width: 330px;
             font-weight: bold;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             text-transform: uppercase;
             cursor: pointer;
             z-index: 20;
@@ -465,18 +491,18 @@
         }
 
         .mode-info { padding: 20px; text-align: center; }
-        .mode-title { color: var(--gold); font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; font-family: 'Courier New', monospace;}
-        .mode-desc { color: #999; font-size: 0.8rem; line-height: 1.4; font-family: 'Courier New', monospace;}
+        .mode-title { color: var(--gold); font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; font-family: var(--font-mono);}
+        .mode-desc { color: #999; font-size: 0.8rem; line-height: 1.4; font-family: var(--font-mono);}
 
         .lobby-status-box {
             border: 2px dashed var(--victory); background: rgba(143, 188, 143, 0.05);
             padding: 20px; width: 100%; max-width: 500px; text-align: center;
             margin-bottom: 20px;
         }
-        .room-code-display { font-size: 2rem; color: var(--gold); letter-spacing: 5px; margin: 10px 0; font-weight: bold; user-select: text; word-break: break-all; font-family: 'Courier New'; border-bottom: 1px solid #444;}
+        .room-code-display { font-size: 2rem; color: var(--gold); letter-spacing: 5px; margin: 10px 0; font-weight: bold; user-select: text; word-break: break-all; font-family: var(--font-mono); border-bottom: 1px solid #444;}
         
         .player-list { list-style: none; padding: 0; text-align: left; }
-        .player-list li { border-bottom: 1px solid #333; padding: 5px; display: flex; justify-content: space-between; font-family: 'Courier New';}
+        .player-list li { border-bottom: 1px solid #333; padding: 5px; display: flex; justify-content: space-between; font-family: var(--font-mono);}
         .player-ready { color: var(--victory); font-weight: bold; text-transform: uppercase; }
 
         /* Range Slider (Estilo analógico) */
@@ -493,7 +519,7 @@
         }
         .time-display {
             font-size: 1.2rem; color: var(--ranking-blue); font-weight: bold; margin-bottom: 10px;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
         }
 
         /* Bloqueo visual */
@@ -535,7 +561,7 @@
                 .mosaic-options { display: flex; gap: 15px; margin: 20px 0; flex-wrap: wrap; justify-content: center;}
         .mosaic-btn {
             background: #ccc; border: 2px solid #555; color: #333;
-            padding: 15px 25px; cursor: pointer; font-family: 'Courier New', monospace;
+            padding: 15px 25px; cursor: pointer; font-family: var(--font-mono);
             font-weight: bold;
         }
         .mosaic-btn.active { border-color: #000; color: #000; background: var(--gold); box-shadow: 3px 3px 0px #000; }
@@ -546,7 +572,7 @@
         }
         .tab-btn {
             flex: 1; padding: 10px; background: #222; color: #666; 
-            border: none; cursor: pointer; font-family: 'Courier New', monospace; font-weight: bold;
+            border: none; cursor: pointer; font-family: var(--font-mono); font-weight: bold;
             transition: all 0.3s;
         }
         .tab-btn.active-tab {
@@ -590,7 +616,7 @@
         }
         .wall-title-text {
             color: #eee; font-size: 1.5rem; letter-spacing: 4px; 
-            text-transform: uppercase; font-weight: bold; font-family: 'Courier New';
+            text-transform: uppercase; font-weight: bold; font-family: var(--font-mono);
         }
 
         .wall-grid {
@@ -633,7 +659,7 @@
         }
         .mugshot-icon { font-size: 2rem; color: #333; }
         
-        .wall-info { font-family: 'Courier New', monospace; font-size: 0.55rem; line-height: 1.3; text-align: left; }
+        .wall-info { font-family: var(--font-mono); font-size: 0.55rem; line-height: 1.3; text-align: left; }
         .wall-info b { color: #000; font-weight: 800; }
         
         .stamp-solved {
@@ -641,7 +667,7 @@
             border: 3px solid var(--dark-red); color: var(--dark-red);
             font-size: 0.8rem; font-weight: bold; padding: 2px 6px;
             transform: rotate(-15deg); opacity: 0.8;
-            font-family: 'Impact', sans-serif; letter-spacing: 1px;
+            font-family: var(--font-display); letter-spacing: 1px;
             mask-image: url('data:image/svg+xml;utf8,<svg ...>'); /* Simulación de desgaste si fuera posible, por ahora borde solido */
         }
 
@@ -660,7 +686,7 @@
             background: rgba(20, 20, 20, 0.95);
             padding: 20px; margin: 20px 0; text-align: left;
             width: 100%; max-width: 400px;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             box-shadow: 0 0 15px rgba(0,0,0,0.8);
         }
         .dossier-header {
@@ -676,7 +702,7 @@
             transform: rotate(-5deg); display: inline-block;
             margin-top: 10px; font-size: 1.2rem;
             text-transform: uppercase;
-            font-family: 'Impact';
+            font-family: var(--font-display);
         }
 
         /* --- INTERFAZ PRINCIPAL --- */
@@ -811,7 +837,7 @@
             border-bottom: 1px solid #888; margin-bottom: 4px; 
             text-align: center; overflow: hidden; white-space: nowrap; 
             text-overflow: ellipsis; flex-shrink: 0;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             text-transform: uppercase;
         }
         .card-body { color: #333; word-wrap: break-word; flex-grow: 1; font-weight: 600;}
@@ -828,7 +854,7 @@
         #queryInput { 
             width: 100%; background: #000; border: 1px solid #555; 
             border-bottom: 1px solid var(--gold); 
-            color: #fff; padding: 8px; font-family: 'Courier New', monospace; 
+            color: #fff; padding: 8px; font-family: var(--font-mono); 
             outline: none; font-size: 16px; 
             margin-bottom: 5px;
         }
@@ -840,7 +866,7 @@
         .output { 
             color: var(--terminal-green); /* Blanco sucio */
             font-size: 0.75rem; min-height: 50px; margin-top: 5px; 
-            line-height: 1.3; font-family: 'Courier New', monospace;
+            line-height: 1.3; font-family: var(--font-mono);
         }
         
         .btn-main { 
@@ -848,7 +874,7 @@
             background: var(--gold); color: #000; 
             border: 2px solid #555; 
             font-weight: bold; cursor: pointer; text-transform: uppercase; 
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             box-shadow: 4px 4px 0px #000;
         }
         .btn-main:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px #000; }
@@ -859,12 +885,72 @@
             box-shadow: 2px 2px 0px #000;
         }
         .btn-abort:hover { background: #550000; border-color: var(--hazard); color: #fff;}
+
+        .action-row { display: flex; gap: 8px; margin-top: 10px; }
+        .action-row .btn-abort { margin-top: 0; flex: 1; }
+        .btn-close-case {
+            background: #1c3a1c; border: 1px solid var(--terminal-green); color: var(--terminal-green);
+            font-size: 0.8rem; padding: 10px; box-shadow: 2px 2px 0px #000;
+            flex: 1; cursor: pointer; font-family: var(--font-mono);
+            text-transform: uppercase; font-weight: bold;
+        }
+        .btn-close-case:hover { background: #245024; }
+        .btn-close-case:disabled, .btn-next-section:disabled {
+            opacity: 0.4; cursor: not-allowed; filter: grayscale(0.4);
+        }
+
+        /* --- SIGUIENTE SECCIÓN --- */
+        .btn-next-section {
+            background: #3a3210; border: 1px solid var(--gold); color: var(--gold);
+            font-size: 0.8rem; padding: 10px; box-shadow: 2px 2px 0px #000;
+            flex: 1; cursor: pointer; font-family: var(--font-mono);
+            text-transform: uppercase; font-weight: bold;
+        }
+        .btn-next-section:hover { background: #4a4018; }
+
+        /* --- PESTAÑAS DE SECCIÓN (GRUPO / RASGO / IDENTIDAD) --- */
+        #section-bar {
+            display: flex; width: 100%; gap: 4px; margin-bottom: 8px; flex-shrink: 0;
+        }
+        .section-tab {
+            flex: 1; text-align: center; font-family: var(--font-mono);
+            font-size: 0.62rem; font-weight: bold; letter-spacing: 1px;
+            color: #555; background: #161616; border: 1px solid #333;
+            padding: 5px 2px; text-transform: uppercase;
+            display: flex; align-items: center; justify-content: center; gap: 5px;
+            transition: all 0.3s;
+        }
+        .section-tab i {
+            font-style: normal; width: 15px; height: 15px; border-radius: 50%;
+            border: 1px solid #555; display: inline-flex; align-items: center; justify-content: center;
+            font-size: 0.6rem; flex-shrink: 0;
+        }
+        .section-tab.done { color: var(--victory); border-color: #2c4a2c; background: #142014; }
+        .section-tab.done i { border-color: var(--victory); background: var(--victory); color: #000; }
+        .section-tab.active { color: #000; background: var(--gold); border-color: #886600; box-shadow: 2px 2px 0px #000; }
+        .section-tab.active i { border-color: #000; background: #000; color: var(--gold); }
+
+        /* Foto que abandona el tablero al no haberse usado en un enlace de la sección */
+        .mug-card.leaving {
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            opacity: 0 !important;
+            transform: translate(-50%, -50%) scale(0.6) rotate(25deg) !important;
+            pointer-events: none;
+        }
+
+        .strong-pulse {
+            animation: strongPulse 0.9s ease-in-out 2;
+        }
+        @keyframes strongPulse {
+            0%, 100% { filter: drop-shadow(0 0 0 transparent); }
+            50% { filter: drop-shadow(0 0 4px var(--terminal-green)); }
+        }
         
         .btn-mini { 
             background: #222; color: #ccc; border: 1px solid #666; 
             padding: 4px 10px; font-size: 0.7rem; cursor: pointer; text-transform: uppercase;
             transition: all 0.2s;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
         }
         .btn-mini:hover { background: #fff; color: #000; }
 
@@ -877,7 +963,7 @@
 
         #preload-status {
             position: fixed; bottom: 10px; left: 10px;
-            font-size: 0.6rem; color: #444; font-family: 'Courier New';
+            font-size: 0.6rem; color: #444; font-family: var(--font-mono);
         }
 
         @keyframes blink { 0% { opacity: 0.2; } 50% { opacity: 1; } 100% { opacity: 0.2; } }
@@ -1218,6 +1304,487 @@ body.game-ending {
     transform: translateY(100%) !important;
     transition: transform 0.4s ease !important;
 } 
+
+/* ============================================
+   CORRECCIÓN DE ESCALA: ALTURA REAL EN MÓVILES
+   (100vh se rompe cuando la barra del navegador
+   aparece/desaparece; 100dvh sigue el viewport real)
+   ============================================ */
+@supports (height: 100dvh) {
+    .machine-body { max-height: calc(100dvh - 20px); }
+    @media (max-width: 768px) {
+        .machine-body { height: 100dvh; max-height: 100dvh; }
+    }
+}
+
+/* ============================================
+   NUEVO: TABLERO DISPERSO ESTILO CORCHO
+   ============================================ */
+.corkboard-wrapper {
+    position: relative;
+    flex-grow: 1;
+    min-height: 280px;
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid #333;
+    margin-bottom: 10px;
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.7);
+    touch-action: none;
+    cursor: grab;
+}
+.corkboard-wrapper:active { cursor: grabbing; }
+@media (max-height: 700px) {
+    .corkboard-wrapper { min-height: 220px; }
+}
+
+.corkboard-canvas {
+    position: absolute;
+    top: 0; left: 0;
+    will-change: transform;
+}
+
+.corkboard {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: var(--cork-bg);
+    background-image:
+        radial-gradient(rgba(0,0,0,0.32) 1px, transparent 1.6px),
+        radial-gradient(rgba(0,0,0,0.22) 1.5px, transparent 2.2px),
+        radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1.6px);
+    background-size: 7px 7px, 13px 13px, 5px 5px;
+    background-position: 0 0, 4px 6px, 2px 3px;
+}
+
+#string-layer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 15;
+    overflow: visible;
+}
+
+.perm-string, #temp-dangle-string, .falling-string {
+    fill: none;
+    stroke-width: 2.6;
+    stroke-linecap: round;
+    filter: drop-shadow(1px 2px 1px rgba(0,0,0,0.6));
+}
+#temp-dangle-string { opacity: 0.9; stroke-dasharray: none; }
+.falling-string { stroke: #8a1414 !important; }
+
+.tack {
+    stroke: #2a2a2a;
+    stroke-width: 1;
+    filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.6));
+}
+
+.dangle-handle {
+    filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.7));
+    animation: dangleInvite 1.4s ease-in-out infinite;
+}
+@keyframes dangleInvite {
+    0%, 100% { r: 8; }
+    50% { r: 9.2; }
+}
+
+/* --- FOTOS DE EXPEDIENTE (MUGSHOTS) --- */
+.mug-card {
+    position: absolute;
+    width: clamp(58px, 15vw, 92px);
+    cursor: pointer;
+    user-select: none;
+    z-index: 10;
+    transition: filter 0.4s ease, opacity 0.4s ease;
+}
+
+.mug-photo {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3/4;
+    background:
+        repeating-linear-gradient(90deg, rgba(0,0,0,0.12) 0 1px, transparent 1px 10%),
+        linear-gradient(#9a968c, #7c7972);
+    border: 2px solid #111;
+    box-shadow: 3px 3px 0 rgba(0,0,0,0.6);
+    overflow: hidden;
+    filter: grayscale(100%) contrast(1.15) sepia(0.12);
+}
+.mug-silhouette { position: absolute; bottom: 0; left: 0; width: 100%; height: 82%; }
+.mug-question {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 6vw, 2.6rem);
+    color: var(--gold);
+    text-shadow: 2px 2px 0 #000;
+    opacity: 0.95;
+}
+.mug-plate {
+    margin-top: 4px;
+    background: #e6e0d4;
+    color: #111;
+    font-family: var(--font-mono);
+    font-weight: bold;
+    font-size: clamp(0.5rem, 2.4vw, 0.7rem);
+    text-align: center;
+    padding: 2px 3px;
+    border: 1px solid #999;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+}
+.mug-card .gender-banner { top: -2px; right: -2px; }
+
+.mug-card.discarded {
+    filter: grayscale(1) brightness(0.45);
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.mug-card.reject-flash .mug-photo {
+    animation: rejectShake 0.35s ease;
+    border-color: var(--hazard);
+}
+@keyframes rejectShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+}
+
+/* ============================================
+   MÁQUINA DE FRENTE — TERMINAL VINTAGE
+   La pantalla solo muestra estado/proceso; la
+   respuesta SÍ/NO sale impresa en el papel.
+   ============================================ */
+.oracle-machine {
+    flex-shrink: 0;
+    width: auto;
+    max-width: 92%;
+    margin: 8px auto 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+@media (max-height: 620px) {
+    .oracle-machine { display: none; }
+}
+
+.oracle-body {
+    position: relative;
+    width: auto;
+    background: linear-gradient(#7c8567, #5f6a4d 55%, #4a533b);
+    border: 2px solid #2c3120;
+    border-radius: 12px;
+    box-shadow:
+        0 5px 0 #333a26,
+        0 8px 12px rgba(0,0,0,0.6),
+        inset 0 2px 3px rgba(255,255,255,0.15);
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-sizing: border-box;
+}
+.oracle-top-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.oracle-bottom-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-left: 2px;
+}
+.oracle-screen-frame {
+    flex-shrink: 0;
+    width: 78px;
+    height: 62px;
+    background: #16150f;
+    border-radius: 10px;
+    border: 3px solid #0a0a08;
+    box-shadow: inset 0 0 8px rgba(0,0,0,0.9), 0 1px 0 rgba(255,255,255,0.1);
+    padding: 3px;
+    box-sizing: border-box;
+}
+.oracle-screen {
+    position: relative;
+    width: 100%; height: 100%;
+    border-radius: 6px;
+    background: radial-gradient(circle at 40% 35%, #2a2f28, #0a0c08 75%);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.oracle-noise {
+    position: absolute; inset: 0;
+    background-image:
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,0.16) 0%, transparent 1.2%),
+        radial-gradient(circle at 60% 70%, rgba(255,255,255,0.12) 0%, transparent 1.2%),
+        radial-gradient(circle at 80% 20%, rgba(255,255,255,0.18) 0%, transparent 1.2%),
+        radial-gradient(circle at 35% 80%, rgba(255,255,255,0.14) 0%, transparent 1.2%);
+    background-size: 7px 7px, 9px 9px, 6px 6px, 8px 8px;
+    animation: staticFlicker 0.12s steps(2) infinite;
+    opacity: 0.55;
+}
+@keyframes staticFlicker {
+    0% { background-position: 0 0, 0 0, 0 0, 0 0; }
+    100% { background-position: 7px 5px, -9px 6px, 5px -7px, -6px 4px; }
+}
+.oracle-status {
+    position: relative;
+    z-index: 2;
+    font-family: var(--font-mono);
+    font-size: 0.42rem;
+    color: #9fdc9f;
+    text-shadow: 0 0 4px #4a4;
+    text-align: center;
+    letter-spacing: 0.5px;
+    padding: 0 4px;
+    line-height: 1.2;
+}
+.oracle-side-panel {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+.oracle-dial-row { display: flex; gap: 6px; }
+.oracle-dial {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #e2e2e2, #8a8a8a 70%);
+    border: 1.5px solid #333;
+    box-shadow: 0 1px 0 #222, inset 0 0 2px rgba(0,0,0,0.4);
+    position: relative;
+    flex-shrink: 0;
+}
+.oracle-dial::after {
+    content: '';
+    position: absolute; top: 15%; left: 50%;
+    width: 1.5px; height: 35%;
+    background: #333;
+    transform: translateX(-50%);
+}
+.oracle-dial.small { width: 12px; height: 12px; }
+.oracle-switches { display: flex; gap: 5px; }
+.oracle-switch {
+    width: 5px; height: 11px;
+    background: linear-gradient(#333,#111);
+    border: 1px solid #000;
+    border-radius: 1px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+.oracle-power-btn {
+    flex-shrink: 0;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #e6c98a, #8a6a2a 70%);
+    border: 1.5px solid #2a2a2a;
+    box-shadow: 0 1px 0 #1a1a1a, inset 0 0 2px rgba(0,0,0,0.4);
+}
+.oracle-mini-btn {
+    flex-shrink: 0;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #cfcac0, #706b60 70%);
+    border: 1px solid #2a2a2a;
+    box-shadow: 0 1px 0 #1a1a1a;
+}
+.oracle-plate {
+    background: #cfc9b8;
+    color: #2a2a2a;
+    font-family: var(--font-mono);
+    font-weight: bold;
+    font-size: 0.5rem;
+    letter-spacing: 1.2px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    border: 1px solid #8a8570;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+    margin-left: 4px;
+}
+
+/* Impresora: la hoja sale por el borde DERECHO de la máquina, no por abajo */
+.oracle-printer-slot {
+    flex-shrink: 0;
+    width: 6px;
+    height: 46px;
+    background: #14150f;
+    border-radius: 2px;
+    box-shadow: inset 0 0 3px rgba(0,0,0,0.8);
+}
+.oracle-paper {
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    width: 100px;
+    background: #efe8d4;
+    background-image: repeating-linear-gradient(180deg, rgba(0,0,0,0.05) 0 1px, transparent 1px 5px);
+    color: #222;
+    font-family: var(--font-mono);
+    font-size: 0.5rem;
+    line-height: 1.25;
+    text-align: center;
+    padding: 6px 5px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.5);
+    border-radius: 0 0 3px 3px;
+    word-break: break-word;
+    z-index: 3;
+    opacity: 0;
+    transform: translateY(-50%) translateX(-20px);
+    transform-origin: left center;
+    transition: transform 1s cubic-bezier(.22,.85,.32,1), opacity 0.35s ease;
+}
+.oracle-paper.paper-eject {
+    opacity: 1;
+    transform: translateY(-50%) translateX(80px);
+}
+
+/* ============================================
+   BLOC DE NOTAS
+   ============================================ */
+.machine-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    width: 100%;
+    flex-shrink: 0;
+}
+.notebook-icon {
+    justify-self: center;
+    width: 44px; height: 56px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    filter: drop-shadow(0 5px 5px rgba(0,0,0,0.45));
+}
+.notebook-icon-cover {
+    position: relative;
+    width: 36px; height: 48px;
+    background: linear-gradient(135deg, #8fd8f8, #3ea0d8 55%, #1c6fa0);
+    border-radius: 3px 6px 6px 3px;
+    box-shadow:
+        inset -4px 0 5px rgba(0,0,0,0.3),
+        inset 0 0 0 1px rgba(255,255,255,0.35),
+        2px 2px 0 rgba(15,60,90,0.55);
+}
+.notebook-icon-cover::before {
+    /* espiral del cuaderno */
+    content: '';
+    position: absolute; left: 1px; top: 4px; bottom: 4px; width: 5px;
+    background-image: radial-gradient(circle, #eef7fc 35%, transparent 40%);
+    background-size: 5px 7px;
+    background-repeat: repeat-y;
+    opacity: 0.95;
+}
+.notebook-icon-cover::after {
+    /* rayas de la hoja, visibles sobre la tapa celeste (como el icono de Notepad) */
+    content: '';
+    position: absolute; left: 7px; right: 3px; top: 15px; bottom: 6px;
+    background: repeating-linear-gradient(180deg, rgba(255,255,255,0.85) 0 3px, transparent 3px 7px);
+    border-radius: 0 1px 1px 0;
+}
+@media (max-height: 620px) {
+    .machine-row .notebook-icon { display: none; }
+}
+/* En computadora: el bloc de notas queda fijo en el borde derecho, siempre visible */
+@media (min-width: 769px) {
+    .machine-row .notebook-icon {
+        position: fixed;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 500;
+        display: flex;
+    }
+}
+
+#notebook-modal {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 9500;
+    align-items: center; justify-content: center;
+    padding: 20px;
+}
+.notebook-window {
+    position: relative;
+    width: 100%; max-width: 260px;
+    background: #eef7fc;
+    border: 2px solid #1c4a66;
+    border-radius: 4px;
+    box-shadow: 8px 10px 0 rgba(0,0,0,0.5);
+    padding: 6px 14px 44px;
+    min-height: 420px;
+    display: flex;
+    flex-direction: column;
+}
+.notebook-close {
+    position: absolute; top: -12px; right: -12px;
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 2px solid #1c4a66; background: #fff; color: #1c4a66;
+    font-weight: bold; cursor: pointer; z-index: 4;
+}
+.notebook-stack {
+    height: 0;
+    flex-shrink: 0;
+    overflow: hidden;
+    transition: height 0.45s ease;
+    background-image: repeating-linear-gradient(180deg, #bfe4f7 0 3px, #8fcdec 3px 4px);
+    border-radius: 2px 2px 0 0;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.15);
+}
+.notebook-page-wrap {
+    position: relative;
+    flex-grow: 1;
+    margin-top: 4px;
+    perspective: 700px;
+}
+.notebook-page {
+    position: absolute; inset: 0;
+    /* Papel celeste rayado: línea azul horizontal cada renglón + margen rojo, como un bloc clásico */
+    background-color: #fbfdfe;
+    background-image:
+        repeating-linear-gradient(180deg, transparent 0 27px, rgba(43,110,168,0.4) 27px 28px),
+        linear-gradient(90deg, transparent 0 30px, rgba(196,60,60,0.35) 30px 31px, transparent 31px);
+    transform-origin: top center;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    transition: transform 0.5s cubic-bezier(.45,0,.2,1);
+}
+.notebook-page.flipping {
+    transform: rotateX(-165deg);
+}
+.notebook-textarea {
+    width: 100%; height: 100%; min-height: 260px;
+    border: none; background: transparent; resize: none;
+    font-family: var(--font-mono); font-size: 0.95rem; color: #1a2c3a;
+    line-height: 28px;
+    padding-left: 36px;
+    outline: none;
+}
+.notebook-page-corner {
+    position: absolute;
+    right: 6px; bottom: 6px;
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, transparent 50%, #bfe4f7 52%);
+    border-radius: 0 0 4px 0;
+    cursor: pointer;
+    box-shadow: -1px -1px 3px rgba(0,0,0,0.2);
+}
+.notebook-page-indicator {
+    position: absolute;
+    left: 14px; bottom: 14px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem; color: #3a6a86;
+}
     </style>                                    
 </head>
 <body>
@@ -1231,17 +1798,17 @@ body.game-ending {
              style="width: 100%; max-width: 500px; margin: 0 auto 30px; display: block; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.7));">
         
         <!-- Mensaje de Texto -->
-        <div style="color: var(--hazard); font-size: 2.8rem; font-weight: bold; text-transform: uppercase; letter-spacing: 4px; font-family: 'Impact', sans-serif; text-shadow: 0 0 15px rgba(255, 0, 0, 0.8); margin-top: 20px;">
+        <div style="color: var(--hazard); font-size: 2.8rem; font-weight: bold; text-transform: uppercase; letter-spacing: 4px; font-family: var(--font-display); text-shadow: 0 0 15px rgba(255, 0, 0, 0.8); margin-top: 20px;">
             ¡EL AGENTE RIVAL HA COMPLETADO UN CASO!
         </div>
         
         <!-- Subtítulo -->
-        <div style="color: var(--gold); font-size: 1.2rem; font-family: 'Courier New', monospace; margin-top: 15px; letter-spacing: 2px;">
+        <div style="color: var(--gold); font-size: 1.2rem; font-family: var(--font-mono); margin-top: 15px; letter-spacing: 2px;">
             ¡ACELERA EL RITMO! ¡NO SE DESANIME AGENTE!
                     </div>
         
         <!-- Contador de tiempo -->
-        <div id="rival-alert-timer" style="color: var(--terminal-green); font-size: 1rem; margin-top: 20px; font-family: 'Courier New', monospace;">
+        <div id="rival-alert-timer" style="color: var(--terminal-green); font-size: 1rem; margin-top: 20px; font-family: var(--font-mono);">
             DESAPARECE EN <span style="color: var(--hazard); font-weight: bold;">3</span> SEGUNDOS
         </div>
     </div>
@@ -1345,7 +1912,7 @@ body.game-ending {
     <div class="tutorial-box" style="max-width: 450px; border-color: #333; position: relative;">
         <h2 id="md-title" style="color: #1a1a1a; text-transform: uppercase; margin-top: 0; border-bottom: 2px solid #999; padding-bottom: 10px;">TÍTULO MODO</h2>
         
-        <p id="md-desc" style="color: #1a1a1a; font-size: 0.95rem; margin: 20px 0; line-height: 1.5; font-family: 'Courier New', monospace; font-weight: normal;">
+        <p id="md-desc" style="color: #1a1a1a; font-size: 0.95rem; margin: 20px 0; line-height: 1.5; font-family: var(--font-mono); font-weight: normal;">
             Descripción...
         </p>
         
@@ -1429,19 +1996,6 @@ body.game-ending {
 
         <div id="settings-modal">
         <div class="tutorial-box" style="padding: 0; overflow: hidden; background: #e6e6e6;">
-                <div id="custom-confirm" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10000; align-items: center; justify-content: center;">
-        <div style="background: #1a1a1a; border: 2px solid var(--gold); padding: 20px; width: 80%; max-width: 300px; text-align: center; box-shadow: 0 0 20px rgba(214, 176, 102, 0.3);">
-            <h3 style="color: var(--gold); font-family: 'Courier New', monospace; margin-top: 0; font-size: 0.9rem; letter-spacing: 2px;">ADVERTENCIA DE ORGANIZACIÓN DE DATOS</h3>
-            <p style="color: #ccc; font-family: 'Courier New', monospace; font-size: 0.8rem; margin: 20px 0; line-height: 1.4;">
-                ¿ESTÁS SEGUR@ DE APLICAR LOS SIGUIENTES CAMBIOS? EL MODO LEGADO PUEDE ALTERAR LA ESTABILIDAD VISUAL.
-            </p>
-            <div style="display: flex; gap: 10px; justify-content: center;">
-                <button id="confirm-yes" class="btn-main" style="padding: 10px 15px; font-size: 0.7rem; background: var(--gold); color: #000;">PROCEDER</button>
-                <button id="confirm-no" class="btn-main" style="padding: 10px 15px; font-size: 0.7rem; background: #333; color: var(--gold); border-color: var(--gold);">DENEGAR</button>
-            </div>
-        </div>
-    </div>    
-            
             <div class="settings-tabs">
                 <button id="tab-btn-visual" class="tab-btn" style="display: none;" onclick="switchSettingsTab('visual')">VISUAL</button>
                 
@@ -1454,13 +2008,7 @@ body.game-ending {
                 <h2 style="color: var(--gold); margin-top: 0; text-shadow: 1px 1px 0 #000;">CONFIGURACIÓN</h2>
                 
                 <div id="panel-visual" class="settings-content-panel">
-                    <p style="color:#555; font-size: 0.8rem; margin-bottom: 10px;">DENSIDAD DE OBJETIVOS</p>
-                    <div class="mosaic-options">
-                        <button class="mosaic-btn" id="btn-mode-2" onclick="selectMosaic(2)">2x2</button>
-                        <button class="mosaic-btn" id="btn-mode-3" onclick="selectMosaic(3)">3x3</button>
-                        <button class="mosaic-btn active" id="btn-mode-5" onclick="selectMosaic(5)">5x5</button>
-                    </div>
-                    <p id="mosaic-desc" style="font-size: 0.7rem; color: #333; min-height: 20px; font-style: italic;">ESTÁNDAR: Vista completa, sin deslizamiento.</p>
+                    <!-- Espacio reservado: antes "densidad de mosaicos", pendiente de una nueva función -->
                 </div>
 
                 <div id="panel-audio" class="settings-content-panel">
@@ -1488,22 +2036,6 @@ body.game-ending {
                 </div>
 
                 <div id="panel-extra" class="settings-content-panel active-panel">
-                    <div style="margin-bottom: 20px; border: 2px dashed #999; padding: 15px; background: #ddd;">
-                        <div style="margin-bottom: 20px; border: 2px dashed #999; padding: 15px; background: #ddd; display: flex; align-items: center; justify-content: space-between;">
-    <div>
-        <span style="color: #000; font-weight: bold; font-family: 'Courier New', monospace; display: block;">USAR MOSAICOS (LEGADO)</span>
-        </span>
-    </div>
-    
-    <label class="switch-container">
-        <input type="checkbox" id="toggle-legacy-mosaic" onchange="toggleLegacyMode(this)">
-        <span class="slider-switch"></span>
-    </label>
-</div>
-<p style="font-size: 0.7rem; color: #555; margin-top: 10px; line-height: 1.2;">
-    Al activar esta opción desbloqueas la pestaña "VISUAL" para cambiar la densidad del tablero.
-</p>
-                    </div>
                 </div>
 
                 <hr style="border: 0; border-top: 1px dashed #999; margin: 20px 0;">
@@ -1552,15 +2084,77 @@ body.game-ending {
             <button id="btn-new-case" class="btn-mini" onclick="initGame()">NUEVO CASO</button>
             
             <span style="color: var(--victory)">RECOMPENSA: <span id="case-reward-display">0</span> S/</span>
+            <span id="case-difficulty-display" style="color: var(--gold);"></span>
         </div>
-        <div class="board-grid mode-5" id="board"></div>
+        <div id="section-bar">
+            <span class="section-tab" data-n="1"><i>1</i>GRUPO</span>
+            <span class="section-tab" data-n="2"><i>2</i>RASGO</span>
+            <span class="section-tab" data-n="3"><i>3</i>IDENTIDAD</span>
+        </div>
+        <div class="corkboard-wrapper" id="corkboard-wrapper">
+            <div class="corkboard-canvas" id="corkboard-canvas">
+                <div class="corkboard" id="board"></div>
+                <svg id="string-layer"></svg>
+            </div>
+        </div>
         
         <div class="terminal-zone">
             <div id="cmd-suggestions"></div>
             <input type="text" id="queryInput" autocomplete="off" placeholder="INTERROGAR SISTEMA (¿...?)...">
             <div class="output" id="out">> AGUARDANDO COMANDOS...</div>
         </div>
-        <button class="btn-main btn-abort" onclick="openAbortModal()">ABORTAR CASO</button>
+        <div class="action-row">
+            <button class="btn-close-case" id="btn-close-case" onclick="evaluateAllLinks()" style="display:none;">🔎 CERRAR CASO</button>
+            <button class="btn-next-section" id="btn-next-section" onclick="goToNextSection()">➜ SIGUIENTE SECCIÓN</button>
+            <button class="btn-main btn-abort" onclick="openAbortModal()">ABORTAR CASO</button>
+        </div>
+
+        <div class="machine-row">
+            <div class="notebook-icon" id="notebook-icon" onclick="openNotebook()" title="Bloc de notas">
+                <div class="notebook-icon-cover"></div>
+            </div>
+            <div class="oracle-machine">
+            <div class="oracle-body">
+                <div class="oracle-top-row">
+                    <div class="oracle-screen-frame">
+                        <div class="oracle-screen">
+                            <div class="oracle-noise"></div>
+                            <div class="oracle-status" id="oracle-status">SISTEMA EN ESPERA</div>
+                        </div>
+                    </div>
+                    <div class="oracle-side-panel">
+                        <div class="oracle-dial-row">
+                            <div class="oracle-dial"></div>
+                            <div class="oracle-dial small"></div>
+                        </div>
+                        <div class="oracle-switches"><span class="oracle-switch"></span><span class="oracle-switch"></span></div>
+                    </div>
+                    <div class="oracle-power-btn"></div>
+                    <div class="oracle-printer-slot"></div>
+                </div>
+                <div class="oracle-bottom-row">
+                    <div class="oracle-mini-btn" title="TELÉFONO"></div>
+                    <div class="oracle-mini-btn" title="RUN"></div>
+                    <div class="oracle-plate">UNIDAD B-7</div>
+                </div>
+                <div class="oracle-paper" id="oracle-paper"><span id="oracle-paper-text"></span></div>
+            </div>
+            </div>
+        </div>
+
+        <div id="notebook-modal" onclick="if(event.target===this) closeNotebook();">
+            <div class="notebook-window">
+                <button class="notebook-close" onclick="closeNotebook()">✕</button>
+                <div class="notebook-stack" id="notebook-stack"></div>
+                <div class="notebook-page-wrap">
+                    <div class="notebook-page" id="notebook-page">
+                        <textarea id="notebook-page-text" class="notebook-textarea" placeholder="Escriba aquí sus notas..." onblur="saveCurrentNotebookPage()"></textarea>
+                    </div>
+                </div>
+                <div class="notebook-page-indicator" id="notebook-page-indicator">1 / 6</div>
+                <div class="notebook-page-corner" id="notebook-next-page" onclick="turnNotebookPage()" title="Página siguiente"></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -1980,29 +2574,6 @@ body.game-ending {
         // === FIN MOTOR DE AUDIO ===
         // ==========================================
         const CACHE_NAME = 'bio-breach-audio-v1';
-        
-        // === CORRECCIÓN DE GUARDADO ===
-// Recuperamos si el usuario tenía activado el modo 'Mosaicos Antiguos'
-let isLegacyMosaicActive = localStorage.getItem('bioBreachLegacyMosaic') === 'true';
-
-// Si está activo, intentamos cargar su modo (2, 3 o 5), si no, forzamos 5
-let savedMode = localStorage.getItem('bioBreachMosaicMode');
-let currentMosaicMode = (isLegacyMosaicActive && savedMode) ? parseInt(savedMode) : 5;
-let tempMosaicMode = currentMosaicMode;
-
-// === INICIALIZACIÓN DE INTERFAZ DE AJUSTES ===
-// Esto asegura que el checkbox aparezca marcado si se guardó así
-setTimeout(() => {
-    const legacyCheck = document.getElementById('toggle-legacy-mosaic');
-    const visualTab = document.getElementById('tab-btn-visual');
-    
-    if(legacyCheck && visualTab) {
-        legacyCheck.checked = isLegacyMosaicActive;
-        // Mostrar/Ocultar pestaña visual según el estado guardado
-        visualTab.style.display = isLegacyMosaicActive ? 'block' : 'none';
-    }
-}, 500); // Pequeño retraso para asegurar que el DOM cargó
-
         // --- VARIABLES DE AUDIO CORREGIDAS (modificadas para modo "temporal" durante ajustes) ---
 let volMaster = (localStorage.getItem('bioBreachVolMaster') !== null) ? parseFloat(localStorage.getItem('bioBreachVolMaster')) : 1.0;
 let volMusic  = (localStorage.getItem('bioBreachVolMusic') !== null) ? parseFloat(localStorage.getItem('bioBreachVolMusic')) : 0.6;
@@ -2044,6 +2615,12 @@ let tempVolSFX    = volSFX;
         let sabotageCmds = {}; 
         let sabotageUsageCount = 0; // NUEVO: Cuantos sabotajes he lanzado
         let successfulQueriesCount = 0; // NUEVO: Cuantas preguntas he hecho 
+        // === RECARGA DE LA MÁQUINA (cada 3 preguntas hay que esperar) ===
+        let questionsSinceRecharge = 0;
+        let isRecharging = false;
+        let rechargeInterval = null;
+        const RECHARGE_EVERY = 3;
+        const RECHARGE_SECONDS = 20;
         
         const SABOTAGE_DEFINITIONS = {
             'REORGANIZED': { desc: 'ALTERAR POSICIÓN FÍSICA DE TARJETAS' },
@@ -2193,18 +2770,6 @@ let tempVolSFX    = volSFX;
         function openSettings() {
             playSFX('click');
             document.getElementById('settings-modal').style.display = 'flex';
-            selectMosaic(currentMosaicMode); 
-        }
-
-        function selectMosaic(mode) {
-            playSFX('click');
-            tempMosaicMode = mode;
-            document.querySelectorAll('.mosaic-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`btn-mode-${mode}`).classList.add('active');
-            
-            const desc = document.getElementById('mosaic-desc');
-            if (mode === 5) desc.innerText = "ESTÁNDAR: Vista completa, sin deslizamiento.";
-            else desc.innerText = "ZOOM TÁCTICO: Tarjetas ampliadas, deslizamiento activo.";
         }
 
                 function saveSettings() {
@@ -2218,30 +2783,16 @@ let tempVolSFX    = volSFX;
     const prevMusic  = (localStorage.getItem('bioBreachVolMusic') !== null) ? parseFloat(localStorage.getItem('bioBreachVolMusic')) : volMusic;
     const prevSfx    = (localStorage.getItem('bioBreachVolSFX') !== null) ? parseFloat(localStorage.getItem('bioBreachVolSFX')) : volSFX;
 
-    const prevLegacy = localStorage.getItem('bioBreachLegacyMosaic') === 'true';
-    const prevMosaic = parseInt(localStorage.getItem('bioBreachMosaicMode') || '5');
-
-    const legacyCheckbox = document.getElementById('toggle-legacy-mosaic');
-    const newLegacy = !!(legacyCheckbox && legacyCheckbox.checked);
-
-    // Temp mosaic seleccionado desde selectMosaic()
-    // (tempMosaicMode ya existe en tu código)
-    const newMosaic = tempMosaicMode || 5;
-
-    // Detectar cambios: audio, legacy flag, y mosaic mode (si aplica)
+    // Detectar cambios de audio
     const audioChanged = (Math.abs(prevMaster - tempVolMaster) > 0.0001) ||
                          (Math.abs(prevMusic  - tempVolMusic)  > 0.0001) ||
                          (Math.abs(prevSfx    - tempVolSFX)    > 0.0001);
 
-    const legacyChanged = (prevLegacy !== newLegacy);
-    const mosaicChanged = (newLegacy && (prevMosaic !== newMosaic)) || (!newLegacy && prevMosaic !== 5);
-
-    // Si NO hubo cambios, cerramos sin mostrar la barra de carga
     // Si NO hubo cambios, cerramos sin sonido ni barra de carga
-if (!audioChanged && !legacyChanged && !mosaicChanged) {
-    document.getElementById('settings-modal').style.display = 'none';
-    return;
-}
+    if (!audioChanged) {
+        document.getElementById('settings-modal').style.display = 'none';
+        return;
+    }
 
     // Mostrar pantalla de carga porque hay cambios reales
     loadingScreen.style.display = 'flex';
@@ -2271,31 +2822,6 @@ if (!audioChanged && !legacyChanged && !mosaicChanged) {
             } catch (e) {
                 // si no existe la propiedad gain o falla, no interrumpimos el guardado
             }
-        }
-
-        // --- B) GUARDAR AJUSTES ADICIONALES (MOSAICOS) ---
-        localStorage.setItem('bioBreachLegacyMosaic', String(newLegacy));
-
-        // AGREGA JUSTO DESPUÉS:
-isLegacyMosaicActive = newLegacy;
-
-// Y en la sección que actualiza el tablero:
-if (newLegacy) {
-    // Aplicar el modo elegido temporalmente
-    currentMosaicMode = newMosaic;
-    localStorage.setItem('bioBreachMosaicMode', String(currentMosaicMode));
-} else {
-    // Si se desactiva, forzamos 5 Y activamos modo miniatura
-    currentMosaicMode = 5;
-    localStorage.setItem('bioBreachMosaicMode', '5');
-    // Nota: isLegacyMosaicActive ya se actualizó arriba a false
-}
-
-        // --- C) ACTUALIZAR TABLERO VISUALMENTE ---
-        const board = document.getElementById('board');
-        if (board) {
-            board.classList.remove('mode-2', 'mode-3', 'mode-5');
-            board.classList.add('mode-' + currentMosaicMode);
         }
 
         // 4. Finalizar: Ocultar modal y carga
@@ -2365,80 +2891,14 @@ openSettings = function() {
     if (sfxSlider) sfxSlider.value = tempVolSFX;
     const volDisplaySfx = document.getElementById('vol-display-sfx');
     if (volDisplaySfx) volDisplaySfx.innerText = Math.round(tempVolSFX * 100) + "%";
-
-    // También sincronizamos la pestaña visual con tempMosaicMode (si corresponde)
-    selectMosaic(tempMosaicMode);
 };
         // ------------------------------
-        
-                // ==========================================
-        // === NUEVO: LOGICA DE AJUSTES EXTRAS ===
-        // ==========================================
-                // Variable temporal para guardar la referencia del checkbox
-        let pendingLegacyCheckbox = null;
-
-        function toggleLegacyMode(checkbox) {
-            const visualTabBtn = document.getElementById('tab-btn-visual');
-            const confirmModal = document.getElementById('custom-confirm');
-
-            if (checkbox.checked) {
-                playSFX('click');
-                // Guardamos el checkbox en una variable para usarlo tras la confirmación
-                pendingLegacyCheckbox = checkbox;
-                confirmModal.style.display = 'flex';
-                
-                // Configuramos los botones del modal una sola vez
-                document.getElementById('confirm-yes').onclick = function() {
-                    playSFX('click');
-                    visualTabBtn.style.display = 'block';
-                    confirmModal.style.display = 'none';
-                };
-
-                document.getElementById('confirm-no').onclick = function() {
-                    playSFX('click');
-                    pendingLegacyCheckbox.checked = false; // Desmarcamos
-                    confirmModal.style.display = 'none';
-                };
-
-            } else {
-                playSFX('click');
-                visualTabBtn.style.display = 'none';
-                // Si estamos en la pestaña visual, saltamos a la de Extras
-                const visualPanel = document.getElementById('panel-visual');
-                if (visualPanel.classList.contains('active-panel')) {
-                    switchSettingsTab('extra');
-                }
-            }
-        }
-
-        function applyMosaicChange(newMode) {
-    const loading = document.getElementById('loading-screen');
-    const bar = document.getElementById('loader-progress');
-    loading.style.display = 'flex';
-    bar.style.width = "0%";
-    let progress = 0;
-    const interval = setInterval(() => {
-        progress += Math.random() * 15;
-        if(progress > 100) progress = 100;
-        bar.style.width = progress + "%";
-        if(progress === 100) {
-            clearInterval(interval);
-            setTimeout(() => {
-                currentMosaicMode = newMode;
-                // GUARDAR con la misma clave que el resto del sistema
-                localStorage.setItem('bioBreachMosaicMode', String(newMode));
-                updateBoardClass();
-                loading.style.display = 'none';
-                if(gameActive) renderBoard();
-            }, 500);
-        }
-    }, 100);
-}
 
         function updateBoardClass() {
+            // El tablero ahora es siempre el corcho disperso; esto ya no cambia el layout,
+            // solo se deja para no romper llamadas existentes desde Ajustes.
             const board = document.getElementById('board');
-            board.className = 'board-grid'; 
-            board.classList.add(`mode-${currentMosaicMode}`);
+            if (board) board.className = 'corkboard';
         }
         
         async function preloadAssets() {
@@ -2537,7 +2997,25 @@ openSettings = function() {
         }
 
         let personas = [], objetivo = null, gameActive = false;
+
+        // === SISTEMA DE SECCIONES (V5.9.13) ===
+        // El tablero se resuelve en 3 secciones. Cada sección exige al menos un enlace
+        // nuevo; solo los sospechosos usados en un enlace de la sección que termina
+        // pasan a la siguiente. "boardSuspects" es el subconjunto de "personas"
+        // actualmente en juego (arranca siendo el total y se va reduciendo).
+        let currentSection = 1;
+        const TOTAL_SECTIONS = 3;
+        let boardSuspects = [];
+        // Cada vez que un enlace queda completo (se suelta sobre otra foto) anota aquí
+        // su orden real de finalización, para poder hallar "la punta del último enlace"
+        // de la Sección 3 sin depender del orden en que se iniciaron las cintas.
+        let linkCompletionCounter = 0;
+        // === NUEVO: TABLERO DE CORCHO / SISTEMA DE CINTA ROJA ===
+        let boardPositions = {};   // nombre -> {x%, y%, rot}
+        let stringLinks = [];      // {a, b} pares ya unidos con cinta (para redibujar en resize)
+        let dragState = null;      // {fromName, downClientX, downClientY, moved}
         let currentReward = 0;
+        let currentCaseDifficulty = 1;
         let totalMoney = parseInt(localStorage.getItem('bioBreachMoney')) || 0;
         let isTyping = false;
         
@@ -2546,6 +3024,7 @@ openSettings = function() {
         let lastQueryText = "";   
         let matchPoints = 0; 
         let pointsPool = 0; 
+        let queryHistory = []; // {checkFunc, targetAnswer, label} de cada consulta exitosa (para evaluar los enlaces al cerrar el caso)
 
         async function typeWriter(text, elementId, speed = 20) {
             if (isTyping) return;
@@ -3068,16 +3547,13 @@ openSettings = function() {
             // LOGICA ESPECÍFICA POR COMANDO
             switch(effectName) {
                 case 'REORGANIZED':
-                    const board = document.getElementById('board');
-                    // Mezclar hijos del DOM
-                    for (let i = board.children.length; i >= 0; i--) {
-                        board.appendChild(board.children[Math.random() * i | 0]);
-                    }
+                    // Sacude el corcho: todas las fotos saltan a nuevas posiciones dispersas
+                    scatterReshuffle();
                     typeWriter("ADVERTENCIA: INTEGRIDAD ESTRUCTURAL DEL TABLERO COMPROMETIDA.", "out", 5);
                     break;
                     
                 case 'RESTORE':
-                    const discarded = Array.from(document.querySelectorAll('.suspect-card.discarded'));
+                    const discarded = Array.from(document.querySelectorAll('.mug-card.discarded'));
                     if(discarded.length > 0) {
                         // Barajar y tomar hasta 3
                         discarded.sort(() => Math.random() - 0.5);
@@ -3106,13 +3582,13 @@ openSettings = function() {
                     break;
                     
                 case 'ENCRYPTEDFILES':
-                    const bodies = document.querySelectorAll('.card-body');
+                    const bodies = document.querySelectorAll('.mug-plate');
                     bodies.forEach(b => {
                         b.setAttribute('data-original', b.innerHTML);
                         b.classList.add('sabotage-scramble');
                         // Generar texto basura
                         let trash = "";
-                        for(let i=0; i<30; i++) trash += String.fromCharCode(33 + Math.random()*30);
+                        for(let i=0; i<8; i++) trash += String.fromCharCode(33 + Math.random()*30);
                         b.innerHTML = trash;
                     });
                     
@@ -3129,7 +3605,7 @@ openSettings = function() {
     document.body.style.filter = "hue-rotate(180deg) invert(1)";
 
     // 2. Intercambio de clases para las cintas
-    const allRibbons = document.querySelectorAll('.gender-ribbon');
+    const allRibbons = document.querySelectorAll('.gender-banner');
     allRibbons.forEach(r => {
         if (r.classList.contains('ribbon-male')) {
             r.classList.remove('ribbon-male');
@@ -3145,7 +3621,7 @@ openSettings = function() {
         document.body.style.filter = "none";
 
         // 4. Restaurar clases de las cintas a su estado original
-        const activeRibbons = document.querySelectorAll('.gender-ribbon');
+        const activeRibbons = document.querySelectorAll('.gender-banner');
         activeRibbons.forEach(r => {
             if (r.classList.contains('ribbon-male')) {
                 r.classList.remove('ribbon-male');
@@ -3213,14 +3689,22 @@ openSettings = function() {
                 tContent.innerHTML = `
                     <div class="step" style="border-left-color: var(--ranking-blue);">
                         <b>1. SUPERVIVENCIA</b>
-                        El reloj cuenta hacia atrás. Resuelve tantos casos como puedas antes de que llegue a cero.
+                        El reloj cuenta hacia atrás. Resuelve tantos casos como puedas antes de que llegue a cero. Además, la máquina necesita recargar cada 3 preguntas.
+                    </div>
+                    <div class="step">
+                        <b>2. ENLACE POR PISTAS</b>
+                        Toque una foto, pulse "ENLAZAR" y arrastre la cinta hasta otra foto para agrupar sospechosos que crea que comparten una misma pista. Nada se valida al momento: todo se revisa recién cuando pulsa "CERRAR CASO".
+                    </div>
+                    <div class="step">
+                        <b>3. TRES SECCIONES</b>
+                        Cada caso se resuelve en tres pasadas: GRUPO, RASGO e IDENTIDAD. Cada una exige al menos un enlace nuevo antes de pulsar "SIGUIENTE SECCIÓN"; solo pasan los sospechosos que quedaron enlazados. En la Sección 3, la última foto a la que ata una cinta es su identificación final.
                     </div>
                     <div class="step" style="border-left-color: var(--hazard);">
-                        <b>2. GUERRA CIBERNÉTICA</b>
+                        <b>4. GUERRA CIBERNÉTICA</b>
                         Usa la consola escribiendo <b>"/"</b> para ver comandos de sabotaje. ¡Ciega, confunde y entorpece a tu rival!
                     </div>
                     <div class="step">
-                        <b>3. PRESIÓN</b>
+                        <b>5. PRESIÓN</b>
                         El sistema te alertará cuando tus rivales completen un descarte masivo.
                     </div>
                 `;
@@ -3228,15 +3712,19 @@ openSettings = function() {
                 tContent.innerHTML = `
                     <div class="step">
                         <b>1. INTERROGATORIO PRECISO</b>
-                        Pregunte por los datos que se le otorgan en las tarjetas de los sospechosos, ejemplo:"¿Tiene ojos azules?".
+                        Pregunte por los datos que se le otorgan en las tarjetas de los sospechosos, ejemplo: "¿Tiene ojos azules?". La máquina tarda un momento en procesar y la respuesta sale impresa en papel, no en la pantalla. Cada 3 preguntas necesita recargar: espere el conteo antes de volver a preguntar.
                     </div>
                     <div class="step">
-                        <b>2. DESCARTE OBLIGATORIO</b>
-                        Haga clic en las tarjetas de los presuntos sospechosos para descartarlos teniendo de base la respuesta que le otorgó la consola, debe descartar a todos los relacionados antes de volver a preguntar.
+                        <b>2. ENLACE POR PISTAS</b>
+                        Toque una foto para ver su expediente y pulse "ENLAZAR" para clavar una chincheta. Sujete la cinta y llévela hasta otra foto que crea que comparte esa misma pista, formando grupos de un mismo color. Puede enlazar varias cintas por sospechoso, y solo usted decide cuándo cortar una: toque la chincheta del otro extremo para soltarla, o la chincheta raíz para retirar la cinta entera.
                     </div>
                     <div class="step">
-                        <b>3. OBJETIVO ÚNICO</b>
-                        Descubra al culpable sin eliminarlo por error.
+                        <b>3. TRES SECCIONES</b>
+                        El tablero se resuelve en tres pasadas: GRUPO, RASGO e IDENTIDAD. En cada una necesita al menos un enlace nuevo antes de pulsar "SIGUIENTE SECCIÓN". Solo pasan a la siguiente sección los sospechosos que sí quedaron enlazados; el resto sale del tablero. Así va cerrando el cerco poco a poco, hasta quedarse con muy pocos nombres.
+                    </div>
+                    <div class="step">
+                        <b>4. CIERRE DEL CASO</b>
+                        En la Sección 3, la última foto a la que lleve una cinta es la persona que está señalando como el objetivo. Cuando esté listo, pulse "CERRAR CASO": el sistema revisa todo el recorrido, desde la primera cinta hasta la última. Un solo enlace débil corta el lazo y pierde el caso; y si el recorrido entero es sólido pero termina en la persona equivocada, también lo pierde.
                     </div>
                 `;
             }
@@ -3423,7 +3911,6 @@ openSettings = function() {
             restoreMusic();
             playSFX('newCase', true);
             
-            currentReward = Math.floor(getRand() * 500) + 100;
             matchPoints = 0;
             pointsPool = 0;
             document.getElementById('game-points').innerText = "PTS: " + matchPoints;
@@ -3442,9 +3929,22 @@ openSettings = function() {
                 if(compTimerInterval) clearInterval(compTimerInterval);
             }
 
-            document.getElementById('case-reward-display').innerText = currentReward;
-            
             pendingDiscards = []; 
+            queryHistory = [];
+            const oracleStatusReset = document.getElementById('oracle-status');
+            if (oracleStatusReset) oracleStatusReset.textContent = "SISTEMA EN ESPERA";
+            const oraclePaperReset = document.getElementById('oracle-paper');
+            if (oraclePaperReset) {
+                oraclePaperReset.style.transition = 'none';
+                oraclePaperReset.classList.remove('paper-eject');
+                void oraclePaperReset.offsetWidth;
+                oraclePaperReset.style.transition = '';
+            }
+            const oraclePaperTextReset = document.getElementById('oracle-paper-text');
+            if (oraclePaperTextReset) oraclePaperTextReset.textContent = '';
+            questionsSinceRecharge = 0;
+            isRecharging = false;
+            clearInterval(rechargeInterval);
             currentBatchTotal = 0;
             lastQueryText = "";
             document.getElementById('queryInput').disabled = false;
@@ -3457,9 +3957,27 @@ openSettings = function() {
             objetivo = personas[Math.floor(getRand() * personas.length)];
             objetivo.recordId = generateCriminalRecordID();
 
+            // === DIFICULTAD REAL DEL CASO: cuánto se parece el objetivo al resto (más parecido = más difícil) ===
+            const diffTraits = [p => p.g, p => p.cont, p => p.t, p => p.o, p => p.accName];
+            let matchSum = 0;
+            diffTraits.forEach(fn => {
+                const val = fn(objetivo);
+                matchSum += personas.filter(p => fn(p) === val).length / personas.length;
+            });
+            const avgMatch = matchSum / diffTraits.length; // 0 a 1: más alto = objetivo más "camuflado"
+            const difficultyStars = Math.max(1, Math.min(5, Math.round(avgMatch * 6)));
+            currentCaseDifficulty = difficultyStars;
+            currentReward = 80 + difficultyStars * 90 + Math.floor(getRand() * 40);
+            document.getElementById('case-difficulty-display').innerText = '★'.repeat(difficultyStars) + '☆'.repeat(5 - difficultyStars);
+            document.getElementById('case-reward-display').innerText = currentReward;
+
             gameActive = true;
+            currentSection = 1;
+            boardSuspects = personas.slice();
+            linkCompletionCounter = 0;
             typeWriter("ESCANEO FINALIZADO. ESPERANDO CONSULTA...", "out", 15);
-            renderBoard();
+            renderBoard(boardSuspects, true);
+            updateSectionUI();
             updateWalletUI();
         }
         
@@ -3596,120 +4114,567 @@ window.addEventListener('orientationchange', () => {
             }, 800);
         }
 
-        function renderBoard() {
+        function renderBoard(suspectsList, resetLinks) {
+    if (resetLinks === undefined) resetLinks = true;
+    const list = suspectsList || personas;
+    const wrapper = document.getElementById('corkboard-wrapper');
+    const canvas = document.getElementById('corkboard-canvas');
     const board = document.getElementById('board');
+    const svg = document.getElementById('string-layer');
     board.innerHTML = '';
-    board.className = 'board-grid'; 
-    board.classList.add(`mode-${currentMosaicMode}`);
+    svg.innerHTML = '';
+    board.className = 'corkboard';
+    if (resetLinks) { stringLinks = []; }
+    panDrag = null;
+    activeDangleDrag = null;
 
-    personas.forEach(p => {
+    const wRect = wrapper.getBoundingClientRect();
+    const layout = computeGridLayout(list.length, wRect.width || 300, wRect.height || 260);
+    canvasSize = { w: layout.canvasW, h: layout.canvasH };
+    canvas.style.width = layout.canvasW + 'px';
+    canvas.style.height = layout.canvasH + 'px';
+    svg.setAttribute('viewBox', `0 0 ${layout.canvasW} ${layout.canvasH}`);
+
+    boardPositions = computeScatterPositions(list.map(pp => pp.n), layout);
+
+    list.forEach(p => {
         const card = document.createElement('div');
-        card.className = 'suspect-card';
+        card.className = 'mug-card';
         card.id = `card-${p.n}`;
-        
-        card.onclick = () => { 
-            if(gameActive) { 
-                const cardEl = document.getElementById(`card-${p.n}`);
-                if(cardEl.classList.contains('discarded')) return;
+        card.dataset.name = p.n;
 
-                // Si el modo mosaico está activo (legacy), comportamiento original
-                if (isLegacyMosaicActive) {
-                    if (pendingDiscards.length > 0) {
-                        playSFX('discard');
-                        
-                        const rect = cardEl.getBoundingClientRect();
-                        const centerX = rect.left + rect.width / 2;
-                        const centerY = rect.top + rect.height / 2;
+        const pos = boardPositions[p.n];
+        card.style.left = pos.x + '%';
+        card.style.top = pos.y + '%';
+        card.style.transform = `translate(-50%, -50%) rotate(${pos.rot}deg)`;
 
-                        let ptsToGive = 0;
-                        if (pointsPool > 0) {
-                            const remainingDiscards = pendingDiscards.length; 
-                            ptsToGive = Math.ceil(pointsPool / remainingDiscards);
-                            if (ptsToGive > pointsPool) ptsToGive = pointsPool;
-                            pointsPool -= ptsToGive;
-                        }
-                        
-                        let winDelay = 0;
-                        if (ptsToGive > 0) {
-                            spawnFloatingPoint(centerX, centerY, ptsToGive);
-                            winDelay = 900; 
-                        }
-
-                        discardVisual(cardEl);
-                        
-                        if (pendingDiscards.includes(p.n)) {
-                            pendingDiscards = pendingDiscards.filter(id => id !== p.n);
-                        }
-
-                        if (p.n === objetivo.n) {
-                            checkStatus(0); 
-                            return;
-                        }
-
-                        if (pendingDiscards.length > 0) {
-                            document.getElementById('out').innerHTML = `> ${lastQueryText}<br><span style="color:var(--hazard)">OBJETIVOS RESTANTES: ${pendingDiscards.length}</span>`;
-                        } else {
-                            playSFX('click'); 
-                            document.getElementById('out').innerHTML = `> ${lastQueryText}<br><span style="color:var(--terminal-green)">DESCARTE COMPLETADO. SISTEMA HABILITADO.</span>`;
-                            document.getElementById('queryInput').disabled = false;
-                            document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA (¿...?)...";
-                            document.getElementById('queryInput').focus();
-
-                            if(isCompetitiveMode && currentBatchTotal > 0) {
-                                if(isHost) broadcastExcluding(myPeerId, {type: 'RIVAL_BATCH_DISCARD', count: currentBatchTotal});
-                                else if(conn) conn.send({type: 'RIVAL_BATCH_DISCARD', count: currentBatchTotal});
-                                currentBatchTotal = 0;
-                            }
-                        }
-                        
-                        checkStatus(winDelay);
-
-                    } 
-                    else if (lastQueryText !== "") {
-                        playSFX('discard');
-                        discardVisual(cardEl);
-                        if (p.n === objetivo.n) { checkStatus(0); return; }
-                        checkStatus(0);
-                    }
-                    else {
-                        playSFX('error');
-                        document.getElementById('out').style.color = "var(--hazard)";
-                        typeWriter("ERROR: REALICE UNA CONSULTA PARA IDENTIFICAR OBJETIVOS.", "out", 10);
-                    }
-                } else {
-                    // MODO MINIATURA: Abrir zoom dinámico
-                    openZoomModal(p);
-                }
-            } 
-        };
-
-        // REEMPLÁZALA CON:
-const rib = p.g === "MASCULINO" ? "ribbon-male" : "ribbon-female";
-
-if (isLegacyMosaicActive) {
-    // Modo legacy/mosaicos activado - mostrar datos completos
-    card.innerHTML = `<div class="gender-ribbon ${rib}"></div><div class="card-header">${p.n}</div><div class="card-body"><b>ORG:</b> ${p.p}<br><b>TEZ:</b> ${p.t}<br><b>OJO:</b> ${p.o}<br><b>EDA:</b> ${p.edad}<br><b>ALT:</b> ${p.altura}M<br><b>ACC:</b> ${p.accName}</div>`;
-} else {
-    // Modo miniatura (default) - mostrar solo líneas horizontales
-    card.innerHTML = `
-        <div class="card-header">
-            <span class="card-name">${p.n}</span>
-            <div class="gender-banner ${rib}"></div>
-        </div>
-        <div class="card-body">
-            <div style="height: 5px;"></div>
-            <div class="line"></div>
-            <div class="line"></div>
-            <div class="line"></div>
-            <div class="line"></div>
-            <div class="line"></div>
-            <div class="line"></div>
-            <div class="line"></div>
-        </div>
-    `;
-}
+        card.innerHTML = `
+            <div class="mug-photo">
+                <svg class="mug-silhouette" viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet">
+                    <circle cx="50" cy="36" r="19" fill="#54534f"></circle>
+                    <path d="M14,100 Q14,60 50,58 Q86,60 86,100 Z" fill="#54534f"></path>
+                </svg>
+                <div class="mug-question">?</div>
+            </div>
+            <div class="mug-plate">${p.n}</div>
+        `;
         board.appendChild(card);
     });
+
+    // Centrar la vista inicial en medio del tablero grande
+    setPan(-(layout.canvasW - wRect.width) / 2, -(layout.canvasH - wRect.height) / 2);
+    redrawAllConnections();
+}
+
+// === INDICADOR DE SECCIÓN: pestañas "GRUPO / RASGO / IDENTIDAD" + qué botón de acción se ve ===
+function updateSectionUI() {
+    document.querySelectorAll('.section-tab').forEach(tab => {
+        const n = parseInt(tab.dataset.n, 10);
+        tab.classList.toggle('active', n === currentSection);
+        tab.classList.toggle('done', n < currentSection);
+    });
+    const nextBtn = document.getElementById('btn-next-section');
+    const closeBtn = document.getElementById('btn-close-case');
+    const isFinal = currentSection >= TOTAL_SECTIONS;
+    if (nextBtn) nextBtn.style.display = isFinal ? 'none' : 'inline-block';
+    if (closeBtn) closeBtn.style.display = isFinal ? 'inline-block' : 'none';
+    updateSectionActionState();
+}
+
+// Habilita "Siguiente sección" / "Cerrar caso" solo cuando ya hay al menos
+// un enlace completo hecho DENTRO de la sección actual.
+function updateSectionActionState() {
+    const hasLinkThisSection = stringLinks.some(l => l.section === currentSection && l.b);
+    const nextBtn = document.getElementById('btn-next-section');
+    const closeBtn = document.getElementById('btn-close-case');
+    if (nextBtn) nextBtn.disabled = !hasLinkThisSection;
+    if (closeBtn) closeBtn.disabled = !hasLinkThisSection;
+}
+
+// === AVANZAR DE SECCIÓN: solo pasan los sospechosos que se enlazaron en la sección que termina ===
+function goToNextSection() {
+    if (!gameActive || currentSection >= TOTAL_SECTIONS) return;
+
+    const thisSectionLinks = stringLinks.filter(l => l.section === currentSection && l.b);
+    if (thisSectionLinks.length === 0) {
+        playSFX('error');
+        typeWriter("ERROR: ENLACE AL MENOS UNA PAREJA DE SOSPECHOSOS ANTES DE AVANZAR DE SECCIÓN.", "out", 10);
+        return;
+    }
+
+    const survivorNames = new Set();
+    thisSectionLinks.forEach(l => { survivorNames.add(l.a); survivorNames.add(l.b); });
+
+    // Se descarta cualquier cinta que quedó a medio arrastrar y cualquier enlace
+    // (de esta o de una sección previa) cuyo otro extremo no sobrevivió.
+    stringLinks = stringLinks.filter(l => l.b && survivorNames.has(l.a) && survivorNames.has(l.b));
+
+    const dropped = boardSuspects.filter(p => !survivorNames.has(p.n));
+    boardSuspects = boardSuspects.filter(p => survivorNames.has(p.n));
+
+    dropped.forEach(p => {
+        const card = document.getElementById('card-' + p.n);
+        if (card) card.classList.add('leaving');
+    });
+
+    playSFX('discard');
+    currentSection++;
+    typeWriter(`SECCIÓN ${currentSection} DE ${TOTAL_SECTIONS} · ${boardSuspects.length} SOSPECHOSO(S) SIGUEN EN SEGUIMIENTO.`, "out", 12);
+
+    setTimeout(() => {
+        renderBoard(boardSuspects, false);
+        updateSectionUI();
+    }, dropped.length > 0 ? 420 : 0);
+}
+
+// === REJILLA DEL TABLERO: celdas de tamaño fijo y generoso, no un múltiplo arbitrario del contenedor ===
+function computeGridLayout(total, wrapperW, wrapperH) {
+    // Tamaño de celda pensado para que quepa la foto (clamp 58-92px) con aire de sobra alrededor
+    const cellTargetW = 195;
+    const cellTargetH = 235;
+    const aspect = wrapperW / wrapperH;
+    let cols = Math.max(2, Math.round(Math.sqrt(Math.max(1, total) * aspect)));
+    let rows = Math.ceil(total / cols);
+    while (cols * rows < total) rows++;
+    const canvasW = Math.max(wrapperW, cols * cellTargetW);
+    const canvasH = Math.max(wrapperH, rows * cellTargetH);
+    return { cols, rows, cellTargetW, cellTargetH, canvasW, canvasH };
+}
+
+// === DISPERSIÓN TIPO CORCHO: una foto por celda, con un jitter suave que no genera encimes ===
+function computeScatterPositions(names, layout) {
+    const { cols, rows, canvasW, canvasH } = layout;
+    const positions = {};
+    const total = names.length;
+    if (total === 0) return positions;
+
+    const cellWpx = canvasW / cols;
+    const cellHpx = canvasH / rows;
+    const cells = [];
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) cells.push({ cx: c * cellWpx + cellWpx / 2, cy: r * cellHpx + cellHpx / 2 });
+    }
+    // Math.random puro a propósito: no debe consumir el RNG con semilla del caso
+    for (let i = cells.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [cells[i], cells[j]] = [cells[j], cells[i]];
+    }
+
+    names.forEach((name, idx) => {
+        const cell = cells[idx];
+        // jitter suave (25% de la celda): variedad orgánica sin que dos fotos lleguen a tocarse
+        const jitterX = (Math.random() - 0.5) * cellWpx * 0.25;
+        const jitterY = (Math.random() - 0.5) * cellHpx * 0.25;
+        const xPx = Math.min(canvasW - cellWpx * 0.3, Math.max(cellWpx * 0.3, cell.cx + jitterX));
+        const yPx = Math.min(canvasH - cellHpx * 0.3, Math.max(cellHpx * 0.3, cell.cy + jitterY));
+        const rot = (Math.random() - 0.5) * 12;
+        positions[name] = { x: (xPx / canvasW) * 100, y: (yPx / canvasH) * 100, rot };
+    });
+    return positions;
+}
+
+// === REORGANIZAR (usado también por el sabotaje REORGANIZED): dispersa de nuevo sin tocar las cintas ===
+function scatterReshuffle() {
+    const wrapper = document.getElementById('corkboard-wrapper');
+    const wRect = wrapper.getBoundingClientRect();
+    const list = (boardSuspects && boardSuspects.length) ? boardSuspects : personas;
+    const layout = computeGridLayout(list.length, canvasSize.w, canvasSize.h);
+    boardPositions = computeScatterPositions(list.map(p => p.n), { ...layout, canvasW: canvasSize.w, canvasH: canvasSize.h });
+    list.forEach(p => {
+        const cardEl = document.getElementById(`card-${p.n}`);
+        if (!cardEl) return;
+        const pos = boardPositions[p.n];
+        cardEl.style.left = pos.x + '%';
+        cardEl.style.top = pos.y + '%';
+        cardEl.style.transform = `translate(-50%, -50%) rotate(${pos.rot}deg)`;
+    });
+    redrawAllConnections();
+}
+
+// === PANEO DEL TABLERO (arrastrar el corcho para recorrer un tablero más grande) ===
+const SVG_NS = "http://www.w3.org/2000/svg";
+let panX = 0, panY = 0;
+let canvasSize = { w: 0, h: 0 };
+let panDrag = null;
+
+function setPan(x, y) {
+    const wrapper = document.getElementById('corkboard-wrapper');
+    const canvas = document.getElementById('corkboard-canvas');
+    if (!wrapper || !canvas) return;
+    const wRect = wrapper.getBoundingClientRect();
+    const minX = Math.min(0, wRect.width - canvasSize.w);
+    const minY = Math.min(0, wRect.height - canvasSize.h);
+    panX = Math.min(0, Math.max(minX, x));
+    panY = Math.min(0, Math.max(minY, y));
+    canvas.style.transform = `translate(${panX}px, ${panY}px)`;
+}
+
+function onBoardPointerDown(e) {
+    if (e.target.closest('.dangle-handle') || e.target.closest('.tack')) return;
+    const cardEl = e.target.closest('.mug-card');
+    panDrag = {
+        startClientX: e.clientX, startClientY: e.clientY,
+        startPanX: panX, startPanY: panY,
+        moved: false,
+        cardName: cardEl ? cardEl.dataset.name : null
+    };
+}
+function onBoardPointerMove(e) {
+    if (!panDrag) return;
+    const dx = e.clientX - panDrag.startClientX;
+    const dy = e.clientY - panDrag.startClientY;
+    if (Math.hypot(dx, dy) > 6) panDrag.moved = true;
+    if (panDrag.moved) setPan(panDrag.startPanX + dx, panDrag.startPanY + dy);
+}
+function onBoardPointerUp(e) {
+    if (!panDrag) return;
+    if (!panDrag.moved && panDrag.cardName) {
+        const per = personas.find(pp => pp.n === panDrag.cardName);
+        if (per && gameActive) openZoomModal(per);
+    }
+    panDrag = null;
+}
+(function initBoardPanHandlers() {
+    const wrapper = document.getElementById('corkboard-wrapper');
+    if (!wrapper) return;
+    wrapper.addEventListener('pointerdown', onBoardPointerDown);
+    document.addEventListener('pointermove', onBoardPointerMove);
+    document.addEventListener('pointerup', onBoardPointerUp);
+})();
+
+let resizeRedrawTimer = null;
+function scheduleBoardRedraw(delay) {
+    clearTimeout(resizeRedrawTimer);
+    resizeRedrawTimer = setTimeout(() => {
+        if (!gameActive) return;
+        const wrapper = document.getElementById('corkboard-wrapper');
+        const canvas = document.getElementById('corkboard-canvas');
+        const svg = document.getElementById('string-layer');
+        const wRect = wrapper.getBoundingClientRect();
+        canvasSize = { w: Math.max(wRect.width, canvasSize.w), h: Math.max(wRect.height, canvasSize.h) };
+        canvas.style.width = canvasSize.w + 'px';
+        canvas.style.height = canvasSize.h + 'px';
+        svg.setAttribute('viewBox', `0 0 ${canvasSize.w} ${canvasSize.h}`);
+        setPan(panX, panY);
+        redrawAllConnections();
+    }, delay);
+}
+window.addEventListener('resize', () => scheduleBoardRedraw(150));
+window.addEventListener('orientationchange', () => scheduleBoardRedraw(400));
+
+// === COLORES DE LAS CINTAS (una por cada grupo que arma el jugador) ===
+const LINK_COLORS = ['#c0392b', '#2471a3', '#1e8449', '#8e44ad', '#ca8a04', '#0e7c73', '#b7472a', '#5b5b5b'];
+function pickColorForNewLink(rootName) {
+    const existing = stringLinks.find(l => l.a === rootName || l.b === rootName);
+    if (existing) return existing.color;
+    const used = new Set(stringLinks.map(l => l.color));
+    const next = LINK_COLORS.find(c => !used.has(c));
+    return next || LINK_COLORS[stringLinks.length % LINK_COLORS.length];
+}
+function shadeColor(hex, percent) {
+    const num = parseInt(hex.slice(1), 16);
+    let r = Math.min(255, (num >> 16) + Math.round(255 * percent / 100));
+    let g = Math.min(255, ((num >> 8) & 0xff) + Math.round(255 * percent / 100));
+    let b = Math.min(255, (num & 0xff) + Math.round(255 * percent / 100));
+    return `rgb(${r},${g},${b})`;
+}
+
+// === INICIAR UN ENLACE DESDE EL EXPEDIENTE (botón ENLAZAR) ===
+function startLinkFromZoom() {
+    if (!currentZoomSuspect) return;
+    const name = currentZoomSuspect.n;
+    closeZoomModal();
+    const color = pickColorForNewLink(name);
+    const id = 'link_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    stringLinks.push({ id, a: name, b: null, color, section: currentSection });
+    activeDangleDrag = null;
+    redrawAllConnections();
+    document.getElementById('btn-new-case').style.display = 'none';
+    setTimeout(() => typeWriter(`CHINCHETA CLAVADA EN ${name}. SUJETE LA CINTA Y LLÉVELA HASTA OTRA FOTO.`, "out", 8), 350);
+}
+
+// === DIBUJO: CINTAS Y CHINCHETAS (una sola chincheta por sospechoso, aunque tenga varias cintas) ===
+function sagPath(p1, p2) {
+    const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+    const sag = Math.min(30, dist * 0.16);
+    const midX = (p1.x + p2.x) / 2;
+    const midY = (p1.y + p2.y) / 2 + sag;
+    return `M${p1.x.toFixed(1)},${p1.y.toFixed(1)} Q${midX.toFixed(1)},${midY.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+}
+
+function nameCenterPx(name) {
+    const pos = boardPositions[name];
+    // Se desplaza un poco hacia arriba (como si la chincheta pinchara la parte alta de la foto),
+    // así el toque para abrir el expediente y el toque sobre la chincheta no se pisan.
+    return { x: (pos.x / 100) * canvasSize.w, y: (pos.y / 100) * canvasSize.h - 22 };
+}
+
+// Toque simple sobre una chincheta = corta la última cinta que toque a ese sospechoso
+function cutLastTapeAt(name) {
+    for (let i = stringLinks.length - 1; i >= 0; i--) {
+        const link = stringLinks[i];
+        if (link.a === name || link.b === name) {
+            playSFX('error');
+            if (link.b === name) {
+                // Caso 1: se desconecta el punto enlazado; la cinta queda pendiendo de su raíz
+                link.b = null;
+                redrawAllConnections();
+            } else {
+                // Caso 2: esta chincheta ES la raíz -> se retira la cinta entera y cae
+                stringLinks.splice(i, 1);
+                const p1 = nameCenterPx(link.a);
+                const p2 = link.b ? nameCenterPx(link.b) : { x: p1.x, y: p1.y + 34 };
+                redrawAllConnections();
+                snapAndFall(p1, p2);
+            }
+            return;
+        }
+    }
+}
+
+// Arrastrar una chincheta ya clavada = nace una cinta NUEVA desde ese mismo punto
+let pendingTackPress = null;
+function startTackPress(name, e) {
+    pendingTackPress = { name, startX: e.clientX, startY: e.clientY };
+}
+
+function drawTack(name) {
+    const svg = document.getElementById('string-layer');
+    if (svg.querySelector(`.tack-hit[data-name="${CSS.escape(name)}"]`)) return; // una sola chincheta por sospechoso
+    const p = nameCenterPx(name);
+
+    // Área de toque invisible, bastante más grande que el dibujo, para que no haga falta apuntar con precisión
+    const hit = document.createElementNS(SVG_NS, 'circle');
+    hit.setAttribute('class', 'tack-hit');
+    hit.setAttribute('cx', p.x); hit.setAttribute('cy', p.y); hit.setAttribute('r', 19);
+    hit.setAttribute('fill', 'transparent');
+    hit.dataset.name = name;
+    hit.style.pointerEvents = 'auto';
+    hit.style.cursor = 'grab';
+    hit.addEventListener('pointerdown', (e) => { e.stopPropagation(); startTackPress(name, e); });
+    svg.appendChild(hit);
+
+    const tack = document.createElementNS(SVG_NS, 'circle');
+    tack.setAttribute('class', 'tack');
+    tack.setAttribute('cx', p.x); tack.setAttribute('cy', p.y); tack.setAttribute('r', 7);
+    tack.setAttribute('fill', '#d6b066');
+    tack.style.pointerEvents = 'none';
+    svg.appendChild(tack);
+
+    const shine = document.createElementNS(SVG_NS, 'circle');
+    shine.setAttribute('cx', p.x - 1.9); shine.setAttribute('cy', p.y - 1.9); shine.setAttribute('r', 1.7);
+    shine.setAttribute('fill', 'rgba(255,255,255,0.7)');
+    shine.style.pointerEvents = 'none';
+    svg.appendChild(shine);
+}
+
+function drawStringPath(p1, p2, color, isDangle, linkId) {
+    const svg = document.getElementById('string-layer');
+    const path = document.createElementNS(SVG_NS, 'path');
+    path.setAttribute('class', isDangle ? 'perm-string dangle-string' : 'perm-string');
+    path.setAttribute('d', sagPath(p1, p2));
+    path.setAttribute('stroke', color);
+    path.dataset.linkId = linkId;
+    svg.appendChild(path);
+}
+
+function drawDangleHandle(p, color, linkId) {
+    const svg = document.getElementById('string-layer');
+    const handle = document.createElementNS(SVG_NS, 'circle');
+    handle.setAttribute('class', 'dangle-handle');
+    handle.setAttribute('cx', p.x); handle.setAttribute('cy', p.y); handle.setAttribute('r', 8);
+    handle.setAttribute('fill', color);
+    handle.setAttribute('stroke', '#fff'); handle.setAttribute('stroke-width', 1.2);
+    handle.dataset.linkId = linkId;
+    handle.style.pointerEvents = 'auto';
+    handle.style.cursor = 'grab';
+    handle.addEventListener('pointerdown', (e) => { e.stopPropagation(); startDangleDrag(linkId, e); });
+    svg.appendChild(handle);
+}
+
+function redrawAllConnections() {
+    const svg = document.getElementById('string-layer');
+    if (!svg) return;
+    svg.querySelectorAll('.perm-string, .tack-hit, .tack, .dangle-handle').forEach(el => el.remove());
+
+    const tackNames = new Set();
+    stringLinks.forEach(link => {
+        if (activeDangleDrag && activeDangleDrag.linkId === link.id) {
+            tackNames.add(link.a); // mientras se arrastra, solo la raíz sigue mostrando su chincheta
+            return;
+        }
+        const pA = nameCenterPx(link.a);
+        tackNames.add(link.a);
+        if (link.b) {
+            tackNames.add(link.b);
+            drawStringPath(pA, nameCenterPx(link.b), link.color, false, link.id);
+        } else {
+            const danglePoint = { x: pA.x, y: pA.y + 34 };
+            drawStringPath(pA, danglePoint, link.color, true, link.id);
+            drawDangleHandle(danglePoint, link.color, link.id);
+        }
+    });
+    tackNames.forEach(name => drawTack(name));
+    if (typeof updateSectionActionState === 'function') updateSectionActionState();
+}
+
+// === ARRASTRAR EL CABO SUELTO (o una chincheta ya clavada) HASTA OTRA FOTO, sin validación en vivo ===
+let activeDangleDrag = null;
+// Auto-desplazamiento del tablero cuando el arrastre se acerca al borde de la pantalla
+let autoPanRAF = null;
+let lastPointerClient = { x: 0, y: 0 };
+function updateAutoPan() {
+    if (!activeDangleDrag) { autoPanRAF = null; return; }
+    const wrapper = document.getElementById('corkboard-wrapper');
+    const rect = wrapper.getBoundingClientRect();
+    const edge = 40, speed = 10;
+    const x = lastPointerClient.x, y = lastPointerClient.y;
+    let dx = 0, dy = 0;
+    if (x < rect.left + edge) dx = speed;
+    else if (x > rect.right - edge) dx = -speed;
+    if (y < rect.top + edge) dy = speed;
+    else if (y > rect.bottom - edge) dy = -speed;
+    if (dx !== 0 || dy !== 0) {
+        setPan(panX + dx, panY + dy);
+        updateDangleTemp(x, y);
+    }
+    autoPanRAF = requestAnimationFrame(updateAutoPan);
+}
+
+function clientToCanvas(clientX, clientY) {
+    const canvas = document.getElementById('corkboard-canvas');
+    const rect = canvas.getBoundingClientRect();
+    return { x: clientX - rect.left, y: clientY - rect.top };
+}
+
+function startDangleDrag(linkId, e) {
+    activeDangleDrag = { linkId };
+    pendingTackPress = null;
+    const svg = document.getElementById('string-layer');
+    svg.querySelectorAll(`.dangle-string[data-link-id="${linkId}"], .dangle-handle[data-link-id="${linkId}"]`).forEach(el => el.remove());
+    updateDangleTemp(e.clientX, e.clientY);
+}
+
+function updateDangleTemp(clientX, clientY) {
+    const svg = document.getElementById('string-layer');
+    let path = document.getElementById('temp-dangle-string');
+    if (!path) {
+        path = document.createElementNS(SVG_NS, 'path');
+        path.setAttribute('id', 'temp-dangle-string');
+        svg.appendChild(path);
+    }
+    const link = stringLinks.find(l => l.id === activeDangleDrag.linkId);
+    if (!link) return;
+    const rootPx = nameCenterPx(link.a);
+    const pt = clientToCanvas(clientX, clientY);
+    path.setAttribute('stroke', link.color);
+    path.setAttribute('d', sagPath(rootPx, pt));
+}
+
+function removeDangleTemp() {
+    const path = document.getElementById('temp-dangle-string');
+    if (path) path.remove();
+}
+
+document.addEventListener('pointermove', (e) => {
+    if (activeDangleDrag) {
+        lastPointerClient = { x: e.clientX, y: e.clientY };
+        updateDangleTemp(e.clientX, e.clientY);
+        if (!autoPanRAF) autoPanRAF = requestAnimationFrame(updateAutoPan);
+        return;
+    }
+    if (pendingTackPress) {
+        const dx = e.clientX - pendingTackPress.startX;
+        const dy = e.clientY - pendingTackPress.startY;
+        if (Math.hypot(dx, dy) > 6) {
+            // Se convirtió en arrastre: nace una cinta nueva desde esta misma chincheta
+            const name = pendingTackPress.name;
+            pendingTackPress = null;
+            const color = pickColorForNewLink(name);
+            const id = 'link_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+            stringLinks.push({ id, a: name, b: null, color, section: currentSection });
+            activeDangleDrag = { linkId: id };
+            redrawAllConnections();
+            updateDangleTemp(e.clientX, e.clientY);
+        }
+    }
+});
+
+document.addEventListener('pointerup', (e) => {
+    if (activeDangleDrag) {
+        const linkId = activeDangleDrag.linkId;
+        activeDangleDrag = null;
+        if (autoPanRAF) { cancelAnimationFrame(autoPanRAF); autoPanRAF = null; }
+        removeDangleTemp();
+
+        const link = stringLinks.find(l => l.id === linkId);
+        if (link) {
+            const elUnder = document.elementFromPoint(e.clientX, e.clientY);
+            const targetCard = elUnder ? elUnder.closest('.mug-card') : null;
+            if (targetCard && targetCard.dataset.name !== link.a) {
+                link.b = targetCard.dataset.name;
+                link.completedAt = ++linkCompletionCounter;
+                playSFX('discard');
+            }
+            // si no soltó sobre ninguna foto, la cinta simplemente vuelve a quedar colgando (sin error, sin caída)
+        }
+        redrawAllConnections();
+        return;
+    }
+    if (pendingTackPress) {
+        // fue un toque simple, sin arrastre: corta la última cinta de ese sospechoso
+        cutLastTapeAt(pendingTackPress.name);
+        pendingTackPress = null;
+    }
+});
+
+
+// === Física de cuerda cortada (Verlet simple) para conexiones inválidas ===
+function snapAndFall(p1, p2) {
+    const svg = document.getElementById('string-layer');
+    const N = 8;
+    const pts = [];
+    for (let i = 0; i <= N; i++) {
+        const t = i / N;
+        const x = p1.x + (p2.x - p1.x) * t;
+        const y = p1.y + (p2.y - p1.y) * t;
+        pts.push({ x, y, oldx: x, oldy: y });
+    }
+    const restLen = Math.hypot(p2.x - p1.x, p2.y - p1.y) / N;
+    const path = document.createElementNS(SVG_NS, 'path');
+    path.setAttribute('class', 'falling-string');
+    svg.appendChild(path);
+
+    let frame = 0;
+    const gravity = 1.6;
+    function step() {
+        frame++;
+        pts.forEach(p => {
+            const vx = (p.x - p.oldx) * 0.97;
+            const vy = (p.y - p.oldy) * 0.97;
+            p.oldx = p.x; p.oldy = p.y;
+            p.x += vx + (Math.random() - 0.5) * 0.4;
+            p.y += vy + gravity;
+        });
+        for (let iter = 0; iter < 3; iter++) {
+            for (let i = 0; i < pts.length - 1; i++) {
+                const a = pts[i], b = pts[i + 1];
+                const dx = b.x - a.x, dy = b.y - a.y;
+                const dist = Math.sqrt(dx * dx + dy * dy) || 0.0001;
+                const diff = (dist - restLen) / dist;
+                const offX = dx * 0.5 * diff, offY = dy * 0.5 * diff;
+                a.x += offX; a.y += offY;
+                b.x -= offX; b.y -= offY;
+            }
+        }
+        const d = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
+        path.setAttribute('d', d);
+        path.style.opacity = Math.max(0, 1 - frame / 42).toFixed(2);
+
+        if (frame < 45) requestAnimationFrame(step);
+        else path.remove();
+    }
+    step();
 }
 
 // ==========================================
@@ -3800,22 +4765,13 @@ if (buttonsContainer) {
     `;
 }
     
-    // Configurar botones (usando las funciones existentes)
+    // Configurar botón (usando la función existente)
     const keepBtn = document.getElementById('zoom-keep-btn');
-    const discardBtn = document.getElementById('zoom-discard-btn');
-    
     if (keepBtn) {
         keepBtn.onclick = keepSuspect;
     }
-    
-    if (discardBtn) {
-        discardBtn.onclick = discardFromZoom;
-    }
-    
-    // Asegurar que los botones tengan los eventos correctos
     setTimeout(() => {
         if (keepBtn) keepBtn.onclick = keepSuspect;
-        if (discardBtn) discardBtn.onclick = discardFromZoom;
     }, 50);
 }
 
@@ -3839,100 +4795,73 @@ function keepSuspect() {
     playSFX('click');
 }
 
-function discardFromZoom() {
-    if (!currentZoomSuspect) return;
-    
-    // Validar que se haya hecho una pregunta
-    if (lastQueryText === "") {
-        playSFX('error');
-        typeWriter("ERROR: REALICE UNA CONSULTA ANTES DE DESCARTAR UN SOSPECHOSO.", "out", 10);
-        return;
-    }
-    
-    // Lógica de descarte (similar a la original)
-    const cardEl = document.getElementById(`card-${currentZoomSuspect.n}`);
-    if (cardEl.classList.contains('discarded')) {
-        closeZoomModal();
-        return;
-    }
-    
-    playSFX('discard');
-    
-    // Si hay descartes pendientes en lote
-    if (pendingDiscards.length > 0 && pendingDiscards.includes(currentZoomSuspect.n)) {
-        // Lógica de descarte en lote (misma que la original)
-        const rect = cardEl.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
+        // === ANÁLISIS DEL RECORRIDO (botón "CERRAR CASO"): revisa TODOS los enlaces del tablero ===
+        // Una cinta entre A y B es FUERTE si existe alguna consulta ya hecha donde ambos
+        // respondieron lo mismo (una pista real que de verdad los une). Si ninguna consulta
+        // los une, la cinta es DÉBIL y se rompe. Un solo enlace débil hace perder el caso.
+        function evaluateAllLinks() {
+            // El caso solo se cierra desde la Sección 3, y esa sección también
+            // necesita su propio enlace nuevo antes de poder cerrarse.
+            if (currentSection < TOTAL_SECTIONS) return;
 
-        let ptsToGive = 0;
-        if (pointsPool > 0) {
-            const remainingDiscards = pendingDiscards.length; 
-            ptsToGive = Math.ceil(pointsPool / remainingDiscards);
-            if (ptsToGive > pointsPool) ptsToGive = pointsPool;
-            pointsPool -= ptsToGive;
-        }
-        
-        if (ptsToGive > 0) {
-            spawnFloatingPoint(centerX, centerY, ptsToGive);
-        }
-        
-        discardVisual(cardEl);
-        pendingDiscards = pendingDiscards.filter(id => id !== currentZoomSuspect.n);
-        
-        if (currentZoomSuspect.n === objetivo.n) {
-            closeZoomModal();
-            checkStatus(900);
-            return;
-        }
-
-        if (pendingDiscards.length > 0) {
-            document.getElementById('out').innerHTML = `> ${lastQueryText}<br><span style="color:var(--hazard)">OBJETIVOS RESTANTES: ${pendingDiscards.length}</span>`;
-        } else {
-            playSFX('click'); 
-            document.getElementById('out').innerHTML = `> ${lastQueryText}<br><span style="color:var(--terminal-green)">DESCARTE COMPLETADO. SISTEMA HABILITADO.</span>`;
-            document.getElementById('queryInput').disabled = false;
-            document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA (¿...?)...";
-            document.getElementById('queryInput').focus();
-
-            if(isCompetitiveMode && currentBatchTotal > 0) {
-                if(isHost) broadcastExcluding(myPeerId, {type: 'RIVAL_BATCH_DISCARD', count: currentBatchTotal});
-                else if(conn) conn.send({type: 'RIVAL_BATCH_DISCARD', count: currentBatchTotal});
-                currentBatchTotal = 0;
-            }
-        }
-    } 
-    // Descarte individual (sin lote pendiente)
-    else if (lastQueryText !== "") {
-        discardVisual(cardEl);
-        if (currentZoomSuspect.n === objetivo.n) { 
-            closeZoomModal();
-            checkStatus(0); 
-            return; 
-        }
-    }
-    
-    closeZoomModal();
-    checkStatus(0);
-}
-
-        function discardVisual(card) {
-            card.classList.add('discarded'); 
-        }
-
-        function checkStatus(delay = 0) {
-            const activeCards = Array.from(document.querySelectorAll('.suspect-card')).filter(c => !c.classList.contains('discarded'));
-            
-            if (document.getElementById(`card-${objetivo.n}`).classList.contains('discarded')) {
-                return endGame(false);
-            }
-            
-            if (activeCards.length === 1 && activeCards[0].id === `card-${objetivo.n}`) {
-                setTimeout(() => {
-                    endGame(true);
-                }, delay);
+            const completeLinks = stringLinks.filter(l => l.b);
+            const thisSectionLinks = completeLinks.filter(l => l.section === currentSection);
+            if (thisSectionLinks.length === 0) {
+                playSFX('error');
+                typeWriter("ERROR: ENLACE AL MENOS UNA PAREJA DE SOSPECHOSOS EN ESTA SECCIÓN ANTES DE CERRAR EL CASO.", "out", 10);
                 return;
             }
+
+            let strongCount = 0, weakCount = 0;
+            completeLinks.forEach(link => {
+                const a = personas.find(p => p.n === link.a);
+                const b = personas.find(p => p.n === link.b);
+                const isStrong = a && b && queryHistory.some(q => q.checkFunc(a) === q.checkFunc(b));
+                if (isStrong) { strongCount++; markLinkStrong(link.id); }
+                else { weakCount++; breakWeakLink(link.id); }
+            });
+
+            const anyWeak = weakCount > 0;
+
+            // El recorrido se sigue en el orden real en que se fueron cerrando las
+            // cintas; la punta del último enlace atado en la Sección 3 es la
+            // identidad que el jugador está señalando como el objetivo.
+            const lastSectionLink = thisSectionLinks.reduce((latest, l) =>
+                (!latest || (l.completedAt || 0) > (latest.completedAt || 0)) ? l : latest, null);
+            const finalSuspectName = lastSectionLink ? lastSectionLink.b : null;
+            const rightPerson = finalSuspectName === objetivo.n;
+            const win = !anyWeak && rightPerson;
+
+            playSFX(win ? 'click' : 'error');
+
+            let msg;
+            if (anyWeak) {
+                msg = `> ANÁLISIS DEL RECORRIDO<br><span style="color:var(--hazard)">ENLACES FUERTES: ${strongCount} · DÉBILES: ${weakCount}<br>UN LAZO SE CORTÓ EN EL RECORRIDO.</span>`;
+            } else if (!rightPerson) {
+                msg = `> ANÁLISIS DEL RECORRIDO<br><span style="color:var(--hazard)">ENLACES FUERTES: ${strongCount} · DÉBILES: 0<br>EL RECORRIDO LLEGA A LA PERSONA EQUIVOCADA.</span>`;
+            } else {
+                msg = `> ANÁLISIS DEL RECORRIDO<br><span style="color:var(--terminal-green)">ENLACES FUERTES: ${strongCount} · DÉBILES: 0<br>RECORRIDO COMPLETO. IDENTIDAD CONFIRMADA.</span>`;
+            }
+            document.getElementById('out').innerHTML = msg;
+
+            setTimeout(() => { endGame(win); }, win ? 700 : 1400);
+        }
+
+        function markLinkStrong(linkId) {
+            const svg = document.getElementById('string-layer');
+            const path = svg.querySelector(`path.perm-string[data-link-id="${linkId}"]`);
+            if (path) path.classList.add('strong-pulse');
+        }
+
+        function breakWeakLink(linkId) {
+            const idx = stringLinks.findIndex(l => l.id === linkId);
+            if (idx === -1) return;
+            const link = stringLinks[idx];
+            const p1 = nameCenterPx(link.a);
+            const p2 = nameCenterPx(link.b);
+            stringLinks.splice(idx, 1);
+            redrawAllConnections();
+            snapAndFall(p1, p2);
         }
 
         function checkAllFinishedTimer() {
@@ -4566,43 +5495,68 @@ if(isHost) {
                     playSFX('click');
                     successfulQueriesCount++;
                     document.getElementById('out').style.color = "var(--terminal-green)";
-                    
-                    const targetHasTrait = checkFunc(objetivo);
-                    const respText = targetHasTrait ? "SÍ." : "NO.";
-                    
-                    // Calcular descartes
-                    pendingDiscards = personas.filter(p => {
-                        const card = document.getElementById('card-' + p.n);
-                        if (card.classList.contains('discarded')) return false; 
-                        const suspectHasTrait = checkFunc(p);
-                        return suspectHasTrait !== targetHasTrait; 
-                    }).map(p => p.n);
 
-                    currentBatchTotal = pendingDiscards.length;
+                    const inputEl = document.getElementById('queryInput');
+                    inputEl.disabled = true;
+                    inputEl.placeholder = "PROCESANDO...";
+                    const oracleStatus = document.getElementById('oracle-status');
+                    if (oracleStatus) oracleStatus.textContent = "ANALIZANDO DATOS...";
+                    typeWriter("CONSULTA RECIBIDA. LA MÁQUINA ESTÁ PROCESANDO...", "out", 10);
 
-                    lastQueryText = `CONSULTA: ${q}<br>RESPUESTA: ${respText}`;
+                    const procDelay = 2200 + Math.random() * 900; // tiempo de respuesta mediano
 
-                    // Cálculo de puntos
-                    let earned = 0;
-                    let count = pendingDiscards.length;
-                    if(count > 0) {
-                        if(count >= 8) earned = 10;
-                        else if(count >= 5) earned = 8;
-                        else if(count >= 3) earned = 5;
-                        else earned = count; 
-                        pointsPool = earned;
-                        lastQueryText += ` <span style="color:var(--gold)">[DETECTADOS: ${earned} PTS]</span>`;
-                    }
+                    setTimeout(() => {
+                        const targetHasTrait = checkFunc(objetivo);
+                        const respText = targetHasTrait ? "SÍ" : "NO";
 
-                    if (pendingDiscards.length > 0) {
-                        const msg = `${lastQueryText}<br><span style="color:var(--hazard)">BLOQUEO ACTIVO: ELIMINE A ${pendingDiscards.length} SOSPECHOSOS INCOMPATIBLES.</span>`;
-                        typeWriter(msg, "out", 15);
-                        document.getElementById('queryInput').disabled = true;
-                        document.getElementById('queryInput').placeholder = "!! DESCARTE REQUERIDO !!";
-                    } else {
-                        typeWriter(`${lastQueryText}<br>NINGÚN DESCARTE DISPONIBLE CON ESTA INFORMACIÓN.`, "out", 15);
-                        currentBatchTotal = 0; 
-                    }
+                        // Guardar en el historial para la evaluación final de los enlaces
+                        queryHistory.push({ checkFunc, targetAnswer: targetHasTrait, label: q });
+
+                        // Calcular a cuántos afectaría (solo informativo: ya no bloquea el sistema)
+                        pendingDiscards = personas.filter(p => {
+                            const card = document.getElementById('card-' + p.n);
+                            if (card.classList.contains('discarded')) return false;
+                            const suspectHasTrait = checkFunc(p);
+                            return suspectHasTrait !== targetHasTrait;
+                        }).map(p => p.n);
+
+                        currentBatchTotal = pendingDiscards.length;
+                        const count = pendingDiscards.length;
+
+                        lastQueryText = `CONSULTA: ${q}`;
+
+                        // Cálculo de puntos: se otorgan de inmediato, ya no dependen de descartar manualmente
+                        let earned = 0;
+                        if (count > 0) {
+                            if (count >= 8) earned = 10;
+                            else if (count >= 5) earned = 8;
+                            else if (count >= 3) earned = 5;
+                            else earned = count;
+                            totalMoney += earned;
+                            localStorage.setItem('bioBreachMoney', String(totalMoney));
+                            lastQueryText += ` <span style="color:var(--gold)">[+${earned} PTS]</span>`;
+                        }
+
+                        printOraclePaper(q, respText);
+                        if (oracleStatus) oracleStatus.textContent = "EN ESPERA";
+
+                        typeWriter(`${lastQueryText}<br><span style="color:#888">LA RESPUESTA SALIÓ IMPRESA. PISTAS COMPATIBLES: ${personas.length - count} · INCOMPATIBLES: ${count}</span>`, "out", 15);
+
+                        questionsSinceRecharge++;
+                        if (questionsSinceRecharge >= RECHARGE_EVERY) {
+                            questionsSinceRecharge = 0;
+                            startRecharge();
+                        } else {
+                            inputEl.disabled = false;
+                            inputEl.placeholder = "INTERROGAR SISTEMA (¿...?)...";
+                        }
+                        // Sin auto-foco: si se reactiva el teclado justo aquí, tapa el papel recién salido.
+
+                        if (isCompetitiveMode && count > 0) {
+                            if (isHost) broadcastExcluding(myPeerId, { type: 'RIVAL_BATCH_DISCARD', count: count });
+                            else if (conn) conn.send({ type: 'RIVAL_BATCH_DISCARD', count: count });
+                        }
+                    }, procDelay);
 
                 } else {
                     playSFX('error');
@@ -4611,7 +5565,108 @@ if(isHost) {
                 }
             }
         });
+
+        // === MÁQUINA: IMPRESIÓN DE LA RESPUESTA EN PAPEL ===
+        function printOraclePaper(query, answer) {
+            const paper = document.getElementById('oracle-paper');
+            const text = document.getElementById('oracle-paper-text');
+            if (!paper || !text) return;
+            text.textContent = `${query} → ${answer}`;
+            paper.classList.remove('paper-eject');
+            void paper.offsetWidth; // reinicia la animación
+            paper.classList.add('paper-eject');
+            playSFX('click');
+            // El papel se queda afuera: no desaparece solo. Se retira/renueva al imprimir el siguiente,
+            // o al reiniciarse por completo cuando empieza un caso nuevo.
+        }
+
+        // === RECARGA: cada RECHARGE_EVERY preguntas, la máquina necesita un rato antes de aceptar otra ===
+        function startRecharge() {
+            const inputEl = document.getElementById('queryInput');
+            const oracleStatus = document.getElementById('oracle-status');
+            isRecharging = true;
+            inputEl.disabled = true;
+            let secondsLeft = RECHARGE_SECONDS;
+            inputEl.placeholder = `RECARGANDO (${secondsLeft}s)...`;
+            if (oracleStatus) oracleStatus.textContent = `RECARGANDO... ${secondsLeft}s`;
+            clearInterval(rechargeInterval);
+            rechargeInterval = setInterval(() => {
+                secondsLeft--;
+                if (secondsLeft <= 0) {
+                    clearInterval(rechargeInterval);
+                    isRecharging = false;
+                    inputEl.disabled = false;
+                    inputEl.placeholder = "INTERROGAR SISTEMA (¿...?)...";
+                    if (oracleStatus) oracleStatus.textContent = "SISTEMA EN ESPERA";
+                    typeWriter("LA MÁQUINA TERMINÓ DE RECARGAR. YA PUEDE PREGUNTAR DE NUEVO.", "out", 8);
+                } else {
+                    inputEl.placeholder = `RECARGANDO (${secondsLeft}s)...`;
+                    if (oracleStatus) oracleStatus.textContent = `RECARGANDO... ${secondsLeft}s`;
+                }
+            }, 1000);
+        }
         
+        // === BLOC DE NOTAS ===
+        const NOTEBOOK_PAGES = 6;
+        let notebookCurrentPage = 0;
+        let notebookData = [];
+
+        function loadNotebookData() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('bioBreachNotebook') || '[]');
+                notebookData = Array.from({ length: NOTEBOOK_PAGES }, (_, i) => saved[i] || '');
+            } catch (e) {
+                notebookData = Array.from({ length: NOTEBOOK_PAGES }, () => '');
+            }
+        }
+        function saveNotebookData() {
+            localStorage.setItem('bioBreachNotebook', JSON.stringify(notebookData));
+        }
+        function openNotebook() {
+            if (notebookData.length === 0) loadNotebookData();
+            document.getElementById('notebook-modal').style.display = 'flex';
+            renderNotebookPage();
+            playSFX('click');
+        }
+        function closeNotebook() {
+            saveCurrentNotebookPage();
+            document.getElementById('notebook-modal').style.display = 'none';
+            playSFX('click');
+        }
+        function saveCurrentNotebookPage() {
+            const ta = document.getElementById('notebook-page-text');
+            if (ta) {
+                notebookData[notebookCurrentPage] = ta.value;
+                saveNotebookData();
+            }
+        }
+        function renderNotebookPage() {
+            const ta = document.getElementById('notebook-page-text');
+            const indicator = document.getElementById('notebook-page-indicator');
+            if (ta) ta.value = notebookData[notebookCurrentPage] || '';
+            if (indicator) indicator.innerText = `${notebookCurrentPage + 1} / ${NOTEBOOK_PAGES}`;
+        }
+        function turnNotebookPage() {
+            saveCurrentNotebookPage();
+            const pageEl = document.getElementById('notebook-page');
+            const stackEl = document.getElementById('notebook-stack');
+            playSFX('click');
+            pageEl.classList.add('flipping');
+            setTimeout(() => {
+                notebookCurrentPage++;
+                if (notebookCurrentPage >= NOTEBOOK_PAGES) {
+                    // Se volvió al inicio: toda la pila baja de golpe
+                    notebookCurrentPage = 0;
+                    stackEl.style.height = '0px';
+                } else {
+                    const h = parseInt(stackEl.style.height) || 0;
+                    stackEl.style.height = (h + 6) + 'px';
+                }
+                renderNotebookPage();
+                pageEl.classList.remove('flipping');
+            }, 520);
+        }
+
                 // ==========================================
         // === NUEVO: CERRAR SUGERENCIAS AL CLIC ===
         // ==========================================
@@ -4648,7 +5703,7 @@ if(isHost) {
     </script>
     
     <!-- MODAL DE ZOOM DINÁMICO -->
-<div id="zoom-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9000; display: none; justify-content: center; align-items: center; padding: 20px; overflow: hidden;">
+<div id="zoom-modal" onclick="if(event.target===this) closeZoomModal();" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9000; display: none; justify-content: center; align-items: center; padding: 20px; overflow: hidden;">
     <!-- La tarjeta del sospechoso -->
     <div id="zoom-content" style="background: #e6e0d4; border: 2px solid #000; max-width: 420px; width: 100%; position: relative; box-shadow: 10px 10px 0px rgba(0,0,0,0.5); min-height: 200px; display: flex; flex-direction: column; overflow: hidden; margin-right: 0;">
         <!-- Estandarte de género en el modal -->
@@ -4656,26 +5711,28 @@ if(isHost) {
         
         <!-- Contenido de la tarjeta ampliada -->
         <div style="padding: 15px 15px 15px 20px; flex-grow: 1; overflow: hidden; display: flex; flex-direction: column;">
-            <h3 id="zoom-name" style="color: #000; text-align: center; border-bottom: 3px solid #000; padding-bottom: 10px; margin-top: 0; margin-bottom: 15px; font-family: 'Courier New', monospace; font-size: 1.6rem; text-transform: uppercase; letter-spacing: 2px; flex-shrink: 0; font-weight: bold;"></h3>
+            <div id="zoom-mugshot" class="mug-photo" style="width: 90px; margin: 0 auto 12px; flex-shrink: 0;">
+                <svg class="mug-silhouette" viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet">
+                    <circle cx="50" cy="36" r="19" fill="#54534f"></circle>
+                    <path d="M14,100 Q14,60 50,58 Q86,60 86,100 Z" fill="#54534f"></path>
+                </svg>
+                <div class="mug-question">?</div>
+            </div>
+            <h3 id="zoom-name" style="color: #000; text-align: center; border-bottom: 3px solid #000; padding-bottom: 10px; margin-top: 0; margin-bottom: 15px; font-family: var(--font-mono); font-size: 1.6rem; text-transform: uppercase; letter-spacing: 2px; flex-shrink: 0; font-weight: bold;"></h3>
             
-            <div id="zoom-info" style="color: #111; font-family: 'Courier New', monospace; font-size: 1rem; line-height: 1.3; flex-grow: 1; overflow: hidden;">
+            <div id="zoom-info" style="color: #111; font-family: var(--font-mono); font-size: 1rem; line-height: 1.3; flex-grow: 1; overflow: hidden;">
                 <!-- Los datos se llenarán dinámicamente -->
             </div>
         </div>
+        <button id="zoom-link-btn" onclick="startLinkFromZoom()" style="width: 100%; border: none; border-top: 2px solid #000; background: var(--gold); color: #000; font-family: var(--font-mono); font-weight: bold; letter-spacing: 2px; font-size: 1rem; padding: 12px 0; cursor: pointer; flex-shrink: 0;">🧵 ENLAZAR</button>
     </div>
     
-    <!-- Botones MANTENER y DESCARTAR como banderitas adhesivas (FUERA de la tarjeta) -->
+    <!-- Botón MANTENER como banderita adhesiva (FUERA de la tarjeta) -->
     <div id="zoom-buttons-container" class="zoom-buttons-absolute" style="display: none;">
-        <!-- Banderita MANTENER -->
+        <!-- Banderita MANTENER (la original) -->
         <button id="zoom-keep-btn" class="bookmark-btn" 
-        style="background: var(--victory); color: #000; padding: 0; border: none; font-family: 'Courier New', monospace; font-weight: bold; cursor: pointer; width: 80px; height: 80px; font-size: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 10px; box-shadow: 5px 5px 0px rgba(0,0,0,0.5);">
+        style="background: var(--victory); color: #000; padding: 0; border: none; font-family: var(--font-mono); font-weight: bold; cursor: pointer; width: 80px; height: 80px; font-size: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 10px; box-shadow: 5px 5px 0px rgba(0,0,0,0.5);">
     📥
-</button>
-        
-        <!-- Banderita DESCARTAR -->
-        <button id="zoom-discard-btn" class="bookmark-btn" 
-        style="background: var(--hazard); color: #fff; padding: 0; border: none; font-family: 'Courier New', monospace; font-weight: bold; cursor: pointer; width: 80px; height: 80px; font-size: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 10px; box-shadow: 5px 5px 0px rgba(0,0,0,0.5);">
-    🗑️
 </button>
     </div>
 </div>
