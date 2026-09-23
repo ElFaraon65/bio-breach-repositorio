@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BIO-BREACH: ONLINE SURVIVAL V8.2 - WARFARE UPDATE</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Special+Elite&display=swap" rel="stylesheet">
         <style>
         /* === NUEVO: CORRECCIÓN DE INTERFAZ NATIVA === */
         /* Esto elimina el color azul al tocar y el borde de selección */
@@ -20,6 +23,12 @@
         }
                     
         :root {
+            /* TIPOGRAFÍA: una máquina de escribir gastada para el cuerpo/terminal,
+               un titular de rotativo para lo dramático. Si la fuente web no carga,
+               cae de vuelta en las mismas familias que ya tenía el proyecto. */
+            --font-mono: 'Special Elite', 'Courier New', Courier, monospace;
+            --font-display: 'Oswald', 'Impact', 'Arial Narrow Bold', sans-serif;
+
             /* PALETA NOIR / DETECTIVE 40s */
             --gold: #d6b066;          /* Amarillo Opaco (Carpeta Manila/Oro viejo) */
             --dark-red: #660000;      /* Rojo Sangre Seca */
@@ -73,7 +82,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
         }
         .cmd-item:hover {
             background: var(--gold);
@@ -103,7 +112,7 @@
             z-index: 8000; display: none;
             text-transform: uppercase;
             letter-spacing: 3px;
-            font-family: 'Impact', sans-serif; /* Estilo titular periódico */
+            font-family: var(--font-display); /* Estilo titular periódico */
             pointer-events: none;
             box-shadow: 0 10px 20px rgba(0,0,0,0.8);
             animation: glitch-anim 0.2s infinite;
@@ -125,7 +134,7 @@
             /* Patrón de "Ruido de película" o papel viejo sutil */
             background-image: repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255, 255, 255, 0.03) 1px, rgba(255, 255, 255, 0.03) 2px);
             margin: 0; padding: 10px;
-            font-family: 'Courier New', Courier, monospace; /* Tipografía Mecanografía */
+            font-family: var(--font-mono); /* Tipografía Mecanografía */
             color: #ddd;
             display: flex; flex-direction: column; align-items: center;
             overflow-x: hidden;
@@ -138,7 +147,7 @@
         .flying-point {
             position: fixed;
             color: var(--gold);
-            font-family: 'Impact', sans-serif;
+            font-family: var(--font-display);
             font-weight: normal;
             font-size: 1.8rem;
             pointer-events: none;
@@ -169,7 +178,7 @@
             z-index: 2000; display: none; opacity: 0;
             box-shadow: 5px 5px 0px rgba(0,0,0,0.5);
             pointer-events: none;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             text-transform: uppercase;
         }
         
@@ -204,7 +213,7 @@
             text-transform: uppercase;
             animation: pulseText 3s infinite;
             text-shadow: 2px 2px 0px #000;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             border-bottom: 2px solid var(--gold);
             padding-bottom: 5px;
             pointer-events: none;
@@ -233,7 +242,7 @@
             color: var(--gold); font-size: 1.2rem; letter-spacing: 3px;
             animation: blink 0.8s infinite;
             margin-top: 15px;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
         }
 
         /* --- PANTALLA DE LOGIN --- */
@@ -251,7 +260,7 @@
             border: 2px solid #555; 
             color: #000; /* Tinta negra */
             padding: 15px; 
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             font-weight: bold;
             font-size: 1.2rem;
             text-align: center; 
@@ -286,18 +295,35 @@
         }
         
         .currency { color: var(--gold); font-size: 1.2rem; font-weight: bold; }
-        .agent-id { color: #888; font-size: 0.7rem; letter-spacing: 1px; font-family: 'Courier New', monospace;}
+        .agent-id { color: #888; font-size: 0.7rem; letter-spacing: 1px; font-family: var(--font-mono);}
         .agent-name { color: var(--terminal-green); font-size: 1rem; font-weight: bold; text-transform: uppercase;}
 
         #main-menu {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            /* Estilo Noir: Sombra dramática */
-            background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+            /* Estilo Noir: Sombra dramática + un halo tenue detrás del título */
+            background:
+                radial-gradient(ellipse 60% 45% at 50% 40%, rgba(214,176,102,0.08) 0%, transparent 70%),
+                linear-gradient(135deg, #000 0%, #1a1a1a 100%);
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
             z-index: 3000;
             transition: opacity 0.5s ease;
+            overflow: hidden;
+        }
+        #main-menu::before {
+            /* mismo grano de película que el resto de la app: el menú no debe sentirse más plano que el juego */
+            content: '';
+            position: absolute; inset: 0; z-index: -1;
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255,255,255,0.025) 1px, rgba(255,255,255,0.025) 2px);
+            pointer-events: none;
+        }
+        #main-menu::after {
+            /* viñeta: oscurece los bordes para dar sensación de foco y profundidad */
+            content: '';
+            position: absolute; inset: 0; z-index: -1;
+            box-shadow: inset 0 0 160px 40px rgba(0,0,0,0.8);
+            pointer-events: none;
         }
 
         .menu-title {
@@ -307,7 +333,7 @@
             margin-bottom: 50px; text-align: center; letter-spacing: 5px;
             line-height: 1.2;
             padding: 0 20px;
-            font-family: 'Impact', 'Arial Black', sans-serif;
+            font-family: var(--font-display);
             text-transform: uppercase;
         }
 
@@ -322,7 +348,7 @@
             padding: 20px 60px; font-size: 1.5rem; font-weight: bold;
             cursor: pointer; text-transform: uppercase; letter-spacing: 3px;
             transition: all 0.2s; width: 100%;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             box-shadow: 6px 6px 0px #000; /* Botón físico */
         }
         .btn-play:active { transform: translate(2px, 2px); box-shadow: 4px 4px 0px #000; }
@@ -332,7 +358,7 @@
             padding: 10px 40px; font-size: 1rem; font-weight: bold;
             cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
             transition: all 0.2s;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             box-shadow: 4px 4px 0px #000;
         }
         .btn-exit:hover { background: #444; color: white; }
@@ -412,7 +438,7 @@
             font-size: 1.7rem;
             width: 330px;
             font-weight: bold;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             text-transform: uppercase;
             cursor: pointer;
             z-index: 20;
@@ -465,18 +491,18 @@
         }
 
         .mode-info { padding: 20px; text-align: center; }
-        .mode-title { color: var(--gold); font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; font-family: 'Courier New', monospace;}
-        .mode-desc { color: #999; font-size: 0.8rem; line-height: 1.4; font-family: 'Courier New', monospace;}
+        .mode-title { color: var(--gold); font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; font-family: var(--font-mono);}
+        .mode-desc { color: #999; font-size: 0.8rem; line-height: 1.4; font-family: var(--font-mono);}
 
         .lobby-status-box {
             border: 2px dashed var(--victory); background: rgba(143, 188, 143, 0.05);
             padding: 20px; width: 100%; max-width: 500px; text-align: center;
             margin-bottom: 20px;
         }
-        .room-code-display { font-size: 2rem; color: var(--gold); letter-spacing: 5px; margin: 10px 0; font-weight: bold; user-select: text; word-break: break-all; font-family: 'Courier New'; border-bottom: 1px solid #444;}
+        .room-code-display { font-size: 2rem; color: var(--gold); letter-spacing: 5px; margin: 10px 0; font-weight: bold; user-select: text; word-break: break-all; font-family: var(--font-mono); border-bottom: 1px solid #444;}
         
         .player-list { list-style: none; padding: 0; text-align: left; }
-        .player-list li { border-bottom: 1px solid #333; padding: 5px; display: flex; justify-content: space-between; font-family: 'Courier New';}
+        .player-list li { border-bottom: 1px solid #333; padding: 5px; display: flex; justify-content: space-between; font-family: var(--font-mono);}
         .player-ready { color: var(--victory); font-weight: bold; text-transform: uppercase; }
 
         /* Range Slider (Estilo analógico) */
@@ -493,7 +519,7 @@
         }
         .time-display {
             font-size: 1.2rem; color: var(--ranking-blue); font-weight: bold; margin-bottom: 10px;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
         }
 
         /* Bloqueo visual */
@@ -535,7 +561,7 @@
                 .mosaic-options { display: flex; gap: 15px; margin: 20px 0; flex-wrap: wrap; justify-content: center;}
         .mosaic-btn {
             background: #ccc; border: 2px solid #555; color: #333;
-            padding: 15px 25px; cursor: pointer; font-family: 'Courier New', monospace;
+            padding: 15px 25px; cursor: pointer; font-family: var(--font-mono);
             font-weight: bold;
         }
         .mosaic-btn.active { border-color: #000; color: #000; background: var(--gold); box-shadow: 3px 3px 0px #000; }
@@ -546,7 +572,7 @@
         }
         .tab-btn {
             flex: 1; padding: 10px; background: #222; color: #666; 
-            border: none; cursor: pointer; font-family: 'Courier New', monospace; font-weight: bold;
+            border: none; cursor: pointer; font-family: var(--font-mono); font-weight: bold;
             transition: all 0.3s;
         }
         .tab-btn.active-tab {
@@ -590,7 +616,7 @@
         }
         .wall-title-text {
             color: #eee; font-size: 1.5rem; letter-spacing: 4px; 
-            text-transform: uppercase; font-weight: bold; font-family: 'Courier New';
+            text-transform: uppercase; font-weight: bold; font-family: var(--font-mono);
         }
 
         .wall-grid {
@@ -633,7 +659,7 @@
         }
         .mugshot-icon { font-size: 2rem; color: #333; }
         
-        .wall-info { font-family: 'Courier New', monospace; font-size: 0.55rem; line-height: 1.3; text-align: left; }
+        .wall-info { font-family: var(--font-mono); font-size: 0.55rem; line-height: 1.3; text-align: left; }
         .wall-info b { color: #000; font-weight: 800; }
         
         .stamp-solved {
@@ -641,7 +667,7 @@
             border: 3px solid var(--dark-red); color: var(--dark-red);
             font-size: 0.8rem; font-weight: bold; padding: 2px 6px;
             transform: rotate(-15deg); opacity: 0.8;
-            font-family: 'Impact', sans-serif; letter-spacing: 1px;
+            font-family: var(--font-display); letter-spacing: 1px;
             mask-image: url('data:image/svg+xml;utf8,<svg ...>'); /* Simulación de desgaste si fuera posible, por ahora borde solido */
         }
 
@@ -660,7 +686,7 @@
             background: rgba(20, 20, 20, 0.95);
             padding: 20px; margin: 20px 0; text-align: left;
             width: 100%; max-width: 400px;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             box-shadow: 0 0 15px rgba(0,0,0,0.8);
         }
         .dossier-header {
@@ -676,7 +702,7 @@
             transform: rotate(-5deg); display: inline-block;
             margin-top: 10px; font-size: 1.2rem;
             text-transform: uppercase;
-            font-family: 'Impact';
+            font-family: var(--font-display);
         }
 
         /* --- INTERFAZ PRINCIPAL --- */
@@ -811,7 +837,7 @@
             border-bottom: 1px solid #888; margin-bottom: 4px; 
             text-align: center; overflow: hidden; white-space: nowrap; 
             text-overflow: ellipsis; flex-shrink: 0;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             text-transform: uppercase;
         }
         .card-body { color: #333; word-wrap: break-word; flex-grow: 1; font-weight: 600;}
@@ -828,7 +854,7 @@
         #queryInput { 
             width: 100%; background: #000; border: 1px solid #555; 
             border-bottom: 1px solid var(--gold); 
-            color: #fff; padding: 8px; font-family: 'Courier New', monospace; 
+            color: #fff; padding: 8px; font-family: var(--font-mono); 
             outline: none; font-size: 16px; 
             margin-bottom: 5px;
         }
@@ -840,7 +866,7 @@
         .output { 
             color: var(--terminal-green); /* Blanco sucio */
             font-size: 0.75rem; min-height: 50px; margin-top: 5px; 
-            line-height: 1.3; font-family: 'Courier New', monospace;
+            line-height: 1.3; font-family: var(--font-mono);
         }
         
         .btn-main { 
@@ -848,7 +874,7 @@
             background: var(--gold); color: #000; 
             border: 2px solid #555; 
             font-weight: bold; cursor: pointer; text-transform: uppercase; 
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             box-shadow: 4px 4px 0px #000;
         }
         .btn-main:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px #000; }
@@ -865,10 +891,52 @@
         .btn-close-case {
             background: #1c3a1c; border: 1px solid var(--terminal-green); color: var(--terminal-green);
             font-size: 0.8rem; padding: 10px; box-shadow: 2px 2px 0px #000;
-            flex: 1; cursor: pointer; font-family: 'Courier New', monospace;
+            flex: 1; cursor: pointer; font-family: var(--font-mono);
             text-transform: uppercase; font-weight: bold;
         }
         .btn-close-case:hover { background: #245024; }
+        .btn-close-case:disabled, .btn-next-section:disabled {
+            opacity: 0.4; cursor: not-allowed; filter: grayscale(0.4);
+        }
+
+        /* --- SIGUIENTE SECCIÓN --- */
+        .btn-next-section {
+            background: #3a3210; border: 1px solid var(--gold); color: var(--gold);
+            font-size: 0.8rem; padding: 10px; box-shadow: 2px 2px 0px #000;
+            flex: 1; cursor: pointer; font-family: var(--font-mono);
+            text-transform: uppercase; font-weight: bold;
+        }
+        .btn-next-section:hover { background: #4a4018; }
+
+        /* --- PESTAÑAS DE SECCIÓN (GRUPO / RASGO / IDENTIDAD) --- */
+        #section-bar {
+            display: flex; width: 100%; gap: 4px; margin-bottom: 8px; flex-shrink: 0;
+        }
+        .section-tab {
+            flex: 1; text-align: center; font-family: var(--font-mono);
+            font-size: 0.62rem; font-weight: bold; letter-spacing: 1px;
+            color: #555; background: #161616; border: 1px solid #333;
+            padding: 5px 2px; text-transform: uppercase;
+            display: flex; align-items: center; justify-content: center; gap: 5px;
+            transition: all 0.3s;
+        }
+        .section-tab i {
+            font-style: normal; width: 15px; height: 15px; border-radius: 50%;
+            border: 1px solid #555; display: inline-flex; align-items: center; justify-content: center;
+            font-size: 0.6rem; flex-shrink: 0;
+        }
+        .section-tab.done { color: var(--victory); border-color: #2c4a2c; background: #142014; }
+        .section-tab.done i { border-color: var(--victory); background: var(--victory); color: #000; }
+        .section-tab.active { color: #000; background: var(--gold); border-color: #886600; box-shadow: 2px 2px 0px #000; }
+        .section-tab.active i { border-color: #000; background: #000; color: var(--gold); }
+
+        /* Foto que abandona el tablero al no haberse usado en un enlace de la sección */
+        .mug-card.leaving {
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            opacity: 0 !important;
+            transform: translate(-50%, -50%) scale(0.6) rotate(25deg) !important;
+            pointer-events: none;
+        }
 
         .strong-pulse {
             animation: strongPulse 0.9s ease-in-out 2;
@@ -882,7 +950,7 @@
             background: #222; color: #ccc; border: 1px solid #666; 
             padding: 4px 10px; font-size: 0.7rem; cursor: pointer; text-transform: uppercase;
             transition: all 0.2s;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
         }
         .btn-mini:hover { background: #fff; color: #000; }
 
@@ -895,7 +963,7 @@
 
         #preload-status {
             position: fixed; bottom: 10px; left: 10px;
-            font-size: 0.6rem; color: #444; font-family: 'Courier New';
+            font-size: 0.6rem; color: #444; font-family: var(--font-mono);
         }
 
         @keyframes blink { 0% { opacity: 0.2; } 50% { opacity: 1; } 100% { opacity: 0.2; } }
@@ -1280,8 +1348,12 @@ body.game-ending {
     top: 0; left: 0;
     width: 100%; height: 100%;
     background-color: var(--cork-bg);
-    background-image: radial-gradient(#2a2018 2px, transparent 2px);
-    background-size: 8px 8px;
+    background-image:
+        radial-gradient(rgba(0,0,0,0.32) 1px, transparent 1.6px),
+        radial-gradient(rgba(0,0,0,0.22) 1.5px, transparent 2.2px),
+        radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1.6px);
+    background-size: 7px 7px, 13px 13px, 5px 5px;
+    background-position: 0 0, 4px 6px, 2px 3px;
 }
 
 #string-layer {
@@ -1343,7 +1415,7 @@ body.game-ending {
 .mug-question {
     position: absolute; inset: 0;
     display: flex; align-items: center; justify-content: center;
-    font-family: 'Impact', 'Arial Black', sans-serif;
+    font-family: var(--font-display);
     font-size: clamp(1.6rem, 6vw, 2.6rem);
     color: var(--gold);
     text-shadow: 2px 2px 0 #000;
@@ -1353,7 +1425,7 @@ body.game-ending {
     margin-top: 4px;
     background: #e6e0d4;
     color: #111;
-    font-family: 'Courier New', monospace;
+    font-family: var(--font-mono);
     font-weight: bold;
     font-size: clamp(0.5rem, 2.4vw, 0.7rem);
     text-align: center;
@@ -1467,7 +1539,7 @@ body.game-ending {
 .oracle-status {
     position: relative;
     z-index: 2;
-    font-family: 'Courier New', monospace;
+    font-family: var(--font-mono);
     font-size: 0.42rem;
     color: #9fdc9f;
     text-shadow: 0 0 4px #4a4;
@@ -1528,7 +1600,7 @@ body.game-ending {
 .oracle-plate {
     background: #cfc9b8;
     color: #2a2a2a;
-    font-family: 'Courier New', monospace;
+    font-family: var(--font-mono);
     font-weight: bold;
     font-size: 0.5rem;
     letter-spacing: 1.2px;
@@ -1556,7 +1628,7 @@ body.game-ending {
     background: #efe8d4;
     background-image: repeating-linear-gradient(180deg, rgba(0,0,0,0.05) 0 1px, transparent 1px 5px);
     color: #222;
-    font-family: 'Courier New', monospace;
+    font-family: var(--font-mono);
     font-size: 0.5rem;
     line-height: 1.25;
     text-align: center;
@@ -1596,28 +1668,28 @@ body.game-ending {
 .notebook-icon-cover {
     position: relative;
     width: 36px; height: 48px;
-    background: linear-gradient(135deg, #9a6cf5, #7c3aed 55%, #5b21b6);
+    background: linear-gradient(135deg, #8fd8f8, #3ea0d8 55%, #1c6fa0);
     border-radius: 3px 6px 6px 3px;
     box-shadow:
-        inset -4px 0 5px rgba(0,0,0,0.35),
-        inset 0 0 0 1px rgba(255,255,255,0.12),
-        2px 2px 0 rgba(76,29,149,0.55);
+        inset -4px 0 5px rgba(0,0,0,0.3),
+        inset 0 0 0 1px rgba(255,255,255,0.35),
+        2px 2px 0 rgba(15,60,90,0.55);
 }
 .notebook-icon-cover::before {
     /* espiral del cuaderno */
     content: '';
     position: absolute; left: 1px; top: 4px; bottom: 4px; width: 5px;
-    background-image: radial-gradient(circle, #d8d8d8 35%, transparent 40%);
+    background-image: radial-gradient(circle, #eef7fc 35%, transparent 40%);
     background-size: 5px 7px;
     background-repeat: repeat-y;
-    opacity: 0.9;
+    opacity: 0.95;
 }
 .notebook-icon-cover::after {
-    /* canto de hojas a la derecha */
+    /* rayas de la hoja, visibles sobre la tapa celeste (como el icono de Notepad) */
     content: '';
-    position: absolute; right: -2px; top: 3px; bottom: 3px; width: 3px;
-    background: repeating-linear-gradient(180deg, #fff 0 1.5px, #d8cfc0 1.5px 3px);
-    border-radius: 0 2px 2px 0;
+    position: absolute; left: 7px; right: 3px; top: 15px; bottom: 6px;
+    background: repeating-linear-gradient(180deg, rgba(255,255,255,0.85) 0 3px, transparent 3px 7px);
+    border-radius: 0 1px 1px 0;
 }
 @media (max-height: 620px) {
     .machine-row .notebook-icon { display: none; }
@@ -1645,8 +1717,8 @@ body.game-ending {
 .notebook-window {
     position: relative;
     width: 100%; max-width: 260px;
-    background: #f2ead6;
-    border: 2px solid #3a2a15;
+    background: #eef7fc;
+    border: 2px solid #1c4a66;
     border-radius: 4px;
     box-shadow: 8px 10px 0 rgba(0,0,0,0.5);
     padding: 6px 14px 44px;
@@ -1657,7 +1729,7 @@ body.game-ending {
 .notebook-close {
     position: absolute; top: -12px; right: -12px;
     width: 30px; height: 30px; border-radius: 50%;
-    border: 2px solid #3a2a15; background: #fff; color: #3a2a15;
+    border: 2px solid #1c4a66; background: #fff; color: #1c4a66;
     font-weight: bold; cursor: pointer; z-index: 4;
 }
 .notebook-stack {
@@ -1665,7 +1737,7 @@ body.game-ending {
     flex-shrink: 0;
     overflow: hidden;
     transition: height 0.45s ease;
-    background-image: repeating-linear-gradient(180deg, #e4d9b8 0 3px, #cbbd91 3px 4px);
+    background-image: repeating-linear-gradient(180deg, #bfe4f7 0 3px, #8fcdec 3px 4px);
     border-radius: 2px 2px 0 0;
     box-shadow: 0 1px 0 rgba(0,0,0,0.15);
 }
@@ -1677,7 +1749,11 @@ body.game-ending {
 }
 .notebook-page {
     position: absolute; inset: 0;
-    background-image: repeating-linear-gradient(180deg, transparent 0 27px, rgba(0,0,50,0.14) 27px 28px);
+    /* Papel celeste rayado: línea azul horizontal cada renglón + margen rojo, como un bloc clásico */
+    background-color: #fbfdfe;
+    background-image:
+        repeating-linear-gradient(180deg, transparent 0 27px, rgba(43,110,168,0.4) 27px 28px),
+        linear-gradient(90deg, transparent 0 30px, rgba(196,60,60,0.35) 30px 31px, transparent 31px);
     transform-origin: top center;
     transform-style: preserve-3d;
     backface-visibility: hidden;
@@ -1689,15 +1765,16 @@ body.game-ending {
 .notebook-textarea {
     width: 100%; height: 100%; min-height: 260px;
     border: none; background: transparent; resize: none;
-    font-family: 'Courier New', monospace; font-size: 0.95rem; color: #2a2010;
+    font-family: var(--font-mono); font-size: 0.95rem; color: #1a2c3a;
     line-height: 28px;
+    padding-left: 36px;
     outline: none;
 }
 .notebook-page-corner {
     position: absolute;
     right: 6px; bottom: 6px;
     width: 36px; height: 36px;
-    background: linear-gradient(135deg, transparent 50%, #d8c9a3 52%);
+    background: linear-gradient(135deg, transparent 50%, #bfe4f7 52%);
     border-radius: 0 0 4px 0;
     cursor: pointer;
     box-shadow: -1px -1px 3px rgba(0,0,0,0.2);
@@ -1705,8 +1782,8 @@ body.game-ending {
 .notebook-page-indicator {
     position: absolute;
     left: 14px; bottom: 14px;
-    font-family: 'Courier New', monospace;
-    font-size: 0.7rem; color: #6a5a3a;
+    font-family: var(--font-mono);
+    font-size: 0.7rem; color: #3a6a86;
 }
     </style>                                    
 </head>
@@ -1721,17 +1798,17 @@ body.game-ending {
              style="width: 100%; max-width: 500px; margin: 0 auto 30px; display: block; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.7));">
         
         <!-- Mensaje de Texto -->
-        <div style="color: var(--hazard); font-size: 2.8rem; font-weight: bold; text-transform: uppercase; letter-spacing: 4px; font-family: 'Impact', sans-serif; text-shadow: 0 0 15px rgba(255, 0, 0, 0.8); margin-top: 20px;">
+        <div style="color: var(--hazard); font-size: 2.8rem; font-weight: bold; text-transform: uppercase; letter-spacing: 4px; font-family: var(--font-display); text-shadow: 0 0 15px rgba(255, 0, 0, 0.8); margin-top: 20px;">
             ¡EL AGENTE RIVAL HA COMPLETADO UN CASO!
         </div>
         
         <!-- Subtítulo -->
-        <div style="color: var(--gold); font-size: 1.2rem; font-family: 'Courier New', monospace; margin-top: 15px; letter-spacing: 2px;">
+        <div style="color: var(--gold); font-size: 1.2rem; font-family: var(--font-mono); margin-top: 15px; letter-spacing: 2px;">
             ¡ACELERA EL RITMO! ¡NO SE DESANIME AGENTE!
                     </div>
         
         <!-- Contador de tiempo -->
-        <div id="rival-alert-timer" style="color: var(--terminal-green); font-size: 1rem; margin-top: 20px; font-family: 'Courier New', monospace;">
+        <div id="rival-alert-timer" style="color: var(--terminal-green); font-size: 1rem; margin-top: 20px; font-family: var(--font-mono);">
             DESAPARECE EN <span style="color: var(--hazard); font-weight: bold;">3</span> SEGUNDOS
         </div>
     </div>
@@ -1835,7 +1912,7 @@ body.game-ending {
     <div class="tutorial-box" style="max-width: 450px; border-color: #333; position: relative;">
         <h2 id="md-title" style="color: #1a1a1a; text-transform: uppercase; margin-top: 0; border-bottom: 2px solid #999; padding-bottom: 10px;">TÍTULO MODO</h2>
         
-        <p id="md-desc" style="color: #1a1a1a; font-size: 0.95rem; margin: 20px 0; line-height: 1.5; font-family: 'Courier New', monospace; font-weight: normal;">
+        <p id="md-desc" style="color: #1a1a1a; font-size: 0.95rem; margin: 20px 0; line-height: 1.5; font-family: var(--font-mono); font-weight: normal;">
             Descripción...
         </p>
         
@@ -2009,6 +2086,11 @@ body.game-ending {
             <span style="color: var(--victory)">RECOMPENSA: <span id="case-reward-display">0</span> S/</span>
             <span id="case-difficulty-display" style="color: var(--gold);"></span>
         </div>
+        <div id="section-bar">
+            <span class="section-tab" data-n="1"><i>1</i>GRUPO</span>
+            <span class="section-tab" data-n="2"><i>2</i>RASGO</span>
+            <span class="section-tab" data-n="3"><i>3</i>IDENTIDAD</span>
+        </div>
         <div class="corkboard-wrapper" id="corkboard-wrapper">
             <div class="corkboard-canvas" id="corkboard-canvas">
                 <div class="corkboard" id="board"></div>
@@ -2022,7 +2104,8 @@ body.game-ending {
             <div class="output" id="out">> AGUARDANDO COMANDOS...</div>
         </div>
         <div class="action-row">
-            <button class="btn-close-case" onclick="evaluateAllLinks()">🔎 CERRAR CASO</button>
+            <button class="btn-close-case" id="btn-close-case" onclick="evaluateAllLinks()" style="display:none;">🔎 CERRAR CASO</button>
+            <button class="btn-next-section" id="btn-next-section" onclick="goToNextSection()">➜ SIGUIENTE SECCIÓN</button>
             <button class="btn-main btn-abort" onclick="openAbortModal()">ABORTAR CASO</button>
         </div>
 
@@ -2914,6 +2997,19 @@ openSettings = function() {
         }
 
         let personas = [], objetivo = null, gameActive = false;
+
+        // === SISTEMA DE SECCIONES (V5.9.13) ===
+        // El tablero se resuelve en 3 secciones. Cada sección exige al menos un enlace
+        // nuevo; solo los sospechosos usados en un enlace de la sección que termina
+        // pasan a la siguiente. "boardSuspects" es el subconjunto de "personas"
+        // actualmente en juego (arranca siendo el total y se va reduciendo).
+        let currentSection = 1;
+        const TOTAL_SECTIONS = 3;
+        let boardSuspects = [];
+        // Cada vez que un enlace queda completo (se suelta sobre otra foto) anota aquí
+        // su orden real de finalización, para poder hallar "la punta del último enlace"
+        // de la Sección 3 sin depender del orden en que se iniciaron las cintas.
+        let linkCompletionCounter = 0;
         // === NUEVO: TABLERO DE CORCHO / SISTEMA DE CINTA ROJA ===
         let boardPositions = {};   // nombre -> {x%, y%, rot}
         let stringLinks = [];      // {a, b} pares ya unidos con cinta (para redibujar en resize)
@@ -3599,12 +3695,16 @@ openSettings = function() {
                         <b>2. ENLACE POR PISTAS</b>
                         Toque una foto, pulse "ENLAZAR" y arrastre la cinta hasta otra foto para agrupar sospechosos que crea que comparten una misma pista. Nada se valida al momento: todo se revisa recién cuando pulsa "CERRAR CASO".
                     </div>
+                    <div class="step">
+                        <b>3. TRES SECCIONES</b>
+                        Cada caso se resuelve en tres pasadas: GRUPO, RASGO e IDENTIDAD. Cada una exige al menos un enlace nuevo antes de pulsar "SIGUIENTE SECCIÓN"; solo pasan los sospechosos que quedaron enlazados. En la Sección 3, la última foto a la que ata una cinta es su identificación final.
+                    </div>
                     <div class="step" style="border-left-color: var(--hazard);">
-                        <b>3. GUERRA CIBERNÉTICA</b>
+                        <b>4. GUERRA CIBERNÉTICA</b>
                         Usa la consola escribiendo <b>"/"</b> para ver comandos de sabotaje. ¡Ciega, confunde y entorpece a tu rival!
                     </div>
                     <div class="step">
-                        <b>4. PRESIÓN</b>
+                        <b>5. PRESIÓN</b>
                         El sistema te alertará cuando tus rivales completen un descarte masivo.
                     </div>
                 `;
@@ -3619,8 +3719,12 @@ openSettings = function() {
                         Toque una foto para ver su expediente y pulse "ENLAZAR" para clavar una chincheta. Sujete la cinta y llévela hasta otra foto que crea que comparte esa misma pista, formando grupos de un mismo color. Puede enlazar varias cintas por sospechoso, y solo usted decide cuándo cortar una: toque la chincheta del otro extremo para soltarla, o la chincheta raíz para retirar la cinta entera.
                     </div>
                     <div class="step">
-                        <b>3. CIERRE DEL CASO</b>
-                        A los que no comparten la pista con el objetivo, simplemente no los enlace. Cuando esté listo, pulse "CERRAR CASO": el sistema revisa todo el recorrido de cintas y marca cuáles son fuertes (se quedan) y cuáles son débiles (se rompen). Un solo enlace débil y pierde el caso.
+                        <b>3. TRES SECCIONES</b>
+                        El tablero se resuelve en tres pasadas: GRUPO, RASGO e IDENTIDAD. En cada una necesita al menos un enlace nuevo antes de pulsar "SIGUIENTE SECCIÓN". Solo pasan a la siguiente sección los sospechosos que sí quedaron enlazados; el resto sale del tablero. Así va cerrando el cerco poco a poco, hasta quedarse con muy pocos nombres.
+                    </div>
+                    <div class="step">
+                        <b>4. CIERRE DEL CASO</b>
+                        En la Sección 3, la última foto a la que lleve una cinta es la persona que está señalando como el objetivo. Cuando esté listo, pulse "CERRAR CASO": el sistema revisa todo el recorrido, desde la primera cinta hasta la última. Un solo enlace débil corta el lazo y pierde el caso; y si el recorrido entero es sólido pero termina en la persona equivocada, también lo pierde.
                     </div>
                 `;
             }
@@ -3868,8 +3972,12 @@ openSettings = function() {
             document.getElementById('case-reward-display').innerText = currentReward;
 
             gameActive = true;
+            currentSection = 1;
+            boardSuspects = personas.slice();
+            linkCompletionCounter = 0;
             typeWriter("ESCANEO FINALIZADO. ESPERANDO CONSULTA...", "out", 15);
-            renderBoard();
+            renderBoard(boardSuspects, true);
+            updateSectionUI();
             updateWalletUI();
         }
         
@@ -4006,7 +4114,9 @@ window.addEventListener('orientationchange', () => {
             }, 800);
         }
 
-        function renderBoard() {
+        function renderBoard(suspectsList, resetLinks) {
+    if (resetLinks === undefined) resetLinks = true;
+    const list = suspectsList || personas;
     const wrapper = document.getElementById('corkboard-wrapper');
     const canvas = document.getElementById('corkboard-canvas');
     const board = document.getElementById('board');
@@ -4014,20 +4124,20 @@ window.addEventListener('orientationchange', () => {
     board.innerHTML = '';
     svg.innerHTML = '';
     board.className = 'corkboard';
-    stringLinks = [];
+    if (resetLinks) { stringLinks = []; }
     panDrag = null;
     activeDangleDrag = null;
 
     const wRect = wrapper.getBoundingClientRect();
-    const layout = computeGridLayout(personas.length, wRect.width || 300, wRect.height || 260);
+    const layout = computeGridLayout(list.length, wRect.width || 300, wRect.height || 260);
     canvasSize = { w: layout.canvasW, h: layout.canvasH };
     canvas.style.width = layout.canvasW + 'px';
     canvas.style.height = layout.canvasH + 'px';
     svg.setAttribute('viewBox', `0 0 ${layout.canvasW} ${layout.canvasH}`);
 
-    boardPositions = computeScatterPositions(personas.map(pp => pp.n), layout);
+    boardPositions = computeScatterPositions(list.map(pp => pp.n), layout);
 
-    personas.forEach(p => {
+    list.forEach(p => {
         const card = document.createElement('div');
         card.className = 'mug-card';
         card.id = `card-${p.n}`;
@@ -4054,6 +4164,67 @@ window.addEventListener('orientationchange', () => {
     // Centrar la vista inicial en medio del tablero grande
     setPan(-(layout.canvasW - wRect.width) / 2, -(layout.canvasH - wRect.height) / 2);
     redrawAllConnections();
+}
+
+// === INDICADOR DE SECCIÓN: pestañas "GRUPO / RASGO / IDENTIDAD" + qué botón de acción se ve ===
+function updateSectionUI() {
+    document.querySelectorAll('.section-tab').forEach(tab => {
+        const n = parseInt(tab.dataset.n, 10);
+        tab.classList.toggle('active', n === currentSection);
+        tab.classList.toggle('done', n < currentSection);
+    });
+    const nextBtn = document.getElementById('btn-next-section');
+    const closeBtn = document.getElementById('btn-close-case');
+    const isFinal = currentSection >= TOTAL_SECTIONS;
+    if (nextBtn) nextBtn.style.display = isFinal ? 'none' : 'inline-block';
+    if (closeBtn) closeBtn.style.display = isFinal ? 'inline-block' : 'none';
+    updateSectionActionState();
+}
+
+// Habilita "Siguiente sección" / "Cerrar caso" solo cuando ya hay al menos
+// un enlace completo hecho DENTRO de la sección actual.
+function updateSectionActionState() {
+    const hasLinkThisSection = stringLinks.some(l => l.section === currentSection && l.b);
+    const nextBtn = document.getElementById('btn-next-section');
+    const closeBtn = document.getElementById('btn-close-case');
+    if (nextBtn) nextBtn.disabled = !hasLinkThisSection;
+    if (closeBtn) closeBtn.disabled = !hasLinkThisSection;
+}
+
+// === AVANZAR DE SECCIÓN: solo pasan los sospechosos que se enlazaron en la sección que termina ===
+function goToNextSection() {
+    if (!gameActive || currentSection >= TOTAL_SECTIONS) return;
+
+    const thisSectionLinks = stringLinks.filter(l => l.section === currentSection && l.b);
+    if (thisSectionLinks.length === 0) {
+        playSFX('error');
+        typeWriter("ERROR: ENLACE AL MENOS UNA PAREJA DE SOSPECHOSOS ANTES DE AVANZAR DE SECCIÓN.", "out", 10);
+        return;
+    }
+
+    const survivorNames = new Set();
+    thisSectionLinks.forEach(l => { survivorNames.add(l.a); survivorNames.add(l.b); });
+
+    // Se descarta cualquier cinta que quedó a medio arrastrar y cualquier enlace
+    // (de esta o de una sección previa) cuyo otro extremo no sobrevivió.
+    stringLinks = stringLinks.filter(l => l.b && survivorNames.has(l.a) && survivorNames.has(l.b));
+
+    const dropped = boardSuspects.filter(p => !survivorNames.has(p.n));
+    boardSuspects = boardSuspects.filter(p => survivorNames.has(p.n));
+
+    dropped.forEach(p => {
+        const card = document.getElementById('card-' + p.n);
+        if (card) card.classList.add('leaving');
+    });
+
+    playSFX('discard');
+    currentSection++;
+    typeWriter(`SECCIÓN ${currentSection} DE ${TOTAL_SECTIONS} · ${boardSuspects.length} SOSPECHOSO(S) SIGUEN EN SEGUIMIENTO.`, "out", 12);
+
+    setTimeout(() => {
+        renderBoard(boardSuspects, false);
+        updateSectionUI();
+    }, dropped.length > 0 ? 420 : 0);
 }
 
 // === REJILLA DEL TABLERO: celdas de tamaño fijo y generoso, no un múltiplo arbitrario del contenedor ===
@@ -4106,9 +4277,10 @@ function computeScatterPositions(names, layout) {
 function scatterReshuffle() {
     const wrapper = document.getElementById('corkboard-wrapper');
     const wRect = wrapper.getBoundingClientRect();
-    const layout = computeGridLayout(personas.length, canvasSize.w, canvasSize.h);
-    boardPositions = computeScatterPositions(personas.map(p => p.n), { ...layout, canvasW: canvasSize.w, canvasH: canvasSize.h });
-    personas.forEach(p => {
+    const list = (boardSuspects && boardSuspects.length) ? boardSuspects : personas;
+    const layout = computeGridLayout(list.length, canvasSize.w, canvasSize.h);
+    boardPositions = computeScatterPositions(list.map(p => p.n), { ...layout, canvasW: canvasSize.w, canvasH: canvasSize.h });
+    list.forEach(p => {
         const cardEl = document.getElementById(`card-${p.n}`);
         if (!cardEl) return;
         const pos = boardPositions[p.n];
@@ -4214,7 +4386,7 @@ function startLinkFromZoom() {
     closeZoomModal();
     const color = pickColorForNewLink(name);
     const id = 'link_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-    stringLinks.push({ id, a: name, b: null, color });
+    stringLinks.push({ id, a: name, b: null, color, section: currentSection });
     activeDangleDrag = null;
     redrawAllConnections();
     document.getElementById('btn-new-case').style.display = 'none';
@@ -4343,6 +4515,7 @@ function redrawAllConnections() {
         }
     });
     tackNames.forEach(name => drawTack(name));
+    if (typeof updateSectionActionState === 'function') updateSectionActionState();
 }
 
 // === ARRASTRAR EL CABO SUELTO (o una chincheta ya clavada) HASTA OTRA FOTO, sin validación en vivo ===
@@ -4419,7 +4592,7 @@ document.addEventListener('pointermove', (e) => {
             pendingTackPress = null;
             const color = pickColorForNewLink(name);
             const id = 'link_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-            stringLinks.push({ id, a: name, b: null, color });
+            stringLinks.push({ id, a: name, b: null, color, section: currentSection });
             activeDangleDrag = { linkId: id };
             redrawAllConnections();
             updateDangleTemp(e.clientX, e.clientY);
@@ -4440,6 +4613,7 @@ document.addEventListener('pointerup', (e) => {
             const targetCard = elUnder ? elUnder.closest('.mug-card') : null;
             if (targetCard && targetCard.dataset.name !== link.a) {
                 link.b = targetCard.dataset.name;
+                link.completedAt = ++linkCompletionCounter;
                 playSFX('discard');
             }
             // si no soltó sobre ninguna foto, la cinta simplemente vuelve a quedar colgando (sin error, sin caída)
@@ -4626,10 +4800,15 @@ function keepSuspect() {
         // respondieron lo mismo (una pista real que de verdad los une). Si ninguna consulta
         // los une, la cinta es DÉBIL y se rompe. Un solo enlace débil hace perder el caso.
         function evaluateAllLinks() {
+            // El caso solo se cierra desde la Sección 3, y esa sección también
+            // necesita su propio enlace nuevo antes de poder cerrarse.
+            if (currentSection < TOTAL_SECTIONS) return;
+
             const completeLinks = stringLinks.filter(l => l.b);
-            if (completeLinks.length === 0) {
+            const thisSectionLinks = completeLinks.filter(l => l.section === currentSection);
+            if (thisSectionLinks.length === 0) {
                 playSFX('error');
-                typeWriter("ERROR: ENLACE AL MENOS UNA PAREJA DE SOSPECHOSOS ANTES DE CERRAR EL CASO.", "out", 10);
+                typeWriter("ERROR: ENLACE AL MENOS UNA PAREJA DE SOSPECHOSOS EN ESTA SECCIÓN ANTES DE CERRAR EL CASO.", "out", 10);
                 return;
             }
 
@@ -4643,10 +4822,29 @@ function keepSuspect() {
             });
 
             const anyWeak = weakCount > 0;
-            playSFX(anyWeak ? 'error' : 'click');
-            document.getElementById('out').innerHTML = `> ANÁLISIS DEL RECORRIDO<br><span style="color:${anyWeak ? 'var(--hazard)' : 'var(--terminal-green)'}">ENLACES FUERTES: ${strongCount} · DÉBILES: ${weakCount}</span>`;
 
-            setTimeout(() => { endGame(!anyWeak); }, anyWeak ? 1400 : 700);
+            // El recorrido se sigue en el orden real en que se fueron cerrando las
+            // cintas; la punta del último enlace atado en la Sección 3 es la
+            // identidad que el jugador está señalando como el objetivo.
+            const lastSectionLink = thisSectionLinks.reduce((latest, l) =>
+                (!latest || (l.completedAt || 0) > (latest.completedAt || 0)) ? l : latest, null);
+            const finalSuspectName = lastSectionLink ? lastSectionLink.b : null;
+            const rightPerson = finalSuspectName === objetivo.n;
+            const win = !anyWeak && rightPerson;
+
+            playSFX(win ? 'click' : 'error');
+
+            let msg;
+            if (anyWeak) {
+                msg = `> ANÁLISIS DEL RECORRIDO<br><span style="color:var(--hazard)">ENLACES FUERTES: ${strongCount} · DÉBILES: ${weakCount}<br>UN LAZO SE CORTÓ EN EL RECORRIDO.</span>`;
+            } else if (!rightPerson) {
+                msg = `> ANÁLISIS DEL RECORRIDO<br><span style="color:var(--hazard)">ENLACES FUERTES: ${strongCount} · DÉBILES: 0<br>EL RECORRIDO LLEGA A LA PERSONA EQUIVOCADA.</span>`;
+            } else {
+                msg = `> ANÁLISIS DEL RECORRIDO<br><span style="color:var(--terminal-green)">ENLACES FUERTES: ${strongCount} · DÉBILES: 0<br>RECORRIDO COMPLETO. IDENTIDAD CONFIRMADA.</span>`;
+            }
+            document.getElementById('out').innerHTML = msg;
+
+            setTimeout(() => { endGame(win); }, win ? 700 : 1400);
         }
 
         function markLinkStrong(linkId) {
@@ -5520,20 +5718,20 @@ if(isHost) {
                 </svg>
                 <div class="mug-question">?</div>
             </div>
-            <h3 id="zoom-name" style="color: #000; text-align: center; border-bottom: 3px solid #000; padding-bottom: 10px; margin-top: 0; margin-bottom: 15px; font-family: 'Courier New', monospace; font-size: 1.6rem; text-transform: uppercase; letter-spacing: 2px; flex-shrink: 0; font-weight: bold;"></h3>
+            <h3 id="zoom-name" style="color: #000; text-align: center; border-bottom: 3px solid #000; padding-bottom: 10px; margin-top: 0; margin-bottom: 15px; font-family: var(--font-mono); font-size: 1.6rem; text-transform: uppercase; letter-spacing: 2px; flex-shrink: 0; font-weight: bold;"></h3>
             
-            <div id="zoom-info" style="color: #111; font-family: 'Courier New', monospace; font-size: 1rem; line-height: 1.3; flex-grow: 1; overflow: hidden;">
+            <div id="zoom-info" style="color: #111; font-family: var(--font-mono); font-size: 1rem; line-height: 1.3; flex-grow: 1; overflow: hidden;">
                 <!-- Los datos se llenarán dinámicamente -->
             </div>
         </div>
-        <button id="zoom-link-btn" onclick="startLinkFromZoom()" style="width: 100%; border: none; border-top: 2px solid #000; background: var(--gold); color: #000; font-family: 'Courier New', monospace; font-weight: bold; letter-spacing: 2px; font-size: 1rem; padding: 12px 0; cursor: pointer; flex-shrink: 0;">🧵 ENLAZAR</button>
+        <button id="zoom-link-btn" onclick="startLinkFromZoom()" style="width: 100%; border: none; border-top: 2px solid #000; background: var(--gold); color: #000; font-family: var(--font-mono); font-weight: bold; letter-spacing: 2px; font-size: 1rem; padding: 12px 0; cursor: pointer; flex-shrink: 0;">🧵 ENLAZAR</button>
     </div>
     
     <!-- Botón MANTENER como banderita adhesiva (FUERA de la tarjeta) -->
     <div id="zoom-buttons-container" class="zoom-buttons-absolute" style="display: none;">
         <!-- Banderita MANTENER (la original) -->
         <button id="zoom-keep-btn" class="bookmark-btn" 
-        style="background: var(--victory); color: #000; padding: 0; border: none; font-family: 'Courier New', monospace; font-weight: bold; cursor: pointer; width: 80px; height: 80px; font-size: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 10px; box-shadow: 5px 5px 0px rgba(0,0,0,0.5);">
+        style="background: var(--victory); color: #000; padding: 0; border: none; font-family: var(--font-mono); font-weight: bold; cursor: pointer; width: 80px; height: 80px; font-size: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 10px; box-shadow: 5px 5px 0px rgba(0,0,0,0.5);">
     📥
 </button>
     </div>
