@@ -262,6 +262,7 @@
         const BYPASS_CORS = "https://corsproxy.io/?"; 
         
         let actualizacionesIgnoradas = new Set(); 
+        let blobUrlActivo = null; // URL del motor cargado actualmente, para poder liberarla al cerrar
 
         window.onload = () => {
             actualizarInterfaz();
@@ -556,24 +557,26 @@
 
             view.style.display = "block";
             
-            // --- MOTOR DE CARGA (V6) ---
-            // Antes esto usaba document.write(), una API vieja que en documentos grandes
-            // (250KB+ de HTML/CSS/JS, como el propio juego) puede bloquear el parser y
-            // dejar el script a medio ejecutar de forma inconsistente: exactamente el
-            // patrón de "la cinta nunca llega a enlazar nada" + lag constante.
-            // srcdoc es la forma moderna de cargar un documento completo en un iframe:
-            // el motor arranca como una página propia y limpia, sin ese cuello de botella.
+            // --- MOTOR DE CARGA (V6.1) ---
+            // srcdoc parecía la solución, pero el control del Service Worker sobre un
+            // iframe srcdoc es un comportamiento INCONSISTENTE entre navegadores (Chrome
+            // llegó a revertirlo por bugs propios; Edge tiene una política dedicada solo
+            // para esto). Cuando el navegador SÍ extiende ese control, sw.js intercepta
+            // hasta los pedidos que hace el propio juego (PeerJS, fuentes) y, si alguno
+            // falla bajo esa intercepción, el motor puede quedar a medio inicializar:
+            // exactamente el patrón de "la cinta nunca conecta" + lag constante.
+            // Un blob: SÍ tiene una garantía consistente: por spec, un Service Worker
+            // nunca puede interceptar una URL blob:, así que esto saca al juego por
+            // completo de esa zona gris, en cualquier navegador.
             try {
-                frame.removeAttribute('src');
-                frame.srcdoc = locales[id].codigo;
+                if (blobUrlActivo) { URL.revokeObjectURL(blobUrlActivo); blobUrlActivo = null; }
+                const blob = new Blob([locales[id].codigo], { type: 'text/html' });
+                blobUrlActivo = URL.createObjectURL(blob);
+                frame.removeAttribute('srcdoc');
+                frame.src = blobUrlActivo;
             } catch (e) {
-                try {
-                    const blob = new Blob([locales[id].codigo], { type: 'text/html' });
-                    frame.src = URL.createObjectURL(blob);
-                } catch (e2) {
-                    console.error('No se pudo iniciar el motor:', e2);
-                    alert('No se pudo iniciar el juego. Intenta descargarlo de nuevo desde CENTRO DE DATOS.');
-                }
+                console.error('No se pudo iniciar el motor:', e);
+                alert('No se pudo iniciar el juego. Intenta descargarlo de nuevo desde CENTRO DE DATOS.');
             }
         }
 
@@ -581,6 +584,7 @@
         function cerrarMotor() {
             document.getElementById('game-view').style.display = "none";
             document.getElementById('game-frame').src = "about:blank"; // Mata el proceso del juego
+            if (blobUrlActivo) { URL.revokeObjectURL(blobUrlActivo); blobUrlActivo = null; }
         }
 
         // Escucha la señal del juego (postMessage)
