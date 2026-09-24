@@ -337,6 +337,57 @@
             text-transform: uppercase;
         }
 
+        /* === LOGOTIPO DEL MENÚ: insignia biométrica + rótulo, en vez de solo texto === */
+        .menu-logo {
+            display: flex; align-items: center; justify-content: center; gap: 16px;
+            margin-bottom: 40px; padding: 0 24px; width: 100%; max-width: 480px;
+        }
+        .menu-badge {
+            width: 64px; height: 64px; flex-shrink: 0;
+            filter: drop-shadow(0 0 4px rgba(214,176,102,0.35));
+        }
+        .menu-wordmark {
+            display: flex; flex-direction: column; align-items: flex-start;
+        }
+        .menu-wordmark-text {
+            position: relative;
+            font-family: var(--font-display); font-size: clamp(1.9rem, 8vw, 3.2rem);
+            color: var(--gold); text-shadow: 4px 4px 0px #000, -1px -1px 0 #333;
+            letter-spacing: 3px; text-transform: uppercase; line-height: 1;
+            white-space: nowrap;
+        }
+        .menu-wordmark-text::after {
+            /* franja de "cinta de escena" cruzando el nombre */
+            content: 'ACCESO RESTRINGIDO';
+            position: absolute; left: -6%; right: -6%; top: 58%;
+            transform: rotate(-3deg);
+            background: var(--dark-red);
+            color: #f0e0c0;
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            letter-spacing: 3px;
+            text-align: center;
+            padding: 2px 0;
+            box-shadow: 0 2px 0 rgba(0,0,0,0.5);
+            text-shadow: none;
+            white-space: nowrap;
+        }
+        .menu-wordmark-sub {
+            margin-top: 14px;
+            font-family: var(--font-mono); font-size: clamp(0.7rem, 2.6vw, 1rem);
+            color: #888; letter-spacing: 4px; text-transform: uppercase;
+        }
+        @media (max-width: 480px) {
+            .menu-logo { flex-direction: column; gap: 8px; }
+            .menu-wordmark { align-items: center; }
+            .menu-wordmark-sub { margin-top: 10px; }
+        }
+        @media (max-height: 600px) {
+            .menu-logo { margin-bottom: 18px; }
+            .menu-badge { width: 46px; height: 46px; }
+            .menu-wordmark-sub { margin-top: 6px; }
+        }
+
         .menu-buttons {
             display: flex; flex-direction: column; gap: 20px;
             width: 100%; max-width: 400px; padding: 0 20px;
@@ -955,10 +1006,11 @@
         .btn-mini:hover { background: #fff; color: #000; }
 
         #case-info-bar { 
-            display: flex; justify-content: space-between; align-items: center; 
-            color: var(--gold); margin-bottom: 10px; font-size: 0.75rem; 
-            border-bottom: 1px solid #444; padding-bottom: 5px; 
-            flex-shrink: 0; transition: filter 0.5s; 
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; 
+            color: var(--gold); margin-bottom: 8px; font-size: 0.75rem; 
+            border-bottom: 1px solid #444; padding-bottom: 6px; 
+            flex-shrink: 0; transition: filter 0.5s;
+            row-gap: 4px; column-gap: 10px;
         }
 
         #preload-status {
@@ -1760,7 +1812,7 @@ body.game-ending {
     transition: transform 0.5s cubic-bezier(.45,0,.2,1);
 }
 .notebook-page.flipping {
-    transform: rotateX(-165deg);
+    transform: rotateX(165deg);
 }
 .notebook-textarea {
     width: 100%; height: 100%; min-height: 260px;
@@ -1862,7 +1914,26 @@ body.game-ending {
             <div style="font-size: 0.6rem; color: #666;">SALDO NETO</div>
             <div class="currency"><span id="total-money">0</span> S/</div>
         </div>
-        <h1 class="menu-title">BIO-BREACH<br><span style="font-size: 1.2rem; color: #555;">SISTEMA DE RASTREO</span></h1>
+        <div class="menu-logo">
+            <svg class="menu-badge" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="50" cy="50" r="46" fill="none" stroke="#d6b066" stroke-width="2.5"/>
+                <circle cx="50" cy="50" r="46" fill="none" stroke="#d6b066" stroke-width="1" stroke-dasharray="2 5" opacity="0.5"/>
+                <path d="M 20,42 A 30,30 0 0 1 80,42" fill="none" stroke="#d6b066" stroke-width="2.2" opacity="0.9"/>
+                <path d="M 25,52 A 25,25 0 0 1 75,52" fill="none" stroke="#d6b066" stroke-width="2.2" opacity="0.7"/>
+                <path d="M 31,62 A 19,19 0 0 1 69,62" fill="none" stroke="#d6b066" stroke-width="2.2" opacity="0.55"/>
+                <path d="M 38,70 A 12,12 0 0 1 62,70" fill="none" stroke="#d6b066" stroke-width="2.2" opacity="0.4"/>
+                <line x1="50" y1="2" x2="50" y2="16" stroke="#d6b066" stroke-width="2"/>
+                <line x1="50" y1="84" x2="50" y2="98" stroke="#d6b066" stroke-width="2"/>
+                <line x1="2" y1="50" x2="16" y2="50" stroke="#d6b066" stroke-width="2"/>
+                <line x1="84" y1="50" x2="98" y2="50" stroke="#d6b066" stroke-width="2"/>
+                <circle cx="50" cy="50" r="3" fill="#8a0000"/>
+            </svg>
+            <div class="menu-wordmark">
+                <span class="menu-wordmark-text">BIO-BREACH</span>
+                <span class="menu-wordmark-sub">SISTEMA DE RASTREO</span>
+            </div>
+        </div>
+        <h1 class="menu-title" style="display:none;">BIO-BREACH<br><span style="font-size: 1.2rem; color: #555;">SISTEMA DE RASTREO</span></h1>
         <div class="menu-buttons">
             <button class="btn-play" onclick="openGameModeSelection()">INICIAR OPERACIÓN</button>
             <button class="btn-exit" onclick="openArchives()">ARCHIVOS (MURO)</button>
@@ -2087,9 +2158,9 @@ body.game-ending {
             <span id="case-difficulty-display" style="color: var(--gold);"></span>
         </div>
         <div id="section-bar">
-            <span class="section-tab" data-n="1"><i>1</i>GRUPO</span>
-            <span class="section-tab" data-n="2"><i>2</i>RASGO</span>
-            <span class="section-tab" data-n="3"><i>3</i>IDENTIDAD</span>
+            <span class="section-tab" data-n="1"><i>1</i>BARRIDO</span>
+            <span class="section-tab" data-n="2"><i>2</i>CERCO</span>
+            <span class="section-tab" data-n="3"><i>3</i>VEREDICTO</span>
         </div>
         <div class="corkboard-wrapper" id="corkboard-wrapper">
             <div class="corkboard-canvas" id="corkboard-canvas">
@@ -3697,7 +3768,7 @@ openSettings = function() {
                     </div>
                     <div class="step">
                         <b>3. TRES SECCIONES</b>
-                        Cada caso se resuelve en tres pasadas: GRUPO, RASGO e IDENTIDAD. Cada una exige al menos un enlace nuevo antes de pulsar "SIGUIENTE SECCIÓN"; solo pasan los sospechosos que quedaron enlazados. En la Sección 3, la última foto a la que ata una cinta es su identificación final.
+                        Cada caso se resuelve en tres pasadas: BARRIDO, CERCO y VEREDICTO. Cada una exige al menos un enlace nuevo antes de pulsar "SIGUIENTE SECCIÓN"; solo pasan los sospechosos que quedaron enlazados. En la Sección 3, la última foto a la que ata una cinta es su identificación final.
                     </div>
                     <div class="step" style="border-left-color: var(--hazard);">
                         <b>4. GUERRA CIBERNÉTICA</b>
@@ -3720,7 +3791,7 @@ openSettings = function() {
                     </div>
                     <div class="step">
                         <b>3. TRES SECCIONES</b>
-                        El tablero se resuelve en tres pasadas: GRUPO, RASGO e IDENTIDAD. En cada una necesita al menos un enlace nuevo antes de pulsar "SIGUIENTE SECCIÓN". Solo pasan a la siguiente sección los sospechosos que sí quedaron enlazados; el resto sale del tablero. Así va cerrando el cerco poco a poco, hasta quedarse con muy pocos nombres.
+                        El tablero se resuelve en tres pasadas: BARRIDO, CERCO y VEREDICTO. En cada una necesita al menos un enlace nuevo antes de pulsar "SIGUIENTE SECCIÓN". Solo pasan a la siguiente sección los sospechosos que sí quedaron enlazados; el resto sale del tablero. Así va cerrando el cerco poco a poco, hasta quedarse con muy pocos nombres.
                     </div>
                     <div class="step">
                         <b>4. CIERRE DEL CASO</b>
@@ -4221,8 +4292,15 @@ function goToNextSection() {
     currentSection++;
     typeWriter(`SECCIÓN ${currentSection} DE ${TOTAL_SECTIONS} · ${boardSuspects.length} SOSPECHOSO(S) SIGUEN EN SEGUIMIENTO.`, "out", 12);
 
+    // Los sobrevivientes NO se reordenan ni cambian de posición ni de rotación: solo
+    // desaparecen del corcho las fotos que no se usaron. Los enlaces que ya estaban
+    // hechos se ven exactamente igual que antes, porque sus dos puntas no se movieron.
     setTimeout(() => {
-        renderBoard(boardSuspects, false);
+        dropped.forEach(p => {
+            const card = document.getElementById('card-' + p.n);
+            if (card) card.remove();
+        });
+        redrawAllConnections();
         updateSectionUI();
     }, dropped.length > 0 ? 420 : 0);
 }
@@ -4365,8 +4443,10 @@ window.addEventListener('orientationchange', () => scheduleBoardRedraw(400));
 // === COLORES DE LAS CINTAS (una por cada grupo que arma el jugador) ===
 const LINK_COLORS = ['#c0392b', '#2471a3', '#1e8449', '#8e44ad', '#ca8a04', '#0e7c73', '#b7472a', '#5b5b5b'];
 function pickColorForNewLink(rootName) {
-    const existing = stringLinks.find(l => l.a === rootName || l.b === rootName);
-    if (existing) return existing.color;
+    // Si este sospechoso ya tiene un enlace de la sección ACTUAL, se mantiene el mismo color (mismo grupo).
+    // Si sus únicos enlaces son de una sección anterior, es un grupo nuevo: el color cambia sí o sí.
+    const existingThisSection = stringLinks.find(l => (l.a === rootName || l.b === rootName) && l.section === currentSection);
+    if (existingThisSection) return existingThisSection.color;
     const used = new Set(stringLinks.map(l => l.color));
     const next = LINK_COLORS.find(c => !used.has(c));
     return next || LINK_COLORS[stringLinks.length % LINK_COLORS.length];
@@ -4409,11 +4489,18 @@ function nameCenterPx(name) {
     return { x: (pos.x / 100) * canvasSize.w, y: (pos.y / 100) * canvasSize.h - 22 };
 }
 
-// Toque simple sobre una chincheta = corta la última cinta que toque a ese sospechoso
+// Toque simple sobre una chincheta = corta la última cinta que toque a ese sospechoso,
+// pero solo si esa cinta es de la sección ACTUAL. Los enlaces de secciones ya cerradas
+// quedan fijos: son la prueba de lo que ya decidiste, no se pueden deshacer.
 function cutLastTapeAt(name) {
     for (let i = stringLinks.length - 1; i >= 0; i--) {
         const link = stringLinks[i];
         if (link.a === name || link.b === name) {
+            if (link.section !== currentSection) {
+                playSFX('error');
+                typeWriter("ESE ENLACE QUEDÓ FIJADO EN UNA SECCIÓN ANTERIOR. NO SE PUEDE CORTAR.", "out", 8);
+                return;
+            }
             playSFX('error');
             if (link.b === name) {
                 // Caso 1: se desconecta el punto enlazado; la cinta queda pendiendo de su raíz
