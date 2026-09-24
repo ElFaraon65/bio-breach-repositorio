@@ -42,55 +42,94 @@
 
     <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), vr=(), accelerometer=(), gyroscope=(), magnetometer=()">
 
-    <link rel="manifest" href="./manifest.json?v=tabs_fix">
+    <link rel="manifest" href="./manifest.json?v=v6">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Special+Elite&display=swap" rel="stylesheet">
 
     <style>        
-        :root { --gold: #ffd700; --bg: #0a0a0a; --card: #161616; --blue: #0078d4; --green: #00ff41; --orange: #ff8c00; --red: #ff0040; --tab-active: #222; }
+        :root { 
+            --gold: #d6b066; --bg: #0a0a0a; --card: #161616; 
+            --blue: #4a6fa5; --green: #2e8b57; --orange: #c17817; --red: #8b1a1a; --tab-active: #1c1810;
+            --font-display: 'Oswald', 'Impact', 'Arial Narrow Bold', sans-serif;
+            --font-mono: 'Special Elite', 'Courier New', Courier, monospace;
+        }
         
         html { height: 100%; overscroll-behavior: none; }
         body { 
-            background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; 
+            background-color: var(--bg);
+            /* mismo grano de película sutil que el resto de BIO-BREACH */
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255,255,255,0.025) 1px, rgba(255,255,255,0.025) 2px);
+            color: #ddd; font-family: var(--font-mono);
             margin: 0; padding: 0; user-select: none; min-height: 100%;
             overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; 
         }
         
-        .header { background: #000; padding: 15px; text-align: center; border-bottom: 1px solid #333; position: sticky; top: 0; z-index: 10; }
-        .header h1 { margin: 0; font-size: 1.2rem; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; }
-        #status-bar { font-size: 0.65rem; color: var(--orange); text-transform: uppercase; margin-top: 5px; letter-spacing: 1px; }
+        .header { 
+            background: #000; padding: 13px 15px; text-align: center; border-bottom: 1px solid #3a3020; 
+            position: sticky; top: 0; z-index: 10; 
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .header-badge { width: 28px; height: 28px; flex-shrink: 0; filter: drop-shadow(0 0 3px rgba(214,176,102,0.35)); }
+        .header-text { text-align: left; }
+        .header h1 { 
+            margin: 0; font-size: 1.1rem; color: var(--gold); letter-spacing: 3px; text-transform: uppercase; 
+            font-family: var(--font-display); font-weight: 600; text-shadow: 2px 2px 0 #000;
+        }
+        #status-bar { font-size: 0.62rem; color: var(--orange); text-transform: uppercase; margin-top: 3px; letter-spacing: 1.5px; }
 
         /* --- SISTEMA DE PESTAÑAS --- */
-        .tabs { display: flex; background: #111; border-bottom: 2px solid var(--gold); position: sticky; top: 60px; z-index: 9; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        .tab { flex: 1; padding: 15px; text-align: center; font-weight: bold; font-size: 0.9rem; color: #888; cursor: pointer; text-transform: uppercase; transition: 0.2s; position: relative; }
-        .tab.active { color: white; background: var(--tab-active); }
+        .tabs { display: flex; background: #111; border-bottom: 2px solid var(--gold); position: sticky; top: 57px; z-index: 9; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .tab { 
+            flex: 1; padding: 14px 8px; text-align: center; font-weight: bold; font-size: 0.78rem; color: #777; 
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; position: relative; 
+            font-family: var(--font-display);
+        }
+        .tab.active { color: #f0e0c0; background: var(--tab-active); }
         .tab.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: var(--gold); }
         
-        .badge { background: var(--red); color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; position: absolute; top: 10px; right: 10px; display: none; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .badge { 
+            background: var(--red); color: #f0e0c0; font-size: 0.68rem; padding: 2px 6px; border-radius: 10px; 
+            border: 1px solid #3a0a0a; position: absolute; top: 8px; right: 8px; display: none; 
+            animation: pulse 2s infinite; font-family: var(--font-mono);
+        }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.12); } 100% { transform: scale(1); } }
 
         /* Contenedores de Vistas */
         .view-section { display: none; padding: 15px; padding-bottom: 100px; animation: fadeIn 0.3s; }
         .view-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        .project-card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid #333; display: flex; flex-direction: column; gap: 12px; transition: 0.3s; position: relative; }
+        .project-card { 
+            background: var(--card); border-radius: 3px; padding: 18px; margin-bottom: 15px; 
+            border: 1px solid #332d20; box-shadow: 4px 4px 0px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; gap: 12px; transition: 0.2s; position: relative; 
+        }
         
-        .v-name { font-size: 1.2rem; font-weight: bold; color: #fff; }
-        .v-status { font-size: 0.8rem; color: #888; display: flex; align-items: center; gap: 6px; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; background: #444; }
+        .v-name { font-size: 1.1rem; font-weight: 600; color: #f0e0c0; font-family: var(--font-display); letter-spacing: 1px; text-transform: uppercase; }
+        .v-status { font-size: 0.78rem; color: #999; display: flex; align-items: center; gap: 6px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #444; flex-shrink: 0; }
         .dot.active { background: var(--green); box-shadow: 0 0 8px var(--green); }
         .dot.offline { background: var(--orange); }
 
-        .progress-container { width: 100%; background: #333; height: 10px; border-radius: 5px; overflow: hidden; display: none; margin-top: 10px; }
+        .progress-container { width: 100%; background: #2a2a2a; height: 10px; border-radius: 2px; overflow: hidden; display: none; margin-top: 10px; border: 1px solid #000; }
         .progress-bar { width: 0%; height: 100%; background: var(--blue); transition: width 0.1s; }
 
-        .btn { border: none; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; text-align: center; transition: 0.2s; margin-top: 5px; color: white; width: 100%; }
-        .btn-play { background: var(--green); }
-        .btn-download { background: var(--blue); }
+        .btn { 
+            border: 1px solid rgba(0,0,0,0.4); padding: 13px; border-radius: 2px; font-weight: bold; font-size: 0.92rem; 
+            cursor: pointer; text-align: center; transition: 0.15s; margin-top: 5px; color: #111; width: 100%; 
+            font-family: var(--font-display); letter-spacing: 1.5px; text-transform: uppercase;
+            box-shadow: 3px 3px 0px rgba(0,0,0,0.5);
+        }
+        .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0px rgba(0,0,0,0.5); }
+        .btn-play { background: var(--green); color: #fff; }
+        .btn-download { background: var(--blue); color: #fff; }
         
-        .btn-update { background: transparent; border: 2px solid var(--gold); color: var(--gold); margin-top: 5px; }
-        .btn-update:active { background: var(--gold); color: black; }
+        .btn-update { background: transparent; border: 2px solid var(--gold); color: var(--gold); margin-top: 5px; box-shadow: none; }
+        .btn-update:active { background: var(--gold); color: black; transform: none; }
 
-        .empty-msg { text-align: center; padding: 40px; color: #666; font-size: 0.9rem; border: 1px dashed #333; border-radius: 10px; margin-top: 20px; }
+        .empty-msg { text-align: center; padding: 40px 20px; color: #666; font-size: 0.85rem; border: 1px dashed #3a3020; border-radius: 3px; margin-top: 20px; font-family: var(--font-mono); }
 
         #game-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; overscroll-behavior: none; }
         iframe { width: 100%; height: 100%; border: none; display: block; }
@@ -99,8 +138,21 @@
 <body>
 
     <div class="header">
-        <h1>BIO-BREACH HUB</h1>
-        <div id="status-bar">MODO LOCAL</div>
+        <svg class="header-badge" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="50" cy="50" r="46" fill="none" stroke="#d6b066" stroke-width="3"/>
+            <path d="M 20,42 A 30,30 0 0 1 80,42" fill="none" stroke="#d6b066" stroke-width="3" opacity="0.9"/>
+            <path d="M 25,52 A 25,25 0 0 1 75,52" fill="none" stroke="#d6b066" stroke-width="3" opacity="0.7"/>
+            <path d="M 31,62 A 19,19 0 0 1 69,62" fill="none" stroke="#d6b066" stroke-width="3" opacity="0.55"/>
+            <line x1="50" y1="2" x2="50" y2="14" stroke="#d6b066" stroke-width="3"/>
+            <line x1="50" y1="86" x2="50" y2="98" stroke="#d6b066" stroke-width="3"/>
+            <line x1="2" y1="50" x2="14" y2="50" stroke="#d6b066" stroke-width="3"/>
+            <line x1="86" y1="50" x2="98" y2="50" stroke="#d6b066" stroke-width="3"/>
+            <circle cx="50" cy="50" r="4" fill="#8b1a1a"/>
+        </svg>
+        <div class="header-text">
+            <h1>BIO-BREACH HUB</h1>
+            <div id="status-bar">MODO LOCAL</div>
+        </div>
     </div>
 
     <div class="tabs">
@@ -433,7 +485,13 @@
         function guardarYActualizar(id, nombre, codigo, version) {
             let locales = getVersionesLocales();
             locales[id] = { nombre: nombre, codigo: codigo, version: version, fecha: new Date().toLocaleString() };
-            localStorage.setItem('bio_breach_v_data', JSON.stringify(locales));
+            try {
+                localStorage.setItem('bio_breach_v_data', JSON.stringify(locales));
+            } catch (e) {
+                console.error('No se pudo guardar en almacenamiento local:', e);
+                alert('ALMACENAMIENTO LLENO: no se pudo guardar esta versión. Borra alguna versión vieja que ya no uses y vuelve a intentarlo.');
+                return;
+            }
             
             if(actualizacionesIgnoradas.has(id)) actualizacionesIgnoradas.delete(id);
             
@@ -498,14 +556,24 @@
 
             view.style.display = "block";
             
+            // --- MOTOR DE CARGA (V6) ---
+            // Antes esto usaba document.write(), una API vieja que en documentos grandes
+            // (250KB+ de HTML/CSS/JS, como el propio juego) puede bloquear el parser y
+            // dejar el script a medio ejecutar de forma inconsistente: exactamente el
+            // patrón de "la cinta nunca llega a enlazar nada" + lag constante.
+            // srcdoc es la forma moderna de cargar un documento completo en un iframe:
+            // el motor arranca como una página propia y limpia, sin ese cuello de botella.
             try {
-                const doc = frame.contentDocument || frame.contentWindow.document;
-                doc.open();
-                doc.write(locales[id].codigo);
-                doc.close();
+                frame.removeAttribute('src');
+                frame.srcdoc = locales[id].codigo;
             } catch (e) {
-                const blob = new Blob([locales[id].codigo], { type: 'text/html' });
-                frame.src = URL.createObjectURL(blob);
+                try {
+                    const blob = new Blob([locales[id].codigo], { type: 'text/html' });
+                    frame.src = URL.createObjectURL(blob);
+                } catch (e2) {
+                    console.error('No se pudo iniciar el motor:', e2);
+                    alert('No se pudo iniciar el juego. Intenta descargarlo de nuevo desde CENTRO DE DATOS.');
+                }
             }
         }
 
