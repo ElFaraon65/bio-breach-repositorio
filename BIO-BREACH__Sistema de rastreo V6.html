@@ -2132,7 +2132,7 @@ body.game-ending {
            font-size: 1.8rem;
            line-height: 1.2;
            margin: 15px 0;">¿ESTÁS SEGURO?</h2>
-            <p>Perderás el monto de <span style="color:#32CD32; font-weight: bold;">S/</span><span id="penalty-amount" style="color:#32CD32; font-weight: bold; text-shadow: 0 0 8px rgba(50,205,50,0.6);">0</span> del contrato actual.</p>
+            <p>Perderás el monto de <span style="color:var(--hazard); font-weight: bold;">S/</span><span id="penalty-amount" style="color:var(--hazard); font-weight: bold;">0</span> del contrato actual.</p>
             <div style="display: flex; gap: 10px; justify-content: center;">
                 <button class="btn-main" style="background:var(--hazard); width: auto; color: #fff;" onclick="confirmAbort()">ESTOY SEGURO</button>
                 <button class="btn-main" style="background:#333; width: auto; color: #fff;" onclick="closeAbortModal()">CANCELAR</button>
@@ -3077,6 +3077,12 @@ openSettings = function() {
         let currentSection = 1;
         const TOTAL_SECTIONS = 3;
         let boardSuspects = [];
+        // Preguntas exitosas hechas en la sección ACTUAL: se exige al menos una antes
+        // de poder avanzar de sección o cerrar el caso, igual que ya se exige un enlace.
+        let questionsThisSection = 0;
+        // Puntos de cada consulta de ESTE caso. No se acreditan a la cartera al momento:
+        // se suman recién cuando el caso se cierra (ganado o perdido).
+        let caseQueryEarnings = [];
         // Cada vez que un enlace queda completo (se suelta sobre otra foto) anota aquí
         // su orden real de finalización, para poder hallar "la punta del último enlace"
         // de la Sección 3 sin depender del orden en que se iniciaron las cintas.
@@ -3768,7 +3774,7 @@ openSettings = function() {
                     </div>
                     <div class="step">
                         <b>3. TRES SECCIONES</b>
-                        Cada caso se resuelve en tres pasadas: BARRIDO, CERCO y VEREDICTO. Cada una exige al menos un enlace nuevo antes de pulsar "SIGUIENTE SECCIÓN"; solo pasan los sospechosos que quedaron enlazados. En la Sección 3, la última foto a la que ata una cinta es su identificación final.
+                        Cada caso se resuelve en tres pasadas: BARRIDO, CERCO y VEREDICTO. Cada una exige al menos una consulta al sistema Y al menos un enlace nuevo antes de pulsar "SIGUIENTE SECCIÓN"; solo pasan los sospechosos que quedaron enlazados. En la Sección 3, la última foto a la que ata una cinta es su identificación final.
                     </div>
                     <div class="step" style="border-left-color: var(--hazard);">
                         <b>4. GUERRA CIBERNÉTICA</b>
@@ -3783,7 +3789,7 @@ openSettings = function() {
                 tContent.innerHTML = `
                     <div class="step">
                         <b>1. INTERROGATORIO PRECISO</b>
-                        Pregunte por los datos que se le otorgan en las tarjetas de los sospechosos, ejemplo: "¿Tiene ojos azules?". La máquina tarda un momento en procesar y la respuesta sale impresa en papel, no en la pantalla. Cada 3 preguntas necesita recargar: espere el conteo antes de volver a preguntar.
+                        Pregunte por los datos que se le otorgan en las tarjetas de los sospechosos, ejemplo: "¿Tiene ojos azules?". La máquina tarda un momento en procesar y la respuesta sale impresa en papel, no en la pantalla. Cada 3 preguntas necesita recargar: espere el conteo antes de volver a preguntar. Los puntos de cada consulta no se acreditan al momento: se suman todos juntos recién cuando cierra el caso, gane o pierda.
                     </div>
                     <div class="step">
                         <b>2. ENLACE POR PISTAS</b>
@@ -3791,7 +3797,7 @@ openSettings = function() {
                     </div>
                     <div class="step">
                         <b>3. TRES SECCIONES</b>
-                        El tablero se resuelve en tres pasadas: BARRIDO, CERCO y VEREDICTO. En cada una necesita al menos un enlace nuevo antes de pulsar "SIGUIENTE SECCIÓN". Solo pasan a la siguiente sección los sospechosos que sí quedaron enlazados; el resto sale del tablero. Así va cerrando el cerco poco a poco, hasta quedarse con muy pocos nombres.
+                        El tablero se resuelve en tres pasadas: BARRIDO, CERCO y VEREDICTO. En cada una necesita al menos una consulta al sistema Y al menos un enlace nuevo antes de pulsar "SIGUIENTE SECCIÓN". Solo pasan a la siguiente sección los sospechosos que sí quedaron enlazados; el resto sale del tablero. Así va cerrando el cerco poco a poco, hasta quedarse con muy pocos nombres.
                     </div>
                     <div class="step">
                         <b>4. CIERRE DEL CASO</b>
@@ -4046,6 +4052,8 @@ openSettings = function() {
             currentSection = 1;
             boardSuspects = personas.slice();
             linkCompletionCounter = 0;
+            questionsThisSection = 0;
+            caseQueryEarnings = [];
             typeWriter("ESCANEO FINALIZADO. ESPERANDO CONSULTA...", "out", 15);
             renderBoard(boardSuspects, true);
             updateSectionUI();
@@ -4256,15 +4264,22 @@ function updateSectionUI() {
 // un enlace completo hecho DENTRO de la sección actual.
 function updateSectionActionState() {
     const hasLinkThisSection = stringLinks.some(l => l.section === currentSection && l.b);
+    const hasQuestionThisSection = questionsThisSection > 0;
     const nextBtn = document.getElementById('btn-next-section');
     const closeBtn = document.getElementById('btn-close-case');
-    if (nextBtn) nextBtn.disabled = !hasLinkThisSection;
-    if (closeBtn) closeBtn.disabled = !hasLinkThisSection;
+    if (nextBtn) nextBtn.disabled = !hasLinkThisSection || !hasQuestionThisSection;
+    if (closeBtn) closeBtn.disabled = !hasLinkThisSection || !hasQuestionThisSection;
 }
 
 // === AVANZAR DE SECCIÓN: solo pasan los sospechosos que se enlazaron en la sección que termina ===
 function goToNextSection() {
     if (!gameActive || currentSection >= TOTAL_SECTIONS) return;
+
+    if (questionsThisSection === 0) {
+        playSFX('error');
+        typeWriter("ERROR: DEBE INTERROGAR AL SISTEMA AL MENOS UNA VEZ EN ESTA SECCIÓN ANTES DE AVANZAR.", "out", 10);
+        return;
+    }
 
     const thisSectionLinks = stringLinks.filter(l => l.section === currentSection && l.b);
     if (thisSectionLinks.length === 0) {
@@ -4290,6 +4305,7 @@ function goToNextSection() {
 
     playSFX('discard');
     currentSection++;
+    questionsThisSection = 0; // la sección nueva exige su propia consulta
     typeWriter(`SECCIÓN ${currentSection} DE ${TOTAL_SECTIONS} · ${boardSuspects.length} SOSPECHOSO(S) SIGUEN EN SEGUIMIENTO.`, "out", 12);
 
     // Los sobrevivientes NO se reordenan ni cambian de posición ni de rotación: solo
@@ -4390,7 +4406,7 @@ function setPan(x, y) {
 function onBoardPointerDown(e) {
     if (e.target.closest('.dangle-handle') || e.target.closest('.tack')) return;
     const cardEl = e.target.closest('.mug-card');
-    e.currentTarget.setPointerCapture(e.pointerId);
+    document.documentElement.setPointerCapture(e.pointerId);
     panDrag = {
         startClientX: e.clientX, startClientY: e.clientY,
         startPanX: panX, startPanY: panY,
@@ -4539,7 +4555,7 @@ function drawTack(name) {
     hit.dataset.name = name;
     hit.style.pointerEvents = 'auto';
     hit.style.cursor = 'grab';
-    hit.addEventListener('pointerdown', (e) => { e.stopPropagation(); hit.setPointerCapture(e.pointerId); startTackPress(name, e); });
+    hit.addEventListener('pointerdown', (e) => { e.stopPropagation(); document.documentElement.setPointerCapture(e.pointerId); startTackPress(name, e); });
     svg.appendChild(hit);
 
     const tack = document.createElementNS(SVG_NS, 'circle');
@@ -4576,7 +4592,7 @@ function drawDangleHandle(p, color, linkId) {
     handle.dataset.linkId = linkId;
     handle.style.pointerEvents = 'auto';
     handle.style.cursor = 'grab';
-    handle.addEventListener('pointerdown', (e) => { e.stopPropagation(); handle.setPointerCapture(e.pointerId); startDangleDrag(linkId, e); });
+    handle.addEventListener('pointerdown', (e) => { e.stopPropagation(); document.documentElement.setPointerCapture(e.pointerId); startDangleDrag(linkId, e); });
     svg.appendChild(handle);
 }
 
@@ -4903,8 +4919,14 @@ function keepSuspect() {
         // los une, la cinta es DÉBIL y se rompe. Un solo enlace débil hace perder el caso.
         function evaluateAllLinks() {
             // El caso solo se cierra desde la Sección 3, y esa sección también
-            // necesita su propio enlace nuevo antes de poder cerrarse.
+            // necesita su propia consulta y su propio enlace nuevo antes de poder cerrarse.
             if (currentSection < TOTAL_SECTIONS) return;
+
+            if (questionsThisSection === 0) {
+                playSFX('error');
+                typeWriter("ERROR: DEBE INTERROGAR AL SISTEMA AL MENOS UNA VEZ EN ESTA SECCIÓN ANTES DE CERRAR EL CASO.", "out", 10);
+                return;
+            }
 
             const completeLinks = stringLinks.filter(l => l.b);
             const thisSectionLinks = completeLinks.filter(l => l.section === currentSection);
@@ -5243,9 +5265,10 @@ if(isHost) {
             if (win) { 
                 playSFX('win', true); 
                 const pointBonus = matchPoints * 10;
-                totalMoney += currentReward + pointBonus;
+                const interrogationTotal = caseQueryEarnings.reduce((a, b) => a + b, 0);
+                totalMoney += currentReward + pointBonus + interrogationTotal;
                 document.getElementById('overlay-title').innerText = "OBJETIVO LOCALIZADO"; 
-                rewardMsg.innerHTML = `+${currentReward} S/ CONTRATO<br><span style="color:var(--gold)">+${pointBonus} S/ BONUS (${matchPoints} PTS)</span>`;
+                rewardMsg.innerHTML = `+${currentReward} S/ CONTRATO<br><span style="color:var(--gold)">+${pointBonus} S/ BONUS (${matchPoints} PTS)</span><br><span style="color:var(--gold)">+${interrogationTotal} S/ INTERROGATORIO (${caseQueryEarnings.length} CONSULTA${caseQueryEarnings.length === 1 ? '' : 'S'})</span>`;
                 nextBtn.innerText = "SIGUIENTE CASO";
                 nextBtn.onclick = () => { initGame(); };
 
@@ -5276,9 +5299,13 @@ if(isHost) {
 
             } else { 
                 playSFX('fail', true);
+                const interrogationTotal = caseQueryEarnings.reduce((a, b) => a + b, 0);
+                totalMoney += interrogationTotal;
                 document.getElementById('overlay-title').innerText = "OBJETIVO PERDIDO"; 
                 document.getElementById('overlay-title').style.color = "var(--hazard)";
-                rewardMsg.innerText = "CONTRATO CANCELADO";
+                rewardMsg.innerHTML = interrogationTotal > 0
+                    ? `CONTRATO CANCELADO<br><span style="color:var(--gold)">+${interrogationTotal} S/ INTERROGATORIO (${caseQueryEarnings.length} CONSULTA${caseQueryEarnings.length === 1 ? '' : 'S'})</span>`
+                    : "CONTRATO CANCELADO";
                 nextBtn.innerText = "INTENTAR OTRO CASO";
                 nextBtn.onclick = () => { initGame(); };
 
@@ -5615,9 +5642,11 @@ if(isHost) {
                         queryHistory.push({ checkFunc, targetAnswer: targetHasTrait, label: q });
 
                         // Calcular a cuántos afectaría (solo informativo: ya no bloquea el sistema)
+                        // Un sospechoso que ya salió del tablero en una sección anterior no tiene
+                        // ficha en pantalla (card === null): cuenta como "ya resuelto", no como error.
                         pendingDiscards = personas.filter(p => {
                             const card = document.getElementById('card-' + p.n);
-                            if (card.classList.contains('discarded')) return false;
+                            if (!card || card.classList.contains('discarded')) return false;
                             const suspectHasTrait = checkFunc(p);
                             return suspectHasTrait !== targetHasTrait;
                         }).map(p => p.n);
@@ -5627,22 +5656,26 @@ if(isHost) {
 
                         lastQueryText = `CONSULTA: ${q}`;
 
-                        // Cálculo de puntos: se otorgan de inmediato, ya no dependen de descartar manualmente
-                        let earned = 0;
-                        if (count > 0) {
-                            if (count >= 8) earned = 10;
-                            else if (count >= 5) earned = 8;
-                            else if (count >= 3) earned = 5;
-                            else earned = count;
-                            totalMoney += earned;
-                            localStorage.setItem('bioBreachMoney', String(totalMoney));
-                            lastQueryText += ` <span style="color:var(--gold)">[+${earned} PTS]</span>`;
-                        }
+                        // Cada pregunta cuenta para el requisito de "al menos una consulta
+                        // por sección", y suma puntos al total del caso — incluso una
+                        // pregunta "mala" (que no reveló nada) vale algo, solo que menos.
+                        // Nada de esto se acredita a la cartera todavía: se suma recién
+                        // al cerrar el caso, sea que lo ganes o lo pierdas.
+                        questionsThisSection++;
+                        let earned;
+                        if (count >= 8) earned = 10;
+                        else if (count >= 5) earned = 8;
+                        else if (count >= 3) earned = 5;
+                        else if (count >= 1) earned = count;
+                        else earned = 1;
+                        caseQueryEarnings.push(earned);
+                        lastQueryText += ` <span style="color:var(--gold)">[+${earned} PTS AL CIERRE]</span>`;
+                        if (typeof updateSectionActionState === 'function') updateSectionActionState();
 
                         printOraclePaper(q, respText);
                         if (oracleStatus) oracleStatus.textContent = "EN ESPERA";
 
-                        typeWriter(`${lastQueryText}<br><span style="color:#888">LA RESPUESTA SALIÓ IMPRESA. PISTAS COMPATIBLES: ${personas.length - count} · INCOMPATIBLES: ${count}</span>`, "out", 15);
+                        typeWriter(`${lastQueryText}<br><span style="color:#888">LA RESPUESTA SALIÓ IMPRESA. PISTAS COMPATIBLES: ${boardSuspects.length - count} · INCOMPATIBLES: ${count}</span>`, "out", 15);
 
                         questionsSinceRecharge++;
                         if (questionsSinceRecharge >= RECHARGE_EVERY) {
