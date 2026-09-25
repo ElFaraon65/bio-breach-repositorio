@@ -4390,6 +4390,7 @@ function setPan(x, y) {
 function onBoardPointerDown(e) {
     if (e.target.closest('.dangle-handle') || e.target.closest('.tack')) return;
     const cardEl = e.target.closest('.mug-card');
+    e.currentTarget.setPointerCapture(e.pointerId);
     panDrag = {
         startClientX: e.clientX, startClientY: e.clientY,
         startPanX: panX, startPanY: panY,
@@ -4538,7 +4539,7 @@ function drawTack(name) {
     hit.dataset.name = name;
     hit.style.pointerEvents = 'auto';
     hit.style.cursor = 'grab';
-    hit.addEventListener('pointerdown', (e) => { e.stopPropagation(); startTackPress(name, e); });
+    hit.addEventListener('pointerdown', (e) => { e.stopPropagation(); hit.setPointerCapture(e.pointerId); startTackPress(name, e); });
     svg.appendChild(hit);
 
     const tack = document.createElementNS(SVG_NS, 'circle');
@@ -4575,7 +4576,7 @@ function drawDangleHandle(p, color, linkId) {
     handle.dataset.linkId = linkId;
     handle.style.pointerEvents = 'auto';
     handle.style.cursor = 'grab';
-    handle.addEventListener('pointerdown', (e) => { e.stopPropagation(); startDangleDrag(linkId, e); });
+    handle.addEventListener('pointerdown', (e) => { e.stopPropagation(); handle.setPointerCapture(e.pointerId); startDangleDrag(linkId, e); });
     svg.appendChild(handle);
 }
 
@@ -4713,6 +4714,20 @@ document.addEventListener('pointerup', (e) => {
         cutLastTapeAt(pendingTackPress.name);
         pendingTackPress = null;
     }
+});
+
+// Red de seguridad: si el navegador cancela el gesto a mitad de camino (por ejemplo,
+// se lo lleva un gesto propio del sistema), limpiamos igual que en pointerup para que
+// activeDangleDrag nunca quede trabado en "true" y el auto-desplazamiento no se quede
+// corriendo solo para siempre.
+document.addEventListener('pointercancel', () => {
+    if (activeDangleDrag) {
+        activeDangleDrag = null;
+        if (autoPanRAF) { cancelAnimationFrame(autoPanRAF); autoPanRAF = null; }
+        removeDangleTemp();
+        redrawAllConnections();
+    }
+    pendingTackPress = null;
 });
 
 
