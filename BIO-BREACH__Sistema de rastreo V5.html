@@ -859,24 +859,6 @@
             box-shadow: 2px 2px 0px #000;
         }
         .btn-abort:hover { background: #550000; border-color: var(--hazard); color: #fff;}
-
-        .action-row { display: flex; gap: 8px; margin-top: 10px; }
-        .action-row .btn-abort { margin-top: 0; flex: 1; }
-        .btn-close-case {
-            background: #1c3a1c; border: 1px solid var(--terminal-green); color: var(--terminal-green);
-            font-size: 0.8rem; padding: 10px; box-shadow: 2px 2px 0px #000;
-            flex: 1; cursor: pointer; font-family: 'Courier New', monospace;
-            text-transform: uppercase; font-weight: bold;
-        }
-        .btn-close-case:hover { background: #245024; }
-
-        .strong-pulse {
-            animation: strongPulse 0.9s ease-in-out 2;
-        }
-        @keyframes strongPulse {
-            0%, 100% { filter: drop-shadow(0 0 0 transparent); }
-            50% { filter: drop-shadow(0 0 4px var(--terminal-green)); }
-        }
         
         .btn-mini { 
             background: #222; color: #ccc; border: 1px solid #666; 
@@ -1236,478 +1218,6 @@ body.game-ending {
     transform: translateY(100%) !important;
     transition: transform 0.4s ease !important;
 } 
-
-/* ============================================
-   CORRECCIÓN DE ESCALA: ALTURA REAL EN MÓVILES
-   (100vh se rompe cuando la barra del navegador
-   aparece/desaparece; 100dvh sigue el viewport real)
-   ============================================ */
-@supports (height: 100dvh) {
-    .machine-body { max-height: calc(100dvh - 20px); }
-    @media (max-width: 768px) {
-        .machine-body { height: 100dvh; max-height: 100dvh; }
-    }
-}
-
-/* ============================================
-   NUEVO: TABLERO DISPERSO ESTILO CORCHO
-   ============================================ */
-.corkboard-wrapper {
-    position: relative;
-    flex-grow: 1;
-    min-height: 280px;
-    width: 100%;
-    overflow: hidden;
-    border: 1px solid #333;
-    margin-bottom: 10px;
-    box-shadow: inset 0 0 40px rgba(0,0,0,0.7);
-    touch-action: none;
-    cursor: grab;
-}
-.corkboard-wrapper:active { cursor: grabbing; }
-@media (max-height: 700px) {
-    .corkboard-wrapper { min-height: 220px; }
-}
-
-.corkboard-canvas {
-    position: absolute;
-    top: 0; left: 0;
-    will-change: transform;
-}
-
-.corkboard {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background-color: var(--cork-bg);
-    background-image: radial-gradient(#2a2018 2px, transparent 2px);
-    background-size: 8px 8px;
-}
-
-#string-layer {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-    z-index: 15;
-    overflow: visible;
-}
-
-.perm-string, #temp-dangle-string, .falling-string {
-    fill: none;
-    stroke-width: 2.6;
-    stroke-linecap: round;
-    filter: drop-shadow(1px 2px 1px rgba(0,0,0,0.6));
-}
-#temp-dangle-string { opacity: 0.9; stroke-dasharray: none; }
-.falling-string { stroke: #8a1414 !important; }
-
-.tack {
-    stroke: #2a2a2a;
-    stroke-width: 1;
-    filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.6));
-}
-
-.dangle-handle {
-    filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.7));
-    animation: dangleInvite 1.4s ease-in-out infinite;
-}
-@keyframes dangleInvite {
-    0%, 100% { r: 8; }
-    50% { r: 9.2; }
-}
-
-/* --- FOTOS DE EXPEDIENTE (MUGSHOTS) --- */
-.mug-card {
-    position: absolute;
-    width: clamp(58px, 15vw, 92px);
-    cursor: pointer;
-    user-select: none;
-    z-index: 10;
-    transition: filter 0.4s ease, opacity 0.4s ease;
-}
-
-.mug-photo {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 3/4;
-    background:
-        repeating-linear-gradient(90deg, rgba(0,0,0,0.12) 0 1px, transparent 1px 10%),
-        linear-gradient(#9a968c, #7c7972);
-    border: 2px solid #111;
-    box-shadow: 3px 3px 0 rgba(0,0,0,0.6);
-    overflow: hidden;
-    filter: grayscale(100%) contrast(1.15) sepia(0.12);
-}
-.mug-silhouette { position: absolute; bottom: 0; left: 0; width: 100%; height: 82%; }
-.mug-question {
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Impact', 'Arial Black', sans-serif;
-    font-size: clamp(1.6rem, 6vw, 2.6rem);
-    color: var(--gold);
-    text-shadow: 2px 2px 0 #000;
-    opacity: 0.95;
-}
-.mug-plate {
-    margin-top: 4px;
-    background: #e6e0d4;
-    color: #111;
-    font-family: 'Courier New', monospace;
-    font-weight: bold;
-    font-size: clamp(0.5rem, 2.4vw, 0.7rem);
-    text-align: center;
-    padding: 2px 3px;
-    border: 1px solid #999;
-    text-transform: uppercase;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
-}
-.mug-card .gender-banner { top: -2px; right: -2px; }
-
-.mug-card.discarded {
-    filter: grayscale(1) brightness(0.45);
-    opacity: 0.4;
-    pointer-events: none;
-}
-
-.mug-card.reject-flash .mug-photo {
-    animation: rejectShake 0.35s ease;
-    border-color: var(--hazard);
-}
-@keyframes rejectShake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-4px); }
-    75% { transform: translateX(4px); }
-}
-
-/* ============================================
-   MÁQUINA DE FRENTE — TERMINAL VINTAGE
-   La pantalla solo muestra estado/proceso; la
-   respuesta SÍ/NO sale impresa en el papel.
-   ============================================ */
-.oracle-machine {
-    flex-shrink: 0;
-    width: auto;
-    max-width: 92%;
-    margin: 8px auto 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-@media (max-height: 620px) {
-    .oracle-machine { display: none; }
-}
-
-.oracle-body {
-    position: relative;
-    width: auto;
-    background: linear-gradient(#7c8567, #5f6a4d 55%, #4a533b);
-    border: 2px solid #2c3120;
-    border-radius: 12px;
-    box-shadow:
-        0 5px 0 #333a26,
-        0 8px 12px rgba(0,0,0,0.6),
-        inset 0 2px 3px rgba(255,255,255,0.15);
-    padding: 8px 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    box-sizing: border-box;
-}
-.oracle-top-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.oracle-bottom-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding-left: 2px;
-}
-.oracle-screen-frame {
-    flex-shrink: 0;
-    width: 78px;
-    height: 62px;
-    background: #16150f;
-    border-radius: 10px;
-    border: 3px solid #0a0a08;
-    box-shadow: inset 0 0 8px rgba(0,0,0,0.9), 0 1px 0 rgba(255,255,255,0.1);
-    padding: 3px;
-    box-sizing: border-box;
-}
-.oracle-screen {
-    position: relative;
-    width: 100%; height: 100%;
-    border-radius: 6px;
-    background: radial-gradient(circle at 40% 35%, #2a2f28, #0a0c08 75%);
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.oracle-noise {
-    position: absolute; inset: 0;
-    background-image:
-        radial-gradient(circle at 20% 30%, rgba(255,255,255,0.16) 0%, transparent 1.2%),
-        radial-gradient(circle at 60% 70%, rgba(255,255,255,0.12) 0%, transparent 1.2%),
-        radial-gradient(circle at 80% 20%, rgba(255,255,255,0.18) 0%, transparent 1.2%),
-        radial-gradient(circle at 35% 80%, rgba(255,255,255,0.14) 0%, transparent 1.2%);
-    background-size: 7px 7px, 9px 9px, 6px 6px, 8px 8px;
-    animation: staticFlicker 0.12s steps(2) infinite;
-    opacity: 0.55;
-}
-@keyframes staticFlicker {
-    0% { background-position: 0 0, 0 0, 0 0, 0 0; }
-    100% { background-position: 7px 5px, -9px 6px, 5px -7px, -6px 4px; }
-}
-.oracle-status {
-    position: relative;
-    z-index: 2;
-    font-family: 'Courier New', monospace;
-    font-size: 0.42rem;
-    color: #9fdc9f;
-    text-shadow: 0 0 4px #4a4;
-    text-align: center;
-    letter-spacing: 0.5px;
-    padding: 0 4px;
-    line-height: 1.2;
-}
-.oracle-side-panel {
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-}
-.oracle-dial-row { display: flex; gap: 6px; }
-.oracle-dial {
-    width: 16px; height: 16px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, #e2e2e2, #8a8a8a 70%);
-    border: 1.5px solid #333;
-    box-shadow: 0 1px 0 #222, inset 0 0 2px rgba(0,0,0,0.4);
-    position: relative;
-    flex-shrink: 0;
-}
-.oracle-dial::after {
-    content: '';
-    position: absolute; top: 15%; left: 50%;
-    width: 1.5px; height: 35%;
-    background: #333;
-    transform: translateX(-50%);
-}
-.oracle-dial.small { width: 12px; height: 12px; }
-.oracle-switches { display: flex; gap: 5px; }
-.oracle-switch {
-    width: 5px; height: 11px;
-    background: linear-gradient(#333,#111);
-    border: 1px solid #000;
-    border-radius: 1px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.5);
-}
-.oracle-power-btn {
-    flex-shrink: 0;
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, #e6c98a, #8a6a2a 70%);
-    border: 1.5px solid #2a2a2a;
-    box-shadow: 0 1px 0 #1a1a1a, inset 0 0 2px rgba(0,0,0,0.4);
-}
-.oracle-mini-btn {
-    flex-shrink: 0;
-    width: 12px; height: 12px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, #cfcac0, #706b60 70%);
-    border: 1px solid #2a2a2a;
-    box-shadow: 0 1px 0 #1a1a1a;
-}
-.oracle-plate {
-    background: #cfc9b8;
-    color: #2a2a2a;
-    font-family: 'Courier New', monospace;
-    font-weight: bold;
-    font-size: 0.5rem;
-    letter-spacing: 1.2px;
-    padding: 2px 8px;
-    border-radius: 2px;
-    border: 1px solid #8a8570;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
-    margin-left: 4px;
-}
-
-/* Impresora: la hoja sale por el borde DERECHO de la máquina, no por abajo */
-.oracle-printer-slot {
-    flex-shrink: 0;
-    width: 6px;
-    height: 46px;
-    background: #14150f;
-    border-radius: 2px;
-    box-shadow: inset 0 0 3px rgba(0,0,0,0.8);
-}
-.oracle-paper {
-    position: absolute;
-    top: 50%;
-    right: 4px;
-    width: 100px;
-    background: #efe8d4;
-    background-image: repeating-linear-gradient(180deg, rgba(0,0,0,0.05) 0 1px, transparent 1px 5px);
-    color: #222;
-    font-family: 'Courier New', monospace;
-    font-size: 0.5rem;
-    line-height: 1.25;
-    text-align: center;
-    padding: 6px 5px;
-    box-shadow: 0 3px 6px rgba(0,0,0,0.5);
-    border-radius: 0 0 3px 3px;
-    word-break: break-word;
-    z-index: 3;
-    opacity: 0;
-    transform: translateY(-50%) translateX(-20px);
-    transform-origin: left center;
-    transition: transform 1s cubic-bezier(.22,.85,.32,1), opacity 0.35s ease;
-}
-.oracle-paper.paper-eject {
-    opacity: 1;
-    transform: translateY(-50%) translateX(80px);
-}
-
-/* ============================================
-   BLOC DE NOTAS
-   ============================================ */
-.machine-row {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    width: 100%;
-    flex-shrink: 0;
-}
-.notebook-icon {
-    justify-self: center;
-    width: 44px; height: 56px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    flex-shrink: 0;
-    filter: drop-shadow(0 5px 5px rgba(0,0,0,0.45));
-}
-.notebook-icon-cover {
-    position: relative;
-    width: 36px; height: 48px;
-    background: linear-gradient(135deg, #9a6cf5, #7c3aed 55%, #5b21b6);
-    border-radius: 3px 6px 6px 3px;
-    box-shadow:
-        inset -4px 0 5px rgba(0,0,0,0.35),
-        inset 0 0 0 1px rgba(255,255,255,0.12),
-        2px 2px 0 rgba(76,29,149,0.55);
-}
-.notebook-icon-cover::before {
-    /* espiral del cuaderno */
-    content: '';
-    position: absolute; left: 1px; top: 4px; bottom: 4px; width: 5px;
-    background-image: radial-gradient(circle, #d8d8d8 35%, transparent 40%);
-    background-size: 5px 7px;
-    background-repeat: repeat-y;
-    opacity: 0.9;
-}
-.notebook-icon-cover::after {
-    /* canto de hojas a la derecha */
-    content: '';
-    position: absolute; right: -2px; top: 3px; bottom: 3px; width: 3px;
-    background: repeating-linear-gradient(180deg, #fff 0 1.5px, #d8cfc0 1.5px 3px);
-    border-radius: 0 2px 2px 0;
-}
-@media (max-height: 620px) {
-    .machine-row .notebook-icon { display: none; }
-}
-/* En computadora: el bloc de notas queda fijo en el borde derecho, siempre visible */
-@media (min-width: 769px) {
-    .machine-row .notebook-icon {
-        position: fixed;
-        right: 16px;
-        top: 50%;
-        transform: translateY(-50%);
-        z-index: 500;
-        display: flex;
-    }
-}
-
-#notebook-modal {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.85);
-    z-index: 9500;
-    align-items: center; justify-content: center;
-    padding: 20px;
-}
-.notebook-window {
-    position: relative;
-    width: 100%; max-width: 260px;
-    background: #f2ead6;
-    border: 2px solid #3a2a15;
-    border-radius: 4px;
-    box-shadow: 8px 10px 0 rgba(0,0,0,0.5);
-    padding: 6px 14px 44px;
-    min-height: 420px;
-    display: flex;
-    flex-direction: column;
-}
-.notebook-close {
-    position: absolute; top: -12px; right: -12px;
-    width: 30px; height: 30px; border-radius: 50%;
-    border: 2px solid #3a2a15; background: #fff; color: #3a2a15;
-    font-weight: bold; cursor: pointer; z-index: 4;
-}
-.notebook-stack {
-    height: 0;
-    flex-shrink: 0;
-    overflow: hidden;
-    transition: height 0.45s ease;
-    background-image: repeating-linear-gradient(180deg, #e4d9b8 0 3px, #cbbd91 3px 4px);
-    border-radius: 2px 2px 0 0;
-    box-shadow: 0 1px 0 rgba(0,0,0,0.15);
-}
-.notebook-page-wrap {
-    position: relative;
-    flex-grow: 1;
-    margin-top: 4px;
-    perspective: 700px;
-}
-.notebook-page {
-    position: absolute; inset: 0;
-    background-image: repeating-linear-gradient(180deg, transparent 0 27px, rgba(0,0,50,0.14) 27px 28px);
-    transform-origin: top center;
-    transform-style: preserve-3d;
-    backface-visibility: hidden;
-    transition: transform 0.5s cubic-bezier(.45,0,.2,1);
-}
-.notebook-page.flipping {
-    transform: rotateX(-165deg);
-}
-.notebook-textarea {
-    width: 100%; height: 100%; min-height: 260px;
-    border: none; background: transparent; resize: none;
-    font-family: 'Courier New', monospace; font-size: 0.95rem; color: #2a2010;
-    line-height: 28px;
-    outline: none;
-}
-.notebook-page-corner {
-    position: absolute;
-    right: 6px; bottom: 6px;
-    width: 36px; height: 36px;
-    background: linear-gradient(135deg, transparent 50%, #d8c9a3 52%);
-    border-radius: 0 0 4px 0;
-    cursor: pointer;
-    box-shadow: -1px -1px 3px rgba(0,0,0,0.2);
-}
-.notebook-page-indicator {
-    position: absolute;
-    left: 14px; bottom: 14px;
-    font-family: 'Courier New', monospace;
-    font-size: 0.7rem; color: #6a5a3a;
-}
     </style>                                    
 </head>
 <body>
@@ -1919,6 +1429,19 @@ body.game-ending {
 
         <div id="settings-modal">
         <div class="tutorial-box" style="padding: 0; overflow: hidden; background: #e6e6e6;">
+                <div id="custom-confirm" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10000; align-items: center; justify-content: center;">
+        <div style="background: #1a1a1a; border: 2px solid var(--gold); padding: 20px; width: 80%; max-width: 300px; text-align: center; box-shadow: 0 0 20px rgba(214, 176, 102, 0.3);">
+            <h3 style="color: var(--gold); font-family: 'Courier New', monospace; margin-top: 0; font-size: 0.9rem; letter-spacing: 2px;">ADVERTENCIA DE ORGANIZACIÓN DE DATOS</h3>
+            <p style="color: #ccc; font-family: 'Courier New', monospace; font-size: 0.8rem; margin: 20px 0; line-height: 1.4;">
+                ¿ESTÁS SEGUR@ DE APLICAR LOS SIGUIENTES CAMBIOS? EL MODO LEGADO PUEDE ALTERAR LA ESTABILIDAD VISUAL.
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button id="confirm-yes" class="btn-main" style="padding: 10px 15px; font-size: 0.7rem; background: var(--gold); color: #000;">PROCEDER</button>
+                <button id="confirm-no" class="btn-main" style="padding: 10px 15px; font-size: 0.7rem; background: #333; color: var(--gold); border-color: var(--gold);">DENEGAR</button>
+            </div>
+        </div>
+    </div>    
+            
             <div class="settings-tabs">
                 <button id="tab-btn-visual" class="tab-btn" style="display: none;" onclick="switchSettingsTab('visual')">VISUAL</button>
                 
@@ -1931,7 +1454,13 @@ body.game-ending {
                 <h2 style="color: var(--gold); margin-top: 0; text-shadow: 1px 1px 0 #000;">CONFIGURACIÓN</h2>
                 
                 <div id="panel-visual" class="settings-content-panel">
-                    <!-- Espacio reservado: antes "densidad de mosaicos", pendiente de una nueva función -->
+                    <p style="color:#555; font-size: 0.8rem; margin-bottom: 10px;">DENSIDAD DE OBJETIVOS</p>
+                    <div class="mosaic-options">
+                        <button class="mosaic-btn" id="btn-mode-2" onclick="selectMosaic(2)">2x2</button>
+                        <button class="mosaic-btn" id="btn-mode-3" onclick="selectMosaic(3)">3x3</button>
+                        <button class="mosaic-btn active" id="btn-mode-5" onclick="selectMosaic(5)">5x5</button>
+                    </div>
+                    <p id="mosaic-desc" style="font-size: 0.7rem; color: #333; min-height: 20px; font-style: italic;">ESTÁNDAR: Vista completa, sin deslizamiento.</p>
                 </div>
 
                 <div id="panel-audio" class="settings-content-panel">
@@ -1959,6 +1488,22 @@ body.game-ending {
                 </div>
 
                 <div id="panel-extra" class="settings-content-panel active-panel">
+                    <div style="margin-bottom: 20px; border: 2px dashed #999; padding: 15px; background: #ddd;">
+                        <div style="margin-bottom: 20px; border: 2px dashed #999; padding: 15px; background: #ddd; display: flex; align-items: center; justify-content: space-between;">
+    <div>
+        <span style="color: #000; font-weight: bold; font-family: 'Courier New', monospace; display: block;">USAR MOSAICOS (LEGADO)</span>
+        </span>
+    </div>
+    
+    <label class="switch-container">
+        <input type="checkbox" id="toggle-legacy-mosaic" onchange="toggleLegacyMode(this)">
+        <span class="slider-switch"></span>
+    </label>
+</div>
+<p style="font-size: 0.7rem; color: #555; margin-top: 10px; line-height: 1.2;">
+    Al activar esta opción desbloqueas la pestaña "VISUAL" para cambiar la densidad del tablero.
+</p>
+                    </div>
                 </div>
 
                 <hr style="border: 0; border-top: 1px dashed #999; margin: 20px 0;">
@@ -2007,71 +1552,15 @@ body.game-ending {
             <button id="btn-new-case" class="btn-mini" onclick="initGame()">NUEVO CASO</button>
             
             <span style="color: var(--victory)">RECOMPENSA: <span id="case-reward-display">0</span> S/</span>
-            <span id="case-difficulty-display" style="color: var(--gold);"></span>
         </div>
-        <div class="corkboard-wrapper" id="corkboard-wrapper">
-            <div class="corkboard-canvas" id="corkboard-canvas">
-                <div class="corkboard" id="board"></div>
-                <svg id="string-layer"></svg>
-            </div>
-        </div>
+        <div class="board-grid mode-5" id="board"></div>
         
         <div class="terminal-zone">
             <div id="cmd-suggestions"></div>
             <input type="text" id="queryInput" autocomplete="off" placeholder="INTERROGAR SISTEMA (¿...?)...">
             <div class="output" id="out">> AGUARDANDO COMANDOS...</div>
         </div>
-        <div class="action-row">
-            <button class="btn-close-case" onclick="evaluateAllLinks()">🔎 CERRAR CASO</button>
-            <button class="btn-main btn-abort" onclick="openAbortModal()">ABORTAR CASO</button>
-        </div>
-
-        <div class="machine-row">
-            <div class="notebook-icon" id="notebook-icon" onclick="openNotebook()" title="Bloc de notas">
-                <div class="notebook-icon-cover"></div>
-            </div>
-            <div class="oracle-machine">
-            <div class="oracle-body">
-                <div class="oracle-top-row">
-                    <div class="oracle-screen-frame">
-                        <div class="oracle-screen">
-                            <div class="oracle-noise"></div>
-                            <div class="oracle-status" id="oracle-status">SISTEMA EN ESPERA</div>
-                        </div>
-                    </div>
-                    <div class="oracle-side-panel">
-                        <div class="oracle-dial-row">
-                            <div class="oracle-dial"></div>
-                            <div class="oracle-dial small"></div>
-                        </div>
-                        <div class="oracle-switches"><span class="oracle-switch"></span><span class="oracle-switch"></span></div>
-                    </div>
-                    <div class="oracle-power-btn"></div>
-                    <div class="oracle-printer-slot"></div>
-                </div>
-                <div class="oracle-bottom-row">
-                    <div class="oracle-mini-btn" title="TELÉFONO"></div>
-                    <div class="oracle-mini-btn" title="RUN"></div>
-                    <div class="oracle-plate">UNIDAD B-7</div>
-                </div>
-                <div class="oracle-paper" id="oracle-paper"><span id="oracle-paper-text"></span></div>
-            </div>
-            </div>
-        </div>
-
-        <div id="notebook-modal" onclick="if(event.target===this) closeNotebook();">
-            <div class="notebook-window">
-                <button class="notebook-close" onclick="closeNotebook()">✕</button>
-                <div class="notebook-stack" id="notebook-stack"></div>
-                <div class="notebook-page-wrap">
-                    <div class="notebook-page" id="notebook-page">
-                        <textarea id="notebook-page-text" class="notebook-textarea" placeholder="Escriba aquí sus notas..." onblur="saveCurrentNotebookPage()"></textarea>
-                    </div>
-                </div>
-                <div class="notebook-page-indicator" id="notebook-page-indicator">1 / 6</div>
-                <div class="notebook-page-corner" id="notebook-next-page" onclick="turnNotebookPage()" title="Página siguiente"></div>
-            </div>
-        </div>
+        <button class="btn-main btn-abort" onclick="openAbortModal()">ABORTAR CASO</button>
     </div>
 
     <script>
@@ -2491,6 +1980,29 @@ body.game-ending {
         // === FIN MOTOR DE AUDIO ===
         // ==========================================
         const CACHE_NAME = 'bio-breach-audio-v1';
+        
+        // === CORRECCIÓN DE GUARDADO ===
+// Recuperamos si el usuario tenía activado el modo 'Mosaicos Antiguos'
+let isLegacyMosaicActive = localStorage.getItem('bioBreachLegacyMosaic') === 'true';
+
+// Si está activo, intentamos cargar su modo (2, 3 o 5), si no, forzamos 5
+let savedMode = localStorage.getItem('bioBreachMosaicMode');
+let currentMosaicMode = (isLegacyMosaicActive && savedMode) ? parseInt(savedMode) : 5;
+let tempMosaicMode = currentMosaicMode;
+
+// === INICIALIZACIÓN DE INTERFAZ DE AJUSTES ===
+// Esto asegura que el checkbox aparezca marcado si se guardó así
+setTimeout(() => {
+    const legacyCheck = document.getElementById('toggle-legacy-mosaic');
+    const visualTab = document.getElementById('tab-btn-visual');
+    
+    if(legacyCheck && visualTab) {
+        legacyCheck.checked = isLegacyMosaicActive;
+        // Mostrar/Ocultar pestaña visual según el estado guardado
+        visualTab.style.display = isLegacyMosaicActive ? 'block' : 'none';
+    }
+}, 500); // Pequeño retraso para asegurar que el DOM cargó
+
         // --- VARIABLES DE AUDIO CORREGIDAS (modificadas para modo "temporal" durante ajustes) ---
 let volMaster = (localStorage.getItem('bioBreachVolMaster') !== null) ? parseFloat(localStorage.getItem('bioBreachVolMaster')) : 1.0;
 let volMusic  = (localStorage.getItem('bioBreachVolMusic') !== null) ? parseFloat(localStorage.getItem('bioBreachVolMusic')) : 0.6;
@@ -2532,12 +2044,6 @@ let tempVolSFX    = volSFX;
         let sabotageCmds = {}; 
         let sabotageUsageCount = 0; // NUEVO: Cuantos sabotajes he lanzado
         let successfulQueriesCount = 0; // NUEVO: Cuantas preguntas he hecho 
-        // === RECARGA DE LA MÁQUINA (cada 3 preguntas hay que esperar) ===
-        let questionsSinceRecharge = 0;
-        let isRecharging = false;
-        let rechargeInterval = null;
-        const RECHARGE_EVERY = 3;
-        const RECHARGE_SECONDS = 20;
         
         const SABOTAGE_DEFINITIONS = {
             'REORGANIZED': { desc: 'ALTERAR POSICIÓN FÍSICA DE TARJETAS' },
@@ -2687,6 +2193,18 @@ let tempVolSFX    = volSFX;
         function openSettings() {
             playSFX('click');
             document.getElementById('settings-modal').style.display = 'flex';
+            selectMosaic(currentMosaicMode); 
+        }
+
+        function selectMosaic(mode) {
+            playSFX('click');
+            tempMosaicMode = mode;
+            document.querySelectorAll('.mosaic-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-mode-${mode}`).classList.add('active');
+            
+            const desc = document.getElementById('mosaic-desc');
+            if (mode === 5) desc.innerText = "ESTÁNDAR: Vista completa, sin deslizamiento.";
+            else desc.innerText = "ZOOM TÁCTICO: Tarjetas ampliadas, deslizamiento activo.";
         }
 
                 function saveSettings() {
@@ -2700,16 +2218,30 @@ let tempVolSFX    = volSFX;
     const prevMusic  = (localStorage.getItem('bioBreachVolMusic') !== null) ? parseFloat(localStorage.getItem('bioBreachVolMusic')) : volMusic;
     const prevSfx    = (localStorage.getItem('bioBreachVolSFX') !== null) ? parseFloat(localStorage.getItem('bioBreachVolSFX')) : volSFX;
 
-    // Detectar cambios de audio
+    const prevLegacy = localStorage.getItem('bioBreachLegacyMosaic') === 'true';
+    const prevMosaic = parseInt(localStorage.getItem('bioBreachMosaicMode') || '5');
+
+    const legacyCheckbox = document.getElementById('toggle-legacy-mosaic');
+    const newLegacy = !!(legacyCheckbox && legacyCheckbox.checked);
+
+    // Temp mosaic seleccionado desde selectMosaic()
+    // (tempMosaicMode ya existe en tu código)
+    const newMosaic = tempMosaicMode || 5;
+
+    // Detectar cambios: audio, legacy flag, y mosaic mode (si aplica)
     const audioChanged = (Math.abs(prevMaster - tempVolMaster) > 0.0001) ||
                          (Math.abs(prevMusic  - tempVolMusic)  > 0.0001) ||
                          (Math.abs(prevSfx    - tempVolSFX)    > 0.0001);
 
+    const legacyChanged = (prevLegacy !== newLegacy);
+    const mosaicChanged = (newLegacy && (prevMosaic !== newMosaic)) || (!newLegacy && prevMosaic !== 5);
+
+    // Si NO hubo cambios, cerramos sin mostrar la barra de carga
     // Si NO hubo cambios, cerramos sin sonido ni barra de carga
-    if (!audioChanged) {
-        document.getElementById('settings-modal').style.display = 'none';
-        return;
-    }
+if (!audioChanged && !legacyChanged && !mosaicChanged) {
+    document.getElementById('settings-modal').style.display = 'none';
+    return;
+}
 
     // Mostrar pantalla de carga porque hay cambios reales
     loadingScreen.style.display = 'flex';
@@ -2739,6 +2271,31 @@ let tempVolSFX    = volSFX;
             } catch (e) {
                 // si no existe la propiedad gain o falla, no interrumpimos el guardado
             }
+        }
+
+        // --- B) GUARDAR AJUSTES ADICIONALES (MOSAICOS) ---
+        localStorage.setItem('bioBreachLegacyMosaic', String(newLegacy));
+
+        // AGREGA JUSTO DESPUÉS:
+isLegacyMosaicActive = newLegacy;
+
+// Y en la sección que actualiza el tablero:
+if (newLegacy) {
+    // Aplicar el modo elegido temporalmente
+    currentMosaicMode = newMosaic;
+    localStorage.setItem('bioBreachMosaicMode', String(currentMosaicMode));
+} else {
+    // Si se desactiva, forzamos 5 Y activamos modo miniatura
+    currentMosaicMode = 5;
+    localStorage.setItem('bioBreachMosaicMode', '5');
+    // Nota: isLegacyMosaicActive ya se actualizó arriba a false
+}
+
+        // --- C) ACTUALIZAR TABLERO VISUALMENTE ---
+        const board = document.getElementById('board');
+        if (board) {
+            board.classList.remove('mode-2', 'mode-3', 'mode-5');
+            board.classList.add('mode-' + currentMosaicMode);
         }
 
         // 4. Finalizar: Ocultar modal y carga
@@ -2808,14 +2365,80 @@ openSettings = function() {
     if (sfxSlider) sfxSlider.value = tempVolSFX;
     const volDisplaySfx = document.getElementById('vol-display-sfx');
     if (volDisplaySfx) volDisplaySfx.innerText = Math.round(tempVolSFX * 100) + "%";
+
+    // También sincronizamos la pestaña visual con tempMosaicMode (si corresponde)
+    selectMosaic(tempMosaicMode);
 };
         // ------------------------------
+        
+                // ==========================================
+        // === NUEVO: LOGICA DE AJUSTES EXTRAS ===
+        // ==========================================
+                // Variable temporal para guardar la referencia del checkbox
+        let pendingLegacyCheckbox = null;
+
+        function toggleLegacyMode(checkbox) {
+            const visualTabBtn = document.getElementById('tab-btn-visual');
+            const confirmModal = document.getElementById('custom-confirm');
+
+            if (checkbox.checked) {
+                playSFX('click');
+                // Guardamos el checkbox en una variable para usarlo tras la confirmación
+                pendingLegacyCheckbox = checkbox;
+                confirmModal.style.display = 'flex';
+                
+                // Configuramos los botones del modal una sola vez
+                document.getElementById('confirm-yes').onclick = function() {
+                    playSFX('click');
+                    visualTabBtn.style.display = 'block';
+                    confirmModal.style.display = 'none';
+                };
+
+                document.getElementById('confirm-no').onclick = function() {
+                    playSFX('click');
+                    pendingLegacyCheckbox.checked = false; // Desmarcamos
+                    confirmModal.style.display = 'none';
+                };
+
+            } else {
+                playSFX('click');
+                visualTabBtn.style.display = 'none';
+                // Si estamos en la pestaña visual, saltamos a la de Extras
+                const visualPanel = document.getElementById('panel-visual');
+                if (visualPanel.classList.contains('active-panel')) {
+                    switchSettingsTab('extra');
+                }
+            }
+        }
+
+        function applyMosaicChange(newMode) {
+    const loading = document.getElementById('loading-screen');
+    const bar = document.getElementById('loader-progress');
+    loading.style.display = 'flex';
+    bar.style.width = "0%";
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += Math.random() * 15;
+        if(progress > 100) progress = 100;
+        bar.style.width = progress + "%";
+        if(progress === 100) {
+            clearInterval(interval);
+            setTimeout(() => {
+                currentMosaicMode = newMode;
+                // GUARDAR con la misma clave que el resto del sistema
+                localStorage.setItem('bioBreachMosaicMode', String(newMode));
+                updateBoardClass();
+                loading.style.display = 'none';
+                if(gameActive) renderBoard();
+            }, 500);
+        }
+    }, 100);
+}
 
         function updateBoardClass() {
-            // El tablero ahora es siempre el corcho disperso; esto ya no cambia el layout,
-            // solo se deja para no romper llamadas existentes desde Ajustes.
             const board = document.getElementById('board');
-            if (board) board.className = 'corkboard';
+            board.className = 'board-grid'; 
+            board.classList.add(`mode-${currentMosaicMode}`);
         }
         
         async function preloadAssets() {
@@ -2914,12 +2537,7 @@ openSettings = function() {
         }
 
         let personas = [], objetivo = null, gameActive = false;
-        // === NUEVO: TABLERO DE CORCHO / SISTEMA DE CINTA ROJA ===
-        let boardPositions = {};   // nombre -> {x%, y%, rot}
-        let stringLinks = [];      // {a, b} pares ya unidos con cinta (para redibujar en resize)
-        let dragState = null;      // {fromName, downClientX, downClientY, moved}
         let currentReward = 0;
-        let currentCaseDifficulty = 1;
         let totalMoney = parseInt(localStorage.getItem('bioBreachMoney')) || 0;
         let isTyping = false;
         
@@ -2928,7 +2546,6 @@ openSettings = function() {
         let lastQueryText = "";   
         let matchPoints = 0; 
         let pointsPool = 0; 
-        let queryHistory = []; // {checkFunc, targetAnswer, label} de cada consulta exitosa (para evaluar los enlaces al cerrar el caso)
 
         async function typeWriter(text, elementId, speed = 20) {
             if (isTyping) return;
@@ -3451,13 +3068,16 @@ openSettings = function() {
             // LOGICA ESPECÍFICA POR COMANDO
             switch(effectName) {
                 case 'REORGANIZED':
-                    // Sacude el corcho: todas las fotos saltan a nuevas posiciones dispersas
-                    scatterReshuffle();
+                    const board = document.getElementById('board');
+                    // Mezclar hijos del DOM
+                    for (let i = board.children.length; i >= 0; i--) {
+                        board.appendChild(board.children[Math.random() * i | 0]);
+                    }
                     typeWriter("ADVERTENCIA: INTEGRIDAD ESTRUCTURAL DEL TABLERO COMPROMETIDA.", "out", 5);
                     break;
                     
                 case 'RESTORE':
-                    const discarded = Array.from(document.querySelectorAll('.mug-card.discarded'));
+                    const discarded = Array.from(document.querySelectorAll('.suspect-card.discarded'));
                     if(discarded.length > 0) {
                         // Barajar y tomar hasta 3
                         discarded.sort(() => Math.random() - 0.5);
@@ -3486,13 +3106,13 @@ openSettings = function() {
                     break;
                     
                 case 'ENCRYPTEDFILES':
-                    const bodies = document.querySelectorAll('.mug-plate');
+                    const bodies = document.querySelectorAll('.card-body');
                     bodies.forEach(b => {
                         b.setAttribute('data-original', b.innerHTML);
                         b.classList.add('sabotage-scramble');
                         // Generar texto basura
                         let trash = "";
-                        for(let i=0; i<8; i++) trash += String.fromCharCode(33 + Math.random()*30);
+                        for(let i=0; i<30; i++) trash += String.fromCharCode(33 + Math.random()*30);
                         b.innerHTML = trash;
                     });
                     
@@ -3509,7 +3129,7 @@ openSettings = function() {
     document.body.style.filter = "hue-rotate(180deg) invert(1)";
 
     // 2. Intercambio de clases para las cintas
-    const allRibbons = document.querySelectorAll('.gender-banner');
+    const allRibbons = document.querySelectorAll('.gender-ribbon');
     allRibbons.forEach(r => {
         if (r.classList.contains('ribbon-male')) {
             r.classList.remove('ribbon-male');
@@ -3525,7 +3145,7 @@ openSettings = function() {
         document.body.style.filter = "none";
 
         // 4. Restaurar clases de las cintas a su estado original
-        const activeRibbons = document.querySelectorAll('.gender-banner');
+        const activeRibbons = document.querySelectorAll('.gender-ribbon');
         activeRibbons.forEach(r => {
             if (r.classList.contains('ribbon-male')) {
                 r.classList.remove('ribbon-male');
@@ -3593,18 +3213,14 @@ openSettings = function() {
                 tContent.innerHTML = `
                     <div class="step" style="border-left-color: var(--ranking-blue);">
                         <b>1. SUPERVIVENCIA</b>
-                        El reloj cuenta hacia atrás. Resuelve tantos casos como puedas antes de que llegue a cero. Además, la máquina necesita recargar cada 3 preguntas.
-                    </div>
-                    <div class="step">
-                        <b>2. ENLACE POR PISTAS</b>
-                        Toque una foto, pulse "ENLAZAR" y arrastre la cinta hasta otra foto para agrupar sospechosos que crea que comparten una misma pista. Nada se valida al momento: todo se revisa recién cuando pulsa "CERRAR CASO".
+                        El reloj cuenta hacia atrás. Resuelve tantos casos como puedas antes de que llegue a cero.
                     </div>
                     <div class="step" style="border-left-color: var(--hazard);">
-                        <b>3. GUERRA CIBERNÉTICA</b>
+                        <b>2. GUERRA CIBERNÉTICA</b>
                         Usa la consola escribiendo <b>"/"</b> para ver comandos de sabotaje. ¡Ciega, confunde y entorpece a tu rival!
                     </div>
                     <div class="step">
-                        <b>4. PRESIÓN</b>
+                        <b>3. PRESIÓN</b>
                         El sistema te alertará cuando tus rivales completen un descarte masivo.
                     </div>
                 `;
@@ -3612,15 +3228,15 @@ openSettings = function() {
                 tContent.innerHTML = `
                     <div class="step">
                         <b>1. INTERROGATORIO PRECISO</b>
-                        Pregunte por los datos que se le otorgan en las tarjetas de los sospechosos, ejemplo: "¿Tiene ojos azules?". La máquina tarda un momento en procesar y la respuesta sale impresa en papel, no en la pantalla. Cada 3 preguntas necesita recargar: espere el conteo antes de volver a preguntar.
+                        Pregunte por los datos que se le otorgan en las tarjetas de los sospechosos, ejemplo:"¿Tiene ojos azules?".
                     </div>
                     <div class="step">
-                        <b>2. ENLACE POR PISTAS</b>
-                        Toque una foto para ver su expediente y pulse "ENLAZAR" para clavar una chincheta. Sujete la cinta y llévela hasta otra foto que crea que comparte esa misma pista, formando grupos de un mismo color. Puede enlazar varias cintas por sospechoso, y solo usted decide cuándo cortar una: toque la chincheta del otro extremo para soltarla, o la chincheta raíz para retirar la cinta entera.
+                        <b>2. DESCARTE OBLIGATORIO</b>
+                        Haga clic en las tarjetas de los presuntos sospechosos para descartarlos teniendo de base la respuesta que le otorgó la consola, debe descartar a todos los relacionados antes de volver a preguntar.
                     </div>
                     <div class="step">
-                        <b>3. CIERRE DEL CASO</b>
-                        A los que no comparten la pista con el objetivo, simplemente no los enlace. Cuando esté listo, pulse "CERRAR CASO": el sistema revisa todo el recorrido de cintas y marca cuáles son fuertes (se quedan) y cuáles son débiles (se rompen). Un solo enlace débil y pierde el caso.
+                        <b>3. OBJETIVO ÚNICO</b>
+                        Descubra al culpable sin eliminarlo por error.
                     </div>
                 `;
             }
@@ -3807,6 +3423,7 @@ openSettings = function() {
             restoreMusic();
             playSFX('newCase', true);
             
+            currentReward = Math.floor(getRand() * 500) + 100;
             matchPoints = 0;
             pointsPool = 0;
             document.getElementById('game-points').innerText = "PTS: " + matchPoints;
@@ -3825,22 +3442,9 @@ openSettings = function() {
                 if(compTimerInterval) clearInterval(compTimerInterval);
             }
 
+            document.getElementById('case-reward-display').innerText = currentReward;
+            
             pendingDiscards = []; 
-            queryHistory = [];
-            const oracleStatusReset = document.getElementById('oracle-status');
-            if (oracleStatusReset) oracleStatusReset.textContent = "SISTEMA EN ESPERA";
-            const oraclePaperReset = document.getElementById('oracle-paper');
-            if (oraclePaperReset) {
-                oraclePaperReset.style.transition = 'none';
-                oraclePaperReset.classList.remove('paper-eject');
-                void oraclePaperReset.offsetWidth;
-                oraclePaperReset.style.transition = '';
-            }
-            const oraclePaperTextReset = document.getElementById('oracle-paper-text');
-            if (oraclePaperTextReset) oraclePaperTextReset.textContent = '';
-            questionsSinceRecharge = 0;
-            isRecharging = false;
-            clearInterval(rechargeInterval);
             currentBatchTotal = 0;
             lastQueryText = "";
             document.getElementById('queryInput').disabled = false;
@@ -3852,20 +3456,6 @@ openSettings = function() {
             
             objetivo = personas[Math.floor(getRand() * personas.length)];
             objetivo.recordId = generateCriminalRecordID();
-
-            // === DIFICULTAD REAL DEL CASO: cuánto se parece el objetivo al resto (más parecido = más difícil) ===
-            const diffTraits = [p => p.g, p => p.cont, p => p.t, p => p.o, p => p.accName];
-            let matchSum = 0;
-            diffTraits.forEach(fn => {
-                const val = fn(objetivo);
-                matchSum += personas.filter(p => fn(p) === val).length / personas.length;
-            });
-            const avgMatch = matchSum / diffTraits.length; // 0 a 1: más alto = objetivo más "camuflado"
-            const difficultyStars = Math.max(1, Math.min(5, Math.round(avgMatch * 6)));
-            currentCaseDifficulty = difficultyStars;
-            currentReward = 80 + difficultyStars * 90 + Math.floor(getRand() * 40);
-            document.getElementById('case-difficulty-display').innerText = '★'.repeat(difficultyStars) + '☆'.repeat(5 - difficultyStars);
-            document.getElementById('case-reward-display').innerText = currentReward;
 
             gameActive = true;
             typeWriter("ESCANEO FINALIZADO. ESPERANDO CONSULTA...", "out", 15);
@@ -4007,500 +3597,119 @@ window.addEventListener('orientationchange', () => {
         }
 
         function renderBoard() {
-    const wrapper = document.getElementById('corkboard-wrapper');
-    const canvas = document.getElementById('corkboard-canvas');
     const board = document.getElementById('board');
-    const svg = document.getElementById('string-layer');
     board.innerHTML = '';
-    svg.innerHTML = '';
-    board.className = 'corkboard';
-    stringLinks = [];
-    panDrag = null;
-    activeDangleDrag = null;
-
-    const wRect = wrapper.getBoundingClientRect();
-    const layout = computeGridLayout(personas.length, wRect.width || 300, wRect.height || 260);
-    canvasSize = { w: layout.canvasW, h: layout.canvasH };
-    canvas.style.width = layout.canvasW + 'px';
-    canvas.style.height = layout.canvasH + 'px';
-    svg.setAttribute('viewBox', `0 0 ${layout.canvasW} ${layout.canvasH}`);
-
-    boardPositions = computeScatterPositions(personas.map(pp => pp.n), layout);
+    board.className = 'board-grid'; 
+    board.classList.add(`mode-${currentMosaicMode}`);
 
     personas.forEach(p => {
         const card = document.createElement('div');
-        card.className = 'mug-card';
+        card.className = 'suspect-card';
         card.id = `card-${p.n}`;
-        card.dataset.name = p.n;
+        
+        card.onclick = () => { 
+            if(gameActive) { 
+                const cardEl = document.getElementById(`card-${p.n}`);
+                if(cardEl.classList.contains('discarded')) return;
 
-        const pos = boardPositions[p.n];
-        card.style.left = pos.x + '%';
-        card.style.top = pos.y + '%';
-        card.style.transform = `translate(-50%, -50%) rotate(${pos.rot}deg)`;
+                // Si el modo mosaico está activo (legacy), comportamiento original
+                if (isLegacyMosaicActive) {
+                    if (pendingDiscards.length > 0) {
+                        playSFX('discard');
+                        
+                        const rect = cardEl.getBoundingClientRect();
+                        const centerX = rect.left + rect.width / 2;
+                        const centerY = rect.top + rect.height / 2;
 
-        card.innerHTML = `
-            <div class="mug-photo">
-                <svg class="mug-silhouette" viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet">
-                    <circle cx="50" cy="36" r="19" fill="#54534f"></circle>
-                    <path d="M14,100 Q14,60 50,58 Q86,60 86,100 Z" fill="#54534f"></path>
-                </svg>
-                <div class="mug-question">?</div>
-            </div>
-            <div class="mug-plate">${p.n}</div>
-        `;
+                        let ptsToGive = 0;
+                        if (pointsPool > 0) {
+                            const remainingDiscards = pendingDiscards.length; 
+                            ptsToGive = Math.ceil(pointsPool / remainingDiscards);
+                            if (ptsToGive > pointsPool) ptsToGive = pointsPool;
+                            pointsPool -= ptsToGive;
+                        }
+                        
+                        let winDelay = 0;
+                        if (ptsToGive > 0) {
+                            spawnFloatingPoint(centerX, centerY, ptsToGive);
+                            winDelay = 900; 
+                        }
+
+                        discardVisual(cardEl);
+                        
+                        if (pendingDiscards.includes(p.n)) {
+                            pendingDiscards = pendingDiscards.filter(id => id !== p.n);
+                        }
+
+                        if (p.n === objetivo.n) {
+                            checkStatus(0); 
+                            return;
+                        }
+
+                        if (pendingDiscards.length > 0) {
+                            document.getElementById('out').innerHTML = `> ${lastQueryText}<br><span style="color:var(--hazard)">OBJETIVOS RESTANTES: ${pendingDiscards.length}</span>`;
+                        } else {
+                            playSFX('click'); 
+                            document.getElementById('out').innerHTML = `> ${lastQueryText}<br><span style="color:var(--terminal-green)">DESCARTE COMPLETADO. SISTEMA HABILITADO.</span>`;
+                            document.getElementById('queryInput').disabled = false;
+                            document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA (¿...?)...";
+                            document.getElementById('queryInput').focus();
+
+                            if(isCompetitiveMode && currentBatchTotal > 0) {
+                                if(isHost) broadcastExcluding(myPeerId, {type: 'RIVAL_BATCH_DISCARD', count: currentBatchTotal});
+                                else if(conn) conn.send({type: 'RIVAL_BATCH_DISCARD', count: currentBatchTotal});
+                                currentBatchTotal = 0;
+                            }
+                        }
+                        
+                        checkStatus(winDelay);
+
+                    } 
+                    else if (lastQueryText !== "") {
+                        playSFX('discard');
+                        discardVisual(cardEl);
+                        if (p.n === objetivo.n) { checkStatus(0); return; }
+                        checkStatus(0);
+                    }
+                    else {
+                        playSFX('error');
+                        document.getElementById('out').style.color = "var(--hazard)";
+                        typeWriter("ERROR: REALICE UNA CONSULTA PARA IDENTIFICAR OBJETIVOS.", "out", 10);
+                    }
+                } else {
+                    // MODO MINIATURA: Abrir zoom dinámico
+                    openZoomModal(p);
+                }
+            } 
+        };
+
+        // REEMPLÁZALA CON:
+const rib = p.g === "MASCULINO" ? "ribbon-male" : "ribbon-female";
+
+if (isLegacyMosaicActive) {
+    // Modo legacy/mosaicos activado - mostrar datos completos
+    card.innerHTML = `<div class="gender-ribbon ${rib}"></div><div class="card-header">${p.n}</div><div class="card-body"><b>ORG:</b> ${p.p}<br><b>TEZ:</b> ${p.t}<br><b>OJO:</b> ${p.o}<br><b>EDA:</b> ${p.edad}<br><b>ALT:</b> ${p.altura}M<br><b>ACC:</b> ${p.accName}</div>`;
+} else {
+    // Modo miniatura (default) - mostrar solo líneas horizontales
+    card.innerHTML = `
+        <div class="card-header">
+            <span class="card-name">${p.n}</span>
+            <div class="gender-banner ${rib}"></div>
+        </div>
+        <div class="card-body">
+            <div style="height: 5px;"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+        </div>
+    `;
+}
         board.appendChild(card);
     });
-
-    // Centrar la vista inicial en medio del tablero grande
-    setPan(-(layout.canvasW - wRect.width) / 2, -(layout.canvasH - wRect.height) / 2);
-    redrawAllConnections();
-}
-
-// === REJILLA DEL TABLERO: celdas de tamaño fijo y generoso, no un múltiplo arbitrario del contenedor ===
-function computeGridLayout(total, wrapperW, wrapperH) {
-    // Tamaño de celda pensado para que quepa la foto (clamp 58-92px) con aire de sobra alrededor
-    const cellTargetW = 195;
-    const cellTargetH = 235;
-    const aspect = wrapperW / wrapperH;
-    let cols = Math.max(2, Math.round(Math.sqrt(Math.max(1, total) * aspect)));
-    let rows = Math.ceil(total / cols);
-    while (cols * rows < total) rows++;
-    const canvasW = Math.max(wrapperW, cols * cellTargetW);
-    const canvasH = Math.max(wrapperH, rows * cellTargetH);
-    return { cols, rows, cellTargetW, cellTargetH, canvasW, canvasH };
-}
-
-// === DISPERSIÓN TIPO CORCHO: una foto por celda, con un jitter suave que no genera encimes ===
-function computeScatterPositions(names, layout) {
-    const { cols, rows, canvasW, canvasH } = layout;
-    const positions = {};
-    const total = names.length;
-    if (total === 0) return positions;
-
-    const cellWpx = canvasW / cols;
-    const cellHpx = canvasH / rows;
-    const cells = [];
-    for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) cells.push({ cx: c * cellWpx + cellWpx / 2, cy: r * cellHpx + cellHpx / 2 });
-    }
-    // Math.random puro a propósito: no debe consumir el RNG con semilla del caso
-    for (let i = cells.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [cells[i], cells[j]] = [cells[j], cells[i]];
-    }
-
-    names.forEach((name, idx) => {
-        const cell = cells[idx];
-        // jitter suave (25% de la celda): variedad orgánica sin que dos fotos lleguen a tocarse
-        const jitterX = (Math.random() - 0.5) * cellWpx * 0.25;
-        const jitterY = (Math.random() - 0.5) * cellHpx * 0.25;
-        const xPx = Math.min(canvasW - cellWpx * 0.3, Math.max(cellWpx * 0.3, cell.cx + jitterX));
-        const yPx = Math.min(canvasH - cellHpx * 0.3, Math.max(cellHpx * 0.3, cell.cy + jitterY));
-        const rot = (Math.random() - 0.5) * 12;
-        positions[name] = { x: (xPx / canvasW) * 100, y: (yPx / canvasH) * 100, rot };
-    });
-    return positions;
-}
-
-// === REORGANIZAR (usado también por el sabotaje REORGANIZED): dispersa de nuevo sin tocar las cintas ===
-function scatterReshuffle() {
-    const wrapper = document.getElementById('corkboard-wrapper');
-    const wRect = wrapper.getBoundingClientRect();
-    const layout = computeGridLayout(personas.length, canvasSize.w, canvasSize.h);
-    boardPositions = computeScatterPositions(personas.map(p => p.n), { ...layout, canvasW: canvasSize.w, canvasH: canvasSize.h });
-    personas.forEach(p => {
-        const cardEl = document.getElementById(`card-${p.n}`);
-        if (!cardEl) return;
-        const pos = boardPositions[p.n];
-        cardEl.style.left = pos.x + '%';
-        cardEl.style.top = pos.y + '%';
-        cardEl.style.transform = `translate(-50%, -50%) rotate(${pos.rot}deg)`;
-    });
-    redrawAllConnections();
-}
-
-// === PANEO DEL TABLERO (arrastrar el corcho para recorrer un tablero más grande) ===
-const SVG_NS = "http://www.w3.org/2000/svg";
-let panX = 0, panY = 0;
-let canvasSize = { w: 0, h: 0 };
-let panDrag = null;
-
-function setPan(x, y) {
-    const wrapper = document.getElementById('corkboard-wrapper');
-    const canvas = document.getElementById('corkboard-canvas');
-    if (!wrapper || !canvas) return;
-    const wRect = wrapper.getBoundingClientRect();
-    const minX = Math.min(0, wRect.width - canvasSize.w);
-    const minY = Math.min(0, wRect.height - canvasSize.h);
-    panX = Math.min(0, Math.max(minX, x));
-    panY = Math.min(0, Math.max(minY, y));
-    canvas.style.transform = `translate(${panX}px, ${panY}px)`;
-}
-
-function onBoardPointerDown(e) {
-    if (e.target.closest('.dangle-handle') || e.target.closest('.tack')) return;
-    const cardEl = e.target.closest('.mug-card');
-    panDrag = {
-        startClientX: e.clientX, startClientY: e.clientY,
-        startPanX: panX, startPanY: panY,
-        moved: false,
-        cardName: cardEl ? cardEl.dataset.name : null
-    };
-}
-function onBoardPointerMove(e) {
-    if (!panDrag) return;
-    const dx = e.clientX - panDrag.startClientX;
-    const dy = e.clientY - panDrag.startClientY;
-    if (Math.hypot(dx, dy) > 6) panDrag.moved = true;
-    if (panDrag.moved) setPan(panDrag.startPanX + dx, panDrag.startPanY + dy);
-}
-function onBoardPointerUp(e) {
-    if (!panDrag) return;
-    if (!panDrag.moved && panDrag.cardName) {
-        const per = personas.find(pp => pp.n === panDrag.cardName);
-        if (per && gameActive) openZoomModal(per);
-    }
-    panDrag = null;
-}
-(function initBoardPanHandlers() {
-    const wrapper = document.getElementById('corkboard-wrapper');
-    if (!wrapper) return;
-    wrapper.addEventListener('pointerdown', onBoardPointerDown);
-    document.addEventListener('pointermove', onBoardPointerMove);
-    document.addEventListener('pointerup', onBoardPointerUp);
-})();
-
-let resizeRedrawTimer = null;
-function scheduleBoardRedraw(delay) {
-    clearTimeout(resizeRedrawTimer);
-    resizeRedrawTimer = setTimeout(() => {
-        if (!gameActive) return;
-        const wrapper = document.getElementById('corkboard-wrapper');
-        const canvas = document.getElementById('corkboard-canvas');
-        const svg = document.getElementById('string-layer');
-        const wRect = wrapper.getBoundingClientRect();
-        canvasSize = { w: Math.max(wRect.width, canvasSize.w), h: Math.max(wRect.height, canvasSize.h) };
-        canvas.style.width = canvasSize.w + 'px';
-        canvas.style.height = canvasSize.h + 'px';
-        svg.setAttribute('viewBox', `0 0 ${canvasSize.w} ${canvasSize.h}`);
-        setPan(panX, panY);
-        redrawAllConnections();
-    }, delay);
-}
-window.addEventListener('resize', () => scheduleBoardRedraw(150));
-window.addEventListener('orientationchange', () => scheduleBoardRedraw(400));
-
-// === COLORES DE LAS CINTAS (una por cada grupo que arma el jugador) ===
-const LINK_COLORS = ['#c0392b', '#2471a3', '#1e8449', '#8e44ad', '#ca8a04', '#0e7c73', '#b7472a', '#5b5b5b'];
-function pickColorForNewLink(rootName) {
-    const existing = stringLinks.find(l => l.a === rootName || l.b === rootName);
-    if (existing) return existing.color;
-    const used = new Set(stringLinks.map(l => l.color));
-    const next = LINK_COLORS.find(c => !used.has(c));
-    return next || LINK_COLORS[stringLinks.length % LINK_COLORS.length];
-}
-function shadeColor(hex, percent) {
-    const num = parseInt(hex.slice(1), 16);
-    let r = Math.min(255, (num >> 16) + Math.round(255 * percent / 100));
-    let g = Math.min(255, ((num >> 8) & 0xff) + Math.round(255 * percent / 100));
-    let b = Math.min(255, (num & 0xff) + Math.round(255 * percent / 100));
-    return `rgb(${r},${g},${b})`;
-}
-
-// === INICIAR UN ENLACE DESDE EL EXPEDIENTE (botón ENLAZAR) ===
-function startLinkFromZoom() {
-    if (!currentZoomSuspect) return;
-    const name = currentZoomSuspect.n;
-    closeZoomModal();
-    const color = pickColorForNewLink(name);
-    const id = 'link_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-    stringLinks.push({ id, a: name, b: null, color });
-    activeDangleDrag = null;
-    redrawAllConnections();
-    document.getElementById('btn-new-case').style.display = 'none';
-    setTimeout(() => typeWriter(`CHINCHETA CLAVADA EN ${name}. SUJETE LA CINTA Y LLÉVELA HASTA OTRA FOTO.`, "out", 8), 350);
-}
-
-// === DIBUJO: CINTAS Y CHINCHETAS (una sola chincheta por sospechoso, aunque tenga varias cintas) ===
-function sagPath(p1, p2) {
-    const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-    const sag = Math.min(30, dist * 0.16);
-    const midX = (p1.x + p2.x) / 2;
-    const midY = (p1.y + p2.y) / 2 + sag;
-    return `M${p1.x.toFixed(1)},${p1.y.toFixed(1)} Q${midX.toFixed(1)},${midY.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
-}
-
-function nameCenterPx(name) {
-    const pos = boardPositions[name];
-    // Se desplaza un poco hacia arriba (como si la chincheta pinchara la parte alta de la foto),
-    // así el toque para abrir el expediente y el toque sobre la chincheta no se pisan.
-    return { x: (pos.x / 100) * canvasSize.w, y: (pos.y / 100) * canvasSize.h - 22 };
-}
-
-// Toque simple sobre una chincheta = corta la última cinta que toque a ese sospechoso
-function cutLastTapeAt(name) {
-    for (let i = stringLinks.length - 1; i >= 0; i--) {
-        const link = stringLinks[i];
-        if (link.a === name || link.b === name) {
-            playSFX('error');
-            if (link.b === name) {
-                // Caso 1: se desconecta el punto enlazado; la cinta queda pendiendo de su raíz
-                link.b = null;
-                redrawAllConnections();
-            } else {
-                // Caso 2: esta chincheta ES la raíz -> se retira la cinta entera y cae
-                stringLinks.splice(i, 1);
-                const p1 = nameCenterPx(link.a);
-                const p2 = link.b ? nameCenterPx(link.b) : { x: p1.x, y: p1.y + 34 };
-                redrawAllConnections();
-                snapAndFall(p1, p2);
-            }
-            return;
-        }
-    }
-}
-
-// Arrastrar una chincheta ya clavada = nace una cinta NUEVA desde ese mismo punto
-let pendingTackPress = null;
-function startTackPress(name, e) {
-    pendingTackPress = { name, startX: e.clientX, startY: e.clientY };
-}
-
-function drawTack(name) {
-    const svg = document.getElementById('string-layer');
-    if (svg.querySelector(`.tack-hit[data-name="${CSS.escape(name)}"]`)) return; // una sola chincheta por sospechoso
-    const p = nameCenterPx(name);
-
-    // Área de toque invisible, bastante más grande que el dibujo, para que no haga falta apuntar con precisión
-    const hit = document.createElementNS(SVG_NS, 'circle');
-    hit.setAttribute('class', 'tack-hit');
-    hit.setAttribute('cx', p.x); hit.setAttribute('cy', p.y); hit.setAttribute('r', 19);
-    hit.setAttribute('fill', 'transparent');
-    hit.dataset.name = name;
-    hit.style.pointerEvents = 'auto';
-    hit.style.cursor = 'grab';
-    hit.addEventListener('pointerdown', (e) => { e.stopPropagation(); startTackPress(name, e); });
-    svg.appendChild(hit);
-
-    const tack = document.createElementNS(SVG_NS, 'circle');
-    tack.setAttribute('class', 'tack');
-    tack.setAttribute('cx', p.x); tack.setAttribute('cy', p.y); tack.setAttribute('r', 7);
-    tack.setAttribute('fill', '#d6b066');
-    tack.style.pointerEvents = 'none';
-    svg.appendChild(tack);
-
-    const shine = document.createElementNS(SVG_NS, 'circle');
-    shine.setAttribute('cx', p.x - 1.9); shine.setAttribute('cy', p.y - 1.9); shine.setAttribute('r', 1.7);
-    shine.setAttribute('fill', 'rgba(255,255,255,0.7)');
-    shine.style.pointerEvents = 'none';
-    svg.appendChild(shine);
-}
-
-function drawStringPath(p1, p2, color, isDangle, linkId) {
-    const svg = document.getElementById('string-layer');
-    const path = document.createElementNS(SVG_NS, 'path');
-    path.setAttribute('class', isDangle ? 'perm-string dangle-string' : 'perm-string');
-    path.setAttribute('d', sagPath(p1, p2));
-    path.setAttribute('stroke', color);
-    path.dataset.linkId = linkId;
-    svg.appendChild(path);
-}
-
-function drawDangleHandle(p, color, linkId) {
-    const svg = document.getElementById('string-layer');
-    const handle = document.createElementNS(SVG_NS, 'circle');
-    handle.setAttribute('class', 'dangle-handle');
-    handle.setAttribute('cx', p.x); handle.setAttribute('cy', p.y); handle.setAttribute('r', 8);
-    handle.setAttribute('fill', color);
-    handle.setAttribute('stroke', '#fff'); handle.setAttribute('stroke-width', 1.2);
-    handle.dataset.linkId = linkId;
-    handle.style.pointerEvents = 'auto';
-    handle.style.cursor = 'grab';
-    handle.addEventListener('pointerdown', (e) => { e.stopPropagation(); startDangleDrag(linkId, e); });
-    svg.appendChild(handle);
-}
-
-function redrawAllConnections() {
-    const svg = document.getElementById('string-layer');
-    if (!svg) return;
-    svg.querySelectorAll('.perm-string, .tack-hit, .tack, .dangle-handle').forEach(el => el.remove());
-
-    const tackNames = new Set();
-    stringLinks.forEach(link => {
-        if (activeDangleDrag && activeDangleDrag.linkId === link.id) {
-            tackNames.add(link.a); // mientras se arrastra, solo la raíz sigue mostrando su chincheta
-            return;
-        }
-        const pA = nameCenterPx(link.a);
-        tackNames.add(link.a);
-        if (link.b) {
-            tackNames.add(link.b);
-            drawStringPath(pA, nameCenterPx(link.b), link.color, false, link.id);
-        } else {
-            const danglePoint = { x: pA.x, y: pA.y + 34 };
-            drawStringPath(pA, danglePoint, link.color, true, link.id);
-            drawDangleHandle(danglePoint, link.color, link.id);
-        }
-    });
-    tackNames.forEach(name => drawTack(name));
-}
-
-// === ARRASTRAR EL CABO SUELTO (o una chincheta ya clavada) HASTA OTRA FOTO, sin validación en vivo ===
-let activeDangleDrag = null;
-// Auto-desplazamiento del tablero cuando el arrastre se acerca al borde de la pantalla
-let autoPanRAF = null;
-let lastPointerClient = { x: 0, y: 0 };
-function updateAutoPan() {
-    if (!activeDangleDrag) { autoPanRAF = null; return; }
-    const wrapper = document.getElementById('corkboard-wrapper');
-    const rect = wrapper.getBoundingClientRect();
-    const edge = 40, speed = 10;
-    const x = lastPointerClient.x, y = lastPointerClient.y;
-    let dx = 0, dy = 0;
-    if (x < rect.left + edge) dx = speed;
-    else if (x > rect.right - edge) dx = -speed;
-    if (y < rect.top + edge) dy = speed;
-    else if (y > rect.bottom - edge) dy = -speed;
-    if (dx !== 0 || dy !== 0) {
-        setPan(panX + dx, panY + dy);
-        updateDangleTemp(x, y);
-    }
-    autoPanRAF = requestAnimationFrame(updateAutoPan);
-}
-
-function clientToCanvas(clientX, clientY) {
-    const canvas = document.getElementById('corkboard-canvas');
-    const rect = canvas.getBoundingClientRect();
-    return { x: clientX - rect.left, y: clientY - rect.top };
-}
-
-function startDangleDrag(linkId, e) {
-    activeDangleDrag = { linkId };
-    pendingTackPress = null;
-    const svg = document.getElementById('string-layer');
-    svg.querySelectorAll(`.dangle-string[data-link-id="${linkId}"], .dangle-handle[data-link-id="${linkId}"]`).forEach(el => el.remove());
-    updateDangleTemp(e.clientX, e.clientY);
-}
-
-function updateDangleTemp(clientX, clientY) {
-    const svg = document.getElementById('string-layer');
-    let path = document.getElementById('temp-dangle-string');
-    if (!path) {
-        path = document.createElementNS(SVG_NS, 'path');
-        path.setAttribute('id', 'temp-dangle-string');
-        svg.appendChild(path);
-    }
-    const link = stringLinks.find(l => l.id === activeDangleDrag.linkId);
-    if (!link) return;
-    const rootPx = nameCenterPx(link.a);
-    const pt = clientToCanvas(clientX, clientY);
-    path.setAttribute('stroke', link.color);
-    path.setAttribute('d', sagPath(rootPx, pt));
-}
-
-function removeDangleTemp() {
-    const path = document.getElementById('temp-dangle-string');
-    if (path) path.remove();
-}
-
-document.addEventListener('pointermove', (e) => {
-    if (activeDangleDrag) {
-        lastPointerClient = { x: e.clientX, y: e.clientY };
-        updateDangleTemp(e.clientX, e.clientY);
-        if (!autoPanRAF) autoPanRAF = requestAnimationFrame(updateAutoPan);
-        return;
-    }
-    if (pendingTackPress) {
-        const dx = e.clientX - pendingTackPress.startX;
-        const dy = e.clientY - pendingTackPress.startY;
-        if (Math.hypot(dx, dy) > 6) {
-            // Se convirtió en arrastre: nace una cinta nueva desde esta misma chincheta
-            const name = pendingTackPress.name;
-            pendingTackPress = null;
-            const color = pickColorForNewLink(name);
-            const id = 'link_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-            stringLinks.push({ id, a: name, b: null, color });
-            activeDangleDrag = { linkId: id };
-            redrawAllConnections();
-            updateDangleTemp(e.clientX, e.clientY);
-        }
-    }
-});
-
-document.addEventListener('pointerup', (e) => {
-    if (activeDangleDrag) {
-        const linkId = activeDangleDrag.linkId;
-        activeDangleDrag = null;
-        if (autoPanRAF) { cancelAnimationFrame(autoPanRAF); autoPanRAF = null; }
-        removeDangleTemp();
-
-        const link = stringLinks.find(l => l.id === linkId);
-        if (link) {
-            const elUnder = document.elementFromPoint(e.clientX, e.clientY);
-            const targetCard = elUnder ? elUnder.closest('.mug-card') : null;
-            if (targetCard && targetCard.dataset.name !== link.a) {
-                link.b = targetCard.dataset.name;
-                playSFX('discard');
-            }
-            // si no soltó sobre ninguna foto, la cinta simplemente vuelve a quedar colgando (sin error, sin caída)
-        }
-        redrawAllConnections();
-        return;
-    }
-    if (pendingTackPress) {
-        // fue un toque simple, sin arrastre: corta la última cinta de ese sospechoso
-        cutLastTapeAt(pendingTackPress.name);
-        pendingTackPress = null;
-    }
-});
-
-
-// === Física de cuerda cortada (Verlet simple) para conexiones inválidas ===
-function snapAndFall(p1, p2) {
-    const svg = document.getElementById('string-layer');
-    const N = 8;
-    const pts = [];
-    for (let i = 0; i <= N; i++) {
-        const t = i / N;
-        const x = p1.x + (p2.x - p1.x) * t;
-        const y = p1.y + (p2.y - p1.y) * t;
-        pts.push({ x, y, oldx: x, oldy: y });
-    }
-    const restLen = Math.hypot(p2.x - p1.x, p2.y - p1.y) / N;
-    const path = document.createElementNS(SVG_NS, 'path');
-    path.setAttribute('class', 'falling-string');
-    svg.appendChild(path);
-
-    let frame = 0;
-    const gravity = 1.6;
-    function step() {
-        frame++;
-        pts.forEach(p => {
-            const vx = (p.x - p.oldx) * 0.97;
-            const vy = (p.y - p.oldy) * 0.97;
-            p.oldx = p.x; p.oldy = p.y;
-            p.x += vx + (Math.random() - 0.5) * 0.4;
-            p.y += vy + gravity;
-        });
-        for (let iter = 0; iter < 3; iter++) {
-            for (let i = 0; i < pts.length - 1; i++) {
-                const a = pts[i], b = pts[i + 1];
-                const dx = b.x - a.x, dy = b.y - a.y;
-                const dist = Math.sqrt(dx * dx + dy * dy) || 0.0001;
-                const diff = (dist - restLen) / dist;
-                const offX = dx * 0.5 * diff, offY = dy * 0.5 * diff;
-                a.x += offX; a.y += offY;
-                b.x -= offX; b.y -= offY;
-            }
-        }
-        const d = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
-        path.setAttribute('d', d);
-        path.style.opacity = Math.max(0, 1 - frame / 42).toFixed(2);
-
-        if (frame < 45) requestAnimationFrame(step);
-        else path.remove();
-    }
-    step();
 }
 
 // ==========================================
@@ -4591,13 +3800,22 @@ if (buttonsContainer) {
     `;
 }
     
-    // Configurar botón (usando la función existente)
+    // Configurar botones (usando las funciones existentes)
     const keepBtn = document.getElementById('zoom-keep-btn');
+    const discardBtn = document.getElementById('zoom-discard-btn');
+    
     if (keepBtn) {
         keepBtn.onclick = keepSuspect;
     }
+    
+    if (discardBtn) {
+        discardBtn.onclick = discardFromZoom;
+    }
+    
+    // Asegurar que los botones tengan los eventos correctos
     setTimeout(() => {
         if (keepBtn) keepBtn.onclick = keepSuspect;
+        if (discardBtn) discardBtn.onclick = discardFromZoom;
     }, 50);
 }
 
@@ -4621,49 +3839,100 @@ function keepSuspect() {
     playSFX('click');
 }
 
-        // === ANÁLISIS DEL RECORRIDO (botón "CERRAR CASO"): revisa TODOS los enlaces del tablero ===
-        // Una cinta entre A y B es FUERTE si existe alguna consulta ya hecha donde ambos
-        // respondieron lo mismo (una pista real que de verdad los une). Si ninguna consulta
-        // los une, la cinta es DÉBIL y se rompe. Un solo enlace débil hace perder el caso.
-        function evaluateAllLinks() {
-            const completeLinks = stringLinks.filter(l => l.b);
-            if (completeLinks.length === 0) {
-                playSFX('error');
-                typeWriter("ERROR: ENLACE AL MENOS UNA PAREJA DE SOSPECHOSOS ANTES DE CERRAR EL CASO.", "out", 10);
+function discardFromZoom() {
+    if (!currentZoomSuspect) return;
+    
+    // Validar que se haya hecho una pregunta
+    if (lastQueryText === "") {
+        playSFX('error');
+        typeWriter("ERROR: REALICE UNA CONSULTA ANTES DE DESCARTAR UN SOSPECHOSO.", "out", 10);
+        return;
+    }
+    
+    // Lógica de descarte (similar a la original)
+    const cardEl = document.getElementById(`card-${currentZoomSuspect.n}`);
+    if (cardEl.classList.contains('discarded')) {
+        closeZoomModal();
+        return;
+    }
+    
+    playSFX('discard');
+    
+    // Si hay descartes pendientes en lote
+    if (pendingDiscards.length > 0 && pendingDiscards.includes(currentZoomSuspect.n)) {
+        // Lógica de descarte en lote (misma que la original)
+        const rect = cardEl.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        let ptsToGive = 0;
+        if (pointsPool > 0) {
+            const remainingDiscards = pendingDiscards.length; 
+            ptsToGive = Math.ceil(pointsPool / remainingDiscards);
+            if (ptsToGive > pointsPool) ptsToGive = pointsPool;
+            pointsPool -= ptsToGive;
+        }
+        
+        if (ptsToGive > 0) {
+            spawnFloatingPoint(centerX, centerY, ptsToGive);
+        }
+        
+        discardVisual(cardEl);
+        pendingDiscards = pendingDiscards.filter(id => id !== currentZoomSuspect.n);
+        
+        if (currentZoomSuspect.n === objetivo.n) {
+            closeZoomModal();
+            checkStatus(900);
+            return;
+        }
+
+        if (pendingDiscards.length > 0) {
+            document.getElementById('out').innerHTML = `> ${lastQueryText}<br><span style="color:var(--hazard)">OBJETIVOS RESTANTES: ${pendingDiscards.length}</span>`;
+        } else {
+            playSFX('click'); 
+            document.getElementById('out').innerHTML = `> ${lastQueryText}<br><span style="color:var(--terminal-green)">DESCARTE COMPLETADO. SISTEMA HABILITADO.</span>`;
+            document.getElementById('queryInput').disabled = false;
+            document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA (¿...?)...";
+            document.getElementById('queryInput').focus();
+
+            if(isCompetitiveMode && currentBatchTotal > 0) {
+                if(isHost) broadcastExcluding(myPeerId, {type: 'RIVAL_BATCH_DISCARD', count: currentBatchTotal});
+                else if(conn) conn.send({type: 'RIVAL_BATCH_DISCARD', count: currentBatchTotal});
+                currentBatchTotal = 0;
+            }
+        }
+    } 
+    // Descarte individual (sin lote pendiente)
+    else if (lastQueryText !== "") {
+        discardVisual(cardEl);
+        if (currentZoomSuspect.n === objetivo.n) { 
+            closeZoomModal();
+            checkStatus(0); 
+            return; 
+        }
+    }
+    
+    closeZoomModal();
+    checkStatus(0);
+}
+
+        function discardVisual(card) {
+            card.classList.add('discarded'); 
+        }
+
+        function checkStatus(delay = 0) {
+            const activeCards = Array.from(document.querySelectorAll('.suspect-card')).filter(c => !c.classList.contains('discarded'));
+            
+            if (document.getElementById(`card-${objetivo.n}`).classList.contains('discarded')) {
+                return endGame(false);
+            }
+            
+            if (activeCards.length === 1 && activeCards[0].id === `card-${objetivo.n}`) {
+                setTimeout(() => {
+                    endGame(true);
+                }, delay);
                 return;
             }
-
-            let strongCount = 0, weakCount = 0;
-            completeLinks.forEach(link => {
-                const a = personas.find(p => p.n === link.a);
-                const b = personas.find(p => p.n === link.b);
-                const isStrong = a && b && queryHistory.some(q => q.checkFunc(a) === q.checkFunc(b));
-                if (isStrong) { strongCount++; markLinkStrong(link.id); }
-                else { weakCount++; breakWeakLink(link.id); }
-            });
-
-            const anyWeak = weakCount > 0;
-            playSFX(anyWeak ? 'error' : 'click');
-            document.getElementById('out').innerHTML = `> ANÁLISIS DEL RECORRIDO<br><span style="color:${anyWeak ? 'var(--hazard)' : 'var(--terminal-green)'}">ENLACES FUERTES: ${strongCount} · DÉBILES: ${weakCount}</span>`;
-
-            setTimeout(() => { endGame(!anyWeak); }, anyWeak ? 1400 : 700);
-        }
-
-        function markLinkStrong(linkId) {
-            const svg = document.getElementById('string-layer');
-            const path = svg.querySelector(`path.perm-string[data-link-id="${linkId}"]`);
-            if (path) path.classList.add('strong-pulse');
-        }
-
-        function breakWeakLink(linkId) {
-            const idx = stringLinks.findIndex(l => l.id === linkId);
-            if (idx === -1) return;
-            const link = stringLinks[idx];
-            const p1 = nameCenterPx(link.a);
-            const p2 = nameCenterPx(link.b);
-            stringLinks.splice(idx, 1);
-            redrawAllConnections();
-            snapAndFall(p1, p2);
         }
 
         function checkAllFinishedTimer() {
@@ -5297,68 +4566,43 @@ if(isHost) {
                     playSFX('click');
                     successfulQueriesCount++;
                     document.getElementById('out').style.color = "var(--terminal-green)";
+                    
+                    const targetHasTrait = checkFunc(objetivo);
+                    const respText = targetHasTrait ? "SÍ." : "NO.";
+                    
+                    // Calcular descartes
+                    pendingDiscards = personas.filter(p => {
+                        const card = document.getElementById('card-' + p.n);
+                        if (card.classList.contains('discarded')) return false; 
+                        const suspectHasTrait = checkFunc(p);
+                        return suspectHasTrait !== targetHasTrait; 
+                    }).map(p => p.n);
 
-                    const inputEl = document.getElementById('queryInput');
-                    inputEl.disabled = true;
-                    inputEl.placeholder = "PROCESANDO...";
-                    const oracleStatus = document.getElementById('oracle-status');
-                    if (oracleStatus) oracleStatus.textContent = "ANALIZANDO DATOS...";
-                    typeWriter("CONSULTA RECIBIDA. LA MÁQUINA ESTÁ PROCESANDO...", "out", 10);
+                    currentBatchTotal = pendingDiscards.length;
 
-                    const procDelay = 2200 + Math.random() * 900; // tiempo de respuesta mediano
+                    lastQueryText = `CONSULTA: ${q}<br>RESPUESTA: ${respText}`;
 
-                    setTimeout(() => {
-                        const targetHasTrait = checkFunc(objetivo);
-                        const respText = targetHasTrait ? "SÍ" : "NO";
+                    // Cálculo de puntos
+                    let earned = 0;
+                    let count = pendingDiscards.length;
+                    if(count > 0) {
+                        if(count >= 8) earned = 10;
+                        else if(count >= 5) earned = 8;
+                        else if(count >= 3) earned = 5;
+                        else earned = count; 
+                        pointsPool = earned;
+                        lastQueryText += ` <span style="color:var(--gold)">[DETECTADOS: ${earned} PTS]</span>`;
+                    }
 
-                        // Guardar en el historial para la evaluación final de los enlaces
-                        queryHistory.push({ checkFunc, targetAnswer: targetHasTrait, label: q });
-
-                        // Calcular a cuántos afectaría (solo informativo: ya no bloquea el sistema)
-                        pendingDiscards = personas.filter(p => {
-                            const card = document.getElementById('card-' + p.n);
-                            if (card.classList.contains('discarded')) return false;
-                            const suspectHasTrait = checkFunc(p);
-                            return suspectHasTrait !== targetHasTrait;
-                        }).map(p => p.n);
-
-                        currentBatchTotal = pendingDiscards.length;
-                        const count = pendingDiscards.length;
-
-                        lastQueryText = `CONSULTA: ${q}`;
-
-                        // Cálculo de puntos: se otorgan de inmediato, ya no dependen de descartar manualmente
-                        let earned = 0;
-                        if (count > 0) {
-                            if (count >= 8) earned = 10;
-                            else if (count >= 5) earned = 8;
-                            else if (count >= 3) earned = 5;
-                            else earned = count;
-                            totalMoney += earned;
-                            localStorage.setItem('bioBreachMoney', String(totalMoney));
-                            lastQueryText += ` <span style="color:var(--gold)">[+${earned} PTS]</span>`;
-                        }
-
-                        printOraclePaper(q, respText);
-                        if (oracleStatus) oracleStatus.textContent = "EN ESPERA";
-
-                        typeWriter(`${lastQueryText}<br><span style="color:#888">LA RESPUESTA SALIÓ IMPRESA. PISTAS COMPATIBLES: ${personas.length - count} · INCOMPATIBLES: ${count}</span>`, "out", 15);
-
-                        questionsSinceRecharge++;
-                        if (questionsSinceRecharge >= RECHARGE_EVERY) {
-                            questionsSinceRecharge = 0;
-                            startRecharge();
-                        } else {
-                            inputEl.disabled = false;
-                            inputEl.placeholder = "INTERROGAR SISTEMA (¿...?)...";
-                        }
-                        // Sin auto-foco: si se reactiva el teclado justo aquí, tapa el papel recién salido.
-
-                        if (isCompetitiveMode && count > 0) {
-                            if (isHost) broadcastExcluding(myPeerId, { type: 'RIVAL_BATCH_DISCARD', count: count });
-                            else if (conn) conn.send({ type: 'RIVAL_BATCH_DISCARD', count: count });
-                        }
-                    }, procDelay);
+                    if (pendingDiscards.length > 0) {
+                        const msg = `${lastQueryText}<br><span style="color:var(--hazard)">BLOQUEO ACTIVO: ELIMINE A ${pendingDiscards.length} SOSPECHOSOS INCOMPATIBLES.</span>`;
+                        typeWriter(msg, "out", 15);
+                        document.getElementById('queryInput').disabled = true;
+                        document.getElementById('queryInput').placeholder = "!! DESCARTE REQUERIDO !!";
+                    } else {
+                        typeWriter(`${lastQueryText}<br>NINGÚN DESCARTE DISPONIBLE CON ESTA INFORMACIÓN.`, "out", 15);
+                        currentBatchTotal = 0; 
+                    }
 
                 } else {
                     playSFX('error');
@@ -5367,108 +4611,7 @@ if(isHost) {
                 }
             }
         });
-
-        // === MÁQUINA: IMPRESIÓN DE LA RESPUESTA EN PAPEL ===
-        function printOraclePaper(query, answer) {
-            const paper = document.getElementById('oracle-paper');
-            const text = document.getElementById('oracle-paper-text');
-            if (!paper || !text) return;
-            text.textContent = `${query} → ${answer}`;
-            paper.classList.remove('paper-eject');
-            void paper.offsetWidth; // reinicia la animación
-            paper.classList.add('paper-eject');
-            playSFX('click');
-            // El papel se queda afuera: no desaparece solo. Se retira/renueva al imprimir el siguiente,
-            // o al reiniciarse por completo cuando empieza un caso nuevo.
-        }
-
-        // === RECARGA: cada RECHARGE_EVERY preguntas, la máquina necesita un rato antes de aceptar otra ===
-        function startRecharge() {
-            const inputEl = document.getElementById('queryInput');
-            const oracleStatus = document.getElementById('oracle-status');
-            isRecharging = true;
-            inputEl.disabled = true;
-            let secondsLeft = RECHARGE_SECONDS;
-            inputEl.placeholder = `RECARGANDO (${secondsLeft}s)...`;
-            if (oracleStatus) oracleStatus.textContent = `RECARGANDO... ${secondsLeft}s`;
-            clearInterval(rechargeInterval);
-            rechargeInterval = setInterval(() => {
-                secondsLeft--;
-                if (secondsLeft <= 0) {
-                    clearInterval(rechargeInterval);
-                    isRecharging = false;
-                    inputEl.disabled = false;
-                    inputEl.placeholder = "INTERROGAR SISTEMA (¿...?)...";
-                    if (oracleStatus) oracleStatus.textContent = "SISTEMA EN ESPERA";
-                    typeWriter("LA MÁQUINA TERMINÓ DE RECARGAR. YA PUEDE PREGUNTAR DE NUEVO.", "out", 8);
-                } else {
-                    inputEl.placeholder = `RECARGANDO (${secondsLeft}s)...`;
-                    if (oracleStatus) oracleStatus.textContent = `RECARGANDO... ${secondsLeft}s`;
-                }
-            }, 1000);
-        }
         
-        // === BLOC DE NOTAS ===
-        const NOTEBOOK_PAGES = 6;
-        let notebookCurrentPage = 0;
-        let notebookData = [];
-
-        function loadNotebookData() {
-            try {
-                const saved = JSON.parse(localStorage.getItem('bioBreachNotebook') || '[]');
-                notebookData = Array.from({ length: NOTEBOOK_PAGES }, (_, i) => saved[i] || '');
-            } catch (e) {
-                notebookData = Array.from({ length: NOTEBOOK_PAGES }, () => '');
-            }
-        }
-        function saveNotebookData() {
-            localStorage.setItem('bioBreachNotebook', JSON.stringify(notebookData));
-        }
-        function openNotebook() {
-            if (notebookData.length === 0) loadNotebookData();
-            document.getElementById('notebook-modal').style.display = 'flex';
-            renderNotebookPage();
-            playSFX('click');
-        }
-        function closeNotebook() {
-            saveCurrentNotebookPage();
-            document.getElementById('notebook-modal').style.display = 'none';
-            playSFX('click');
-        }
-        function saveCurrentNotebookPage() {
-            const ta = document.getElementById('notebook-page-text');
-            if (ta) {
-                notebookData[notebookCurrentPage] = ta.value;
-                saveNotebookData();
-            }
-        }
-        function renderNotebookPage() {
-            const ta = document.getElementById('notebook-page-text');
-            const indicator = document.getElementById('notebook-page-indicator');
-            if (ta) ta.value = notebookData[notebookCurrentPage] || '';
-            if (indicator) indicator.innerText = `${notebookCurrentPage + 1} / ${NOTEBOOK_PAGES}`;
-        }
-        function turnNotebookPage() {
-            saveCurrentNotebookPage();
-            const pageEl = document.getElementById('notebook-page');
-            const stackEl = document.getElementById('notebook-stack');
-            playSFX('click');
-            pageEl.classList.add('flipping');
-            setTimeout(() => {
-                notebookCurrentPage++;
-                if (notebookCurrentPage >= NOTEBOOK_PAGES) {
-                    // Se volvió al inicio: toda la pila baja de golpe
-                    notebookCurrentPage = 0;
-                    stackEl.style.height = '0px';
-                } else {
-                    const h = parseInt(stackEl.style.height) || 0;
-                    stackEl.style.height = (h + 6) + 'px';
-                }
-                renderNotebookPage();
-                pageEl.classList.remove('flipping');
-            }, 520);
-        }
-
                 // ==========================================
         // === NUEVO: CERRAR SUGERENCIAS AL CLIC ===
         // ==========================================
@@ -5505,7 +4648,7 @@ if(isHost) {
     </script>
     
     <!-- MODAL DE ZOOM DINÁMICO -->
-<div id="zoom-modal" onclick="if(event.target===this) closeZoomModal();" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9000; display: none; justify-content: center; align-items: center; padding: 20px; overflow: hidden;">
+<div id="zoom-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9000; display: none; justify-content: center; align-items: center; padding: 20px; overflow: hidden;">
     <!-- La tarjeta del sospechoso -->
     <div id="zoom-content" style="background: #e6e0d4; border: 2px solid #000; max-width: 420px; width: 100%; position: relative; box-shadow: 10px 10px 0px rgba(0,0,0,0.5); min-height: 200px; display: flex; flex-direction: column; overflow: hidden; margin-right: 0;">
         <!-- Estandarte de género en el modal -->
@@ -5513,28 +4656,26 @@ if(isHost) {
         
         <!-- Contenido de la tarjeta ampliada -->
         <div style="padding: 15px 15px 15px 20px; flex-grow: 1; overflow: hidden; display: flex; flex-direction: column;">
-            <div id="zoom-mugshot" class="mug-photo" style="width: 90px; margin: 0 auto 12px; flex-shrink: 0;">
-                <svg class="mug-silhouette" viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet">
-                    <circle cx="50" cy="36" r="19" fill="#54534f"></circle>
-                    <path d="M14,100 Q14,60 50,58 Q86,60 86,100 Z" fill="#54534f"></path>
-                </svg>
-                <div class="mug-question">?</div>
-            </div>
             <h3 id="zoom-name" style="color: #000; text-align: center; border-bottom: 3px solid #000; padding-bottom: 10px; margin-top: 0; margin-bottom: 15px; font-family: 'Courier New', monospace; font-size: 1.6rem; text-transform: uppercase; letter-spacing: 2px; flex-shrink: 0; font-weight: bold;"></h3>
             
             <div id="zoom-info" style="color: #111; font-family: 'Courier New', monospace; font-size: 1rem; line-height: 1.3; flex-grow: 1; overflow: hidden;">
                 <!-- Los datos se llenarán dinámicamente -->
             </div>
         </div>
-        <button id="zoom-link-btn" onclick="startLinkFromZoom()" style="width: 100%; border: none; border-top: 2px solid #000; background: var(--gold); color: #000; font-family: 'Courier New', monospace; font-weight: bold; letter-spacing: 2px; font-size: 1rem; padding: 12px 0; cursor: pointer; flex-shrink: 0;">🧵 ENLAZAR</button>
     </div>
     
-    <!-- Botón MANTENER como banderita adhesiva (FUERA de la tarjeta) -->
+    <!-- Botones MANTENER y DESCARTAR como banderitas adhesivas (FUERA de la tarjeta) -->
     <div id="zoom-buttons-container" class="zoom-buttons-absolute" style="display: none;">
-        <!-- Banderita MANTENER (la original) -->
+        <!-- Banderita MANTENER -->
         <button id="zoom-keep-btn" class="bookmark-btn" 
         style="background: var(--victory); color: #000; padding: 0; border: none; font-family: 'Courier New', monospace; font-weight: bold; cursor: pointer; width: 80px; height: 80px; font-size: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 10px; box-shadow: 5px 5px 0px rgba(0,0,0,0.5);">
     📥
+</button>
+        
+        <!-- Banderita DESCARTAR -->
+        <button id="zoom-discard-btn" class="bookmark-btn" 
+        style="background: var(--hazard); color: #fff; padding: 0; border: none; font-family: 'Courier New', monospace; font-weight: bold; cursor: pointer; width: 80px; height: 80px; font-size: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 10px; box-shadow: 5px 5px 0px rgba(0,0,0,0.5);">
+    🗑️
 </button>
     </div>
 </div>
