@@ -1,8 +1,22 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "io.github.elfaraon65.twa",
-        "sha256_cert_fingerprints": ["FD:94:7A:8A:3F:98:9F:B9:B3:C4:71:61:59:21:F2:EB:20:A3:33:10:35:3F:3F:4E:B9:17:59:C3:94:38:21:60"]
-      }
-    }]
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.elfaraon65.twa",
+      "sha256_cert_fingerprints": [
+        "FD:94:7A:8A:3F:98:9F:B9:B3:C4:71:61:59:21:F2:EB:20:A3:33:10:35:3F:3F:4E:B9:17:59:C3:94:38:21:60"
+      ]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.elfaraon65.datagrid",
+      "sha256_cert_fingerprints": [
+        "41:7F:14:F1:5B:90:93:CF:D6:1F:5D:14:41:A2:EE:AA:D6:9F:2C:C5:84:6C:10:65:27:87:51:B6:BB:41:9F:55"
+      ]
+    }
+  }
+]
