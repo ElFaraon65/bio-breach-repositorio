@@ -129,6 +129,11 @@
 
         * { box-sizing: border-box; }
 
+        /* Los <button> e <input> no heredan la fuente del body por defecto (el navegador les
+           pone la suya). Esta regla, de especificidad mínima, hace que cualquier botón sin
+           fuente propia use la del juego; las clases que ya declaran la suya siguen mandando. */
+        button, input, select, textarea { font-family: inherit; }
+
         body {
             background-color: var(--bg-dark);
             /* Patrón de "Ruido de película" o papel viejo sutil */
@@ -726,6 +731,7 @@
             position: fixed; bottom: 20px; 
             background: #000; border: 2px solid var(--gold); color: var(--gold);
             padding: 10px 30px; cursor: pointer; z-index: 3600;
+            font-family: var(--font-mono);
             font-weight: bold; text-transform: uppercase;
             box-shadow: 4px 4px 0px #fff;
         }
@@ -1005,13 +1011,19 @@
         }
         .btn-mini:hover { background: #fff; color: #000; }
 
+        /* Barra del caso en dos filas deliberadas: arriba la identidad del caso, abajo lo que
+           está en juego. Antes dependía de flex-wrap y las estrellas quedaban solas en una línea. */
         #case-info-bar { 
-            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; 
+            display: flex; flex-direction: column; gap: 5px;
             color: var(--gold); margin-bottom: 8px; font-size: 0.75rem; 
             border-bottom: 1px solid #444; padding-bottom: 6px; 
             flex-shrink: 0; transition: filter 0.5s;
-            row-gap: 4px; column-gap: 10px;
         }
+        #case-info-bar .info-row {
+            display: flex; justify-content: space-between; align-items: center; gap: 10px;
+        }
+        #case-difficulty-display { letter-spacing: 2px; white-space: nowrap; }
+        .diff-label { font-size: 0.6rem; letter-spacing: 1px; color: #8a7a55; margin-right: 6px; }
 
         #preload-status {
             position: fixed; bottom: 10px; left: 10px;
@@ -1062,7 +1074,7 @@
             .terminal-zone { padding: 8px; }
             #queryInput { font-size: 0.9rem; }
             .btn-main { padding: 10px; font-size: 0.9rem; }
-            #case-info-bar { flex-direction: row; gap: 5px; font-size: 0.65rem; }
+            #case-info-bar { font-size: 0.65rem; }
         }
         
         /* === NUEVO: INTERRUPTOR RETRO (SWITCH) === */
@@ -1175,6 +1187,11 @@ input:not(:checked) + .slider-switch:before {
 #zoom-buttons-container {
     transition: opacity 0.3s ease;
     opacity: 0;
+}
+
+.bookmark-btn.active {
+    background: var(--victory) !important;
+    box-shadow: 5px 5px 0px rgba(0,0,0,0.5), 0 0 0 3px #fff !important;
 }
 
 /* Posicionamiento responsivo de botones */
@@ -1448,7 +1465,15 @@ body.game-ending {
     cursor: pointer;
     user-select: none;
     z-index: 10;
-    transition: filter 0.4s ease, opacity 0.4s ease;
+    transition: filter 0.4s ease, opacity 0.4s ease, width 0.3s ease;
+}
+/* TAMAÑO (Configuración → VISUAL): fichas más grandes para quien le cuesta sujetar un enlace.
+   Pequeño/estándar = tamaño original, sin clase. */
+body.size-medium .mug-card {
+    width: clamp(74px, 19vw, 118px);
+}
+body.size-large .mug-card {
+    width: clamp(92px, 24vw, 148px);
 }
 
 .mug-photo {
@@ -1676,15 +1701,15 @@ body.game-ending {
     position: absolute;
     top: 50%;
     right: 4px;
-    width: 100px;
+    width: 135px;
     background: #efe8d4;
     background-image: repeating-linear-gradient(180deg, rgba(0,0,0,0.05) 0 1px, transparent 1px 5px);
     color: #222;
     font-family: var(--font-mono);
-    font-size: 0.5rem;
-    line-height: 1.25;
+    font-size: 0.72rem;
+    line-height: 1.3;
     text-align: center;
-    padding: 6px 5px;
+    padding: 7px 6px;
     box-shadow: 0 3px 6px rgba(0,0,0,0.5);
     border-radius: 0 0 3px 3px;
     word-break: break-word;
@@ -1756,6 +1781,15 @@ body.game-ending {
         z-index: 500;
         display: flex;
     }
+
+    /* Expediente en PC: la foto va a la izquierda y la información a la derecha,
+       aprovechando el ancho extra del monitor. En celular sigue apilado como antes. */
+    #zoom-content { max-width: 640px !important; }
+    .zoom-body { flex-direction: row !important; align-items: flex-start !important; gap: 24px; }
+    .zoom-photo-col { flex-shrink: 0; }
+    .zoom-photo-col #zoom-mugshot { width: 150px !important; margin: 10px auto 0 !important; }
+    .zoom-info-col { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+    .zoom-info-col #zoom-name { text-align: left !important; }
 }
 
 #notebook-modal {
@@ -2068,7 +2102,7 @@ body.game-ending {
         <div id="settings-modal">
         <div class="tutorial-box" style="padding: 0; overflow: hidden; background: #e6e6e6;">
             <div class="settings-tabs">
-                <button id="tab-btn-visual" class="tab-btn" style="display: none;" onclick="switchSettingsTab('visual')">VISUAL</button>
+                <button id="tab-btn-visual" class="tab-btn" onclick="switchSettingsTab('visual')">VISUAL</button>
                 
                 <button class="tab-btn" onclick="switchSettingsTab('audio')">SONIDO</button>
                 
@@ -2079,7 +2113,19 @@ body.game-ending {
                 <h2 style="color: var(--gold); margin-top: 0; text-shadow: 1px 1px 0 #000;">CONFIGURACIÓN</h2>
                 
                 <div id="panel-visual" class="settings-content-panel">
-                    <!-- Espacio reservado: antes "densidad de mosaicos", pendiente de una nueva función -->
+                    <div class="audio-control-row">
+                        <div class="audio-label">
+                            <span>TAMAÑO DE FICHAS Y CHINCHETAS</span>
+                            <span id="size-mode-display">PEQUEÑO (ESTÁNDAR)</span>
+                        </div>
+                        <input type="range" id="slider-size-mode" min="0" max="2" step="1" value="0" oninput="updateSizeMode(this.value)">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: #777; margin-top: 2px; font-family: var(--font-mono);">
+                            <span>PEQUEÑO</span><span>MEDIANO</span><span>GRANDE</span>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.75rem; color: #555; margin-top: 8px; font-family: var(--font-mono); line-height: 1.4;">
+                        Si le cuesta sujetar una cinta con precisión, suba el tamaño: agranda las fichas del tablero y el área de las chinchetas.
+                    </p>
                 </div>
 
                 <div id="panel-audio" class="settings-content-panel">
@@ -2149,13 +2195,16 @@ body.game-ending {
 
     <div class="machine-body" id="main-ui">
         <div id="case-info-bar">
-            <span id="case-id-display">CASO #----</span>
-            <span id="game-points" style="color: var(--terminal-green)">PTS: 0</span>
-            <span id="comp-timer-display" style="display:none; color: var(--ranking-blue); font-weight: bold;">10:00</span>
-            <button id="btn-new-case" class="btn-mini" onclick="initGame()">NUEVO CASO</button>
-            
-            <span style="color: var(--victory)">RECOMPENSA: <span id="case-reward-display">0</span> S/</span>
-            <span id="case-difficulty-display" style="color: var(--gold);"></span>
+            <div class="info-row">
+                <span id="case-id-display">CASO #----</span>
+                <span id="game-points" style="color: var(--terminal-green)">PTS: 0</span>
+                <span id="comp-timer-display" style="display:none; color: var(--ranking-blue); font-weight: bold;">10:00</span>
+                <button id="btn-new-case" class="btn-mini" onclick="initGame()">NUEVO CASO</button>
+            </div>
+            <div class="info-row">
+                <span><span class="diff-label">DIFICULTAD</span><span id="case-difficulty-display" style="color: var(--gold);"></span></span>
+                <span style="color: var(--victory)">RECOMPENSA: <span id="case-reward-display">0</span> S/</span>
+            </div>
         </div>
         <div id="section-bar">
             <span class="section-tab" data-n="1"><i>1</i>BARRIDO</span>
@@ -3770,7 +3819,7 @@ openSettings = function() {
                     </div>
                     <div class="step">
                         <b>2. ENLACE POR PISTAS</b>
-                        Toque una foto, pulse "ENLAZAR" y arrastre la cinta hasta otra foto para agrupar sospechosos que crea que comparten una misma pista. Nada se valida al momento: todo se revisa recién cuando pulsa "CERRAR CASO".
+                        Toque una foto, pulse "ENLAZAR" y arrastre la cinta hasta otra foto para agrupar sospechosos que crea que comparten una misma pista. Nada se valida al momento: todo se revisa recién cuando pulsa "CERRAR CASO". Para cerrar el expediente sin enlazar, toque fuera de la tarjeta. Si le cuesta sujetar una cinta, el botón 🔍 del expediente activa un modo con fichas más grandes.
                     </div>
                     <div class="step">
                         <b>3. TRES SECCIONES</b>
@@ -3789,11 +3838,11 @@ openSettings = function() {
                 tContent.innerHTML = `
                     <div class="step">
                         <b>1. INTERROGATORIO PRECISO</b>
-                        Pregunte por los datos que se le otorgan en las tarjetas de los sospechosos, ejemplo: "¿Tiene ojos azules?". La máquina tarda un momento en procesar y la respuesta sale impresa en papel, no en la pantalla. Cada 3 preguntas necesita recargar: espere el conteo antes de volver a preguntar. Los puntos de cada consulta no se acreditan al momento: se suman todos juntos recién cuando cierra el caso, gane o pierda.
+                        Pregunte por los datos que se le otorgan en las tarjetas de los sospechosos, ejemplo: "¿Tiene ojos azules?". La máquina tarda un momento en procesar y la respuesta sale impresa en papel, no en la pantalla. Cada 3 preguntas necesita recargar: espere el conteo antes de volver a preguntar. Los puntos de cada consulta no se acreditan al momento: se suman todos juntos recién cuando cierra el caso, gane o pierda. Cada foto ya tiene su chincheta clavada, pero no sujeta cinta hasta que haga al menos una consulta.
                     </div>
                     <div class="step">
                         <b>2. ENLACE POR PISTAS</b>
-                        Toque una foto para ver su expediente y pulse "ENLAZAR" para clavar una chincheta. Sujete la cinta y llévela hasta otra foto que crea que comparte esa misma pista, formando grupos de un mismo color. Puede enlazar varias cintas por sospechoso, y solo usted decide cuándo cortar una: toque la chincheta del otro extremo para soltarla, o la chincheta raíz para retirar la cinta entera.
+                        Toque una foto para ver su expediente y pulse "ENLAZAR" para clavar una chincheta. Sujete la cinta y llévela hasta otra foto que crea que comparte esa misma pista, formando grupos de un mismo color. Puede enlazar varias cintas por sospechoso, y solo usted decide cuándo cortar una: toque la chincheta del otro extremo para soltarla, o la chincheta raíz para retirar la cinta entera. Para cerrar el expediente sin enlazar, toque fuera de la tarjeta. Si le cuesta sujetar una cinta, el botón 🔍 del expediente activa un modo con fichas y chinchetas más grandes.
                     </div>
                     <div class="step">
                         <b>3. TRES SECCIONES</b>
@@ -4028,21 +4077,19 @@ openSettings = function() {
             document.getElementById('queryInput').placeholder = "INTERROGAR SISTEMA (¿...?)...";
             document.getElementById('queryInput').value = ""; 
 
-            generateNewSquad(); 
+            // === DIFICULTAD: se sortea primero y decide cuántas fotos hay en el tablero ===
+            // Antes las estrellas salían de cuánto se parecía el objetivo al resto de un grupo
+            // fijo de 25, y casi siempre caían en 1-2. Ahora el nivel se elige con pesos que
+            // dejan salir de 1 a 5, y a más estrellas, muchas más fotos entre las que buscar.
+            const tierRoll = getRand();
+            const difficultyStars = tierRoll < 0.15 ? 1 : tierRoll < 0.40 ? 2 : tierRoll < 0.70 ? 3 : tierRoll < 0.90 ? 4 : 5;
+            const SQUAD_BY_STARS = { 1: 14, 2: 20, 3: 28, 4: 38, 5: 48 };
+            generateNewSquad(SQUAD_BY_STARS[difficultyStars]);
             if(isCompetitiveMode && sameCaseMode) seededRNGVal += (compRound * 100);
             
             objetivo = personas[Math.floor(getRand() * personas.length)];
             objetivo.recordId = generateCriminalRecordID();
 
-            // === DIFICULTAD REAL DEL CASO: cuánto se parece el objetivo al resto (más parecido = más difícil) ===
-            const diffTraits = [p => p.g, p => p.cont, p => p.t, p => p.o, p => p.accName];
-            let matchSum = 0;
-            diffTraits.forEach(fn => {
-                const val = fn(objetivo);
-                matchSum += personas.filter(p => fn(p) === val).length / personas.length;
-            });
-            const avgMatch = matchSum / diffTraits.length; // 0 a 1: más alto = objetivo más "camuflado"
-            const difficultyStars = Math.max(1, Math.min(5, Math.round(avgMatch * 6)));
             currentCaseDifficulty = difficultyStars;
             currentReward = 80 + difficultyStars * 90 + Math.floor(getRand() * 40);
             document.getElementById('case-difficulty-display').innerText = '★'.repeat(difficultyStars) + '☆'.repeat(5 - difficultyStars);
@@ -4099,7 +4146,7 @@ window.addEventListener('orientationchange', () => {
     }, 500);
 });
 
-        function generateNewSquad() {
+        function generateNewSquad(count = 25) {
             personas = [];
             DP = {
                 M: ["LEON", "MARC", "OTTO", "IVAN", "ERIC", "HUAN", "KURT", "NOAH", "AXEL", "SAUL", "IGOR", "LIAM", "ENZO", "HUGO", "OMAR", "LUC", "YURI", "RYAN", "FINN", "EZRA", "MILO", "IAN", "ALAN", "KAI", "BORIS", "OSCAR", "VICTOR", "FELIX", "DANTE", "BRUNO", "KALEB", "SILAS", "ARLO", "THEO", "REMY", "ZAYN", "LUCA", "NICO", "JUDE", "ELIAS", "SETH", "KANE", "AARON", "SIMON", "RAUL", "LEVI", "TOBIAS", "GAGE", "XANDER", "JACE", "JOHN", "JAMES", "WILLIAM", "DAVID"],
@@ -4145,7 +4192,7 @@ window.addEventListener('orientationchange', () => {
             const poolM = customShuffle([...new Set(DP.M)]);
             const poolF = customShuffle([...new Set(DP.F)]);
 
-            for (let i = 0; i < 25; i++) {
+            for (let i = 0; i < count; i++) {
                 const genero = getRand() > 0.5 ? "MASCULINO" : "FEMENINO";
                 const pais = DP.P[Math.floor(getRand() * DP.P.length)];
                 const acc = DP.A[Math.floor(getRand() * DP.A.length)];
@@ -4235,7 +4282,6 @@ window.addEventListener('orientationchange', () => {
                 </svg>
                 <div class="mug-question">?</div>
             </div>
-            <div class="mug-plate">${p.n}</div>
         `;
         board.appendChild(card);
     });
@@ -4407,11 +4453,21 @@ function onBoardPointerDown(e) {
     if (e.target.closest('.dangle-handle') || e.target.closest('.tack')) return;
     const cardEl = e.target.closest('.mug-card');
     document.documentElement.setPointerCapture(e.pointerId);
+    let cardName = cardEl ? cardEl.dataset.name : null;
+    // En celular, la zona que abre el expediente se achica a la mitad inferior de la
+    // ficha: la chincheta vive pegada a la parte de arriba (ver nameCenterPx), y un
+    // toque impreciso ahí terminaba abriendo el expediente en vez de agarrar la cinta.
+    // En PC no hace falta: el clic del mouse ya apunta con precisión de sobra.
+    if (cardName && e.pointerType === 'touch') {
+        const rect = cardEl.getBoundingClientRect();
+        const relativeY = (e.clientY - rect.top) / rect.height;
+        if (relativeY < 0.45) cardName = null;
+    }
     panDrag = {
         startClientX: e.clientX, startClientY: e.clientY,
         startPanX: panX, startPanY: panY,
         moved: false,
-        cardName: cardEl ? cardEl.dataset.name : null
+        cardName: cardName
     };
 }
 function onBoardPointerMove(e) {
@@ -4480,6 +4536,11 @@ function shadeColor(hex, percent) {
 function startLinkFromZoom() {
     if (!currentZoomSuspect) return;
     const name = currentZoomSuspect.n;
+    if (questionsThisSection === 0) {
+        playSFX('error');
+        typeWriter("PRIMERO INTERROGUE AL SISTEMA. LA CHINCHETA NO SUJETA CINTA TODAVÍA.", "out", 8);
+        return;
+    }
     closeZoomModal();
     const color = pickColorForNewLink(name);
     const id = 'link_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
@@ -4487,7 +4548,7 @@ function startLinkFromZoom() {
     activeDangleDrag = null;
     redrawAllConnections();
     document.getElementById('btn-new-case').style.display = 'none';
-    setTimeout(() => typeWriter(`CHINCHETA CLAVADA EN ${name}. SUJETE LA CINTA Y LLÉVELA HASTA OTRA FOTO.`, "out", 8), 350);
+    setTimeout(() => typeWriter(`CINTA LISTA EN ${name}. LLÉVELA HASTA OTRA FOTO.`, "out", 8), 350);
 }
 
 // === DIBUJO: CINTAS Y CHINCHETAS (una sola chincheta por sospechoso, aunque tenga varias cintas) ===
@@ -4503,21 +4564,17 @@ function nameCenterPx(name) {
     const pos = boardPositions[name];
     // Se desplaza un poco hacia arriba (como si la chincheta pinchara la parte alta de la foto),
     // así el toque para abrir el expediente y el toque sobre la chincheta no se pisan.
-    return { x: (pos.x / 100) * canvasSize.w, y: (pos.y / 100) * canvasSize.h - 22 };
+    return { x: (pos.x / 100) * canvasSize.w, y: (pos.y / 100) * canvasSize.h - 14 * SIZE_SCALES[sizeMode] };
 }
 
 // Toque simple sobre una chincheta = corta la última cinta que toque a ese sospechoso,
 // pero solo si esa cinta es de la sección ACTUAL. Los enlaces de secciones ya cerradas
 // quedan fijos: son la prueba de lo que ya decidiste, no se pueden deshacer.
+// Toque simple sobre una chincheta = corta la última cinta que toque a ese sospechoso.
 function cutLastTapeAt(name) {
     for (let i = stringLinks.length - 1; i >= 0; i--) {
         const link = stringLinks[i];
         if (link.a === name || link.b === name) {
-            if (link.section !== currentSection) {
-                playSFX('error');
-                typeWriter("ESE ENLACE QUEDÓ FIJADO EN UNA SECCIÓN ANTERIOR. NO SE PUEDE CORTAR.", "out", 8);
-                return;
-            }
             playSFX('error');
             if (link.b === name) {
                 // Caso 1: se desconecta el punto enlazado; la cinta queda pendiendo de su raíz
@@ -4546,11 +4603,12 @@ function drawTack(name) {
     const svg = document.getElementById('string-layer');
     if (svg.querySelector(`.tack-hit[data-name="${CSS.escape(name)}"]`)) return; // una sola chincheta por sospechoso
     const p = nameCenterPx(name);
+    const scale = SIZE_SCALES[sizeMode];
 
     // Área de toque invisible, bastante más grande que el dibujo, para que no haga falta apuntar con precisión
     const hit = document.createElementNS(SVG_NS, 'circle');
     hit.setAttribute('class', 'tack-hit');
-    hit.setAttribute('cx', p.x); hit.setAttribute('cy', p.y); hit.setAttribute('r', 19);
+    hit.setAttribute('cx', p.x); hit.setAttribute('cy', p.y); hit.setAttribute('r', 19 * scale);
     hit.setAttribute('fill', 'transparent');
     hit.dataset.name = name;
     hit.style.pointerEvents = 'auto';
@@ -4560,13 +4618,14 @@ function drawTack(name) {
 
     const tack = document.createElementNS(SVG_NS, 'circle');
     tack.setAttribute('class', 'tack');
-    tack.setAttribute('cx', p.x); tack.setAttribute('cy', p.y); tack.setAttribute('r', 7);
+    tack.setAttribute('cx', p.x); tack.setAttribute('cy', p.y); tack.setAttribute('r', 7 * scale);
     tack.setAttribute('fill', '#d6b066');
     tack.style.pointerEvents = 'none';
     svg.appendChild(tack);
 
     const shine = document.createElementNS(SVG_NS, 'circle');
-    shine.setAttribute('cx', p.x - 1.9); shine.setAttribute('cy', p.y - 1.9); shine.setAttribute('r', 1.7);
+    shine.setAttribute('class', 'tack-shine');
+    shine.setAttribute('cx', p.x - 1.9 * scale); shine.setAttribute('cy', p.y - 1.9 * scale); shine.setAttribute('r', 1.7 * scale);
     shine.setAttribute('fill', 'rgba(255,255,255,0.7)');
     shine.style.pointerEvents = 'none';
     svg.appendChild(shine);
@@ -4584,11 +4643,12 @@ function drawStringPath(p1, p2, color, isDangle, linkId) {
 
 function drawDangleHandle(p, color, linkId) {
     const svg = document.getElementById('string-layer');
+    const scale = SIZE_SCALES[sizeMode];
     const handle = document.createElementNS(SVG_NS, 'circle');
     handle.setAttribute('class', 'dangle-handle');
-    handle.setAttribute('cx', p.x); handle.setAttribute('cy', p.y); handle.setAttribute('r', 8);
+    handle.setAttribute('cx', p.x); handle.setAttribute('cy', p.y); handle.setAttribute('r', 8 * scale);
     handle.setAttribute('fill', color);
-    handle.setAttribute('stroke', '#fff'); handle.setAttribute('stroke-width', 1.2);
+    handle.setAttribute('stroke', '#fff'); handle.setAttribute('stroke-width', 1.2 * scale);
     handle.dataset.linkId = linkId;
     handle.style.pointerEvents = 'auto';
     handle.style.cursor = 'grab';
@@ -4599,9 +4659,14 @@ function drawDangleHandle(p, color, linkId) {
 function redrawAllConnections() {
     const svg = document.getElementById('string-layer');
     if (!svg) return;
-    svg.querySelectorAll('.perm-string, .tack-hit, .tack, .dangle-handle').forEach(el => el.remove());
+    svg.querySelectorAll('.perm-string, .tack-hit, .tack, .tack-shine, .dangle-handle').forEach(el => el.remove());
 
     const tackNames = new Set();
+    // La chincheta está clavada desde el principio en TODOS los sospechosos del
+    // tablero, no solo en los que ya tienen un enlace: el jugador ve dónde puede
+    // empezar a enlazar aunque todavía no haya interrogado al sistema (ver
+    // startTackPress / startLinkFromZoom, que bloquean la cinta hasta entonces).
+    boardSuspects.forEach(p => tackNames.add(p.n));
     stringLinks.forEach(link => {
         if (activeDangleDrag && activeDangleDrag.linkId === link.id) {
             tackNames.add(link.a); // mientras se arrastra, solo la raíz sigue mostrando su chincheta
@@ -4694,6 +4759,11 @@ document.addEventListener('pointermove', (e) => {
             // Se convirtió en arrastre: nace una cinta nueva desde esta misma chincheta
             const name = pendingTackPress.name;
             pendingTackPress = null;
+            if (questionsThisSection === 0) {
+                playSFX('error');
+                typeWriter("PRIMERO INTERROGUE AL SISTEMA. LA CHINCHETA NO SUJETA CINTA TODAVÍA.", "out", 8);
+                return;
+            }
             const color = pickColorForNewLink(name);
             const id = 'link_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
             stringLinks.push({ id, a: name, b: null, color, section: currentSection });
@@ -4800,6 +4870,12 @@ function snapAndFall(p1, p2) {
 // ==========================================
 
 let currentZoomSuspect = null;
+let zoomModalOpenedAt = 0;
+// MODO GRANDE: agranda fichas y chinchetas para quien le cuesta sujetar un enlace con precisión.
+// Se recuerda entre partidas.
+// TAMAÑO: 0 = pequeño (estándar), 1 = mediano, 2 = grande. Vive en Configuración → VISUAL.
+let sizeMode = parseInt(localStorage.getItem('bioBreachSizeMode') || '0', 10);
+const SIZE_SCALES = [1, 1.3, 1.6];
 
 function openZoomModal(suspect) {
     currentZoomSuspect = suspect;
@@ -4807,19 +4883,16 @@ function openZoomModal(suspect) {
     const nameEl = document.getElementById('zoom-name');
     const infoEl = document.getElementById('zoom-info');
     const bannerEl = document.getElementById('zoom-gender-banner');
-    const buttonsContainer = document.getElementById('zoom-buttons-container');
     
-    // Mostrar ambos elementos
-modal.style.display = 'flex';
-if (buttonsContainer) {
-    buttonsContainer.style.display = 'flex';
-    
-    // Cambiar clase
-    buttonsContainer.className = 'zoom-buttons-fixed'; }
-    
+    // Guarda de tiempo: el propio toque que ABRE el expediente todavía puede generar
+    // un "click" de compatibilidad después de este mismo evento, y ese click aterriza
+    // sobre el fondo recién aparecido (ver closeZoomModal). Ignoramos cualquier cierre
+    // por fondo durante los primeros instantes para que no se cierre solo.
+    zoomModalOpenedAt = Date.now();
+
+    modal.style.display = 'flex';
     setTimeout(() => {
         modal.style.opacity = '1';
-        if (buttonsContainer) buttonsContainer.style.opacity = '1';
     }, 10);
     
     // Configurar estandarte de género (gender-banner)
@@ -4882,35 +4955,58 @@ if (buttonsContainer) {
         </div>
     `;
 }
-    
-    // Configurar botón (usando la función existente)
-    const keepBtn = document.getElementById('zoom-keep-btn');
-    if (keepBtn) {
-        keepBtn.onclick = keepSuspect;
-    }
-    setTimeout(() => {
-        if (keepBtn) keepBtn.onclick = keepSuspect;
-    }, 50);
 }
 
 function closeZoomModal() {
     const modal = document.getElementById('zoom-modal');
-    const buttons = document.getElementById('zoom-buttons-container');
     
     modal.style.opacity = '0';
-    if (buttons) buttons.style.opacity = '0';
     
     setTimeout(() => {
         modal.style.display = 'none';
-        if (buttons) buttons.style.display = 'none';
         currentZoomSuspect = null;
     }, 300);
     playSFX('click');
 }
 
-function keepSuspect() {
-    closeZoomModal();
+// Cierre al tocar el fondo. Va en pointerdown (una pulsación NUEVA, separada de la que
+// abrió el expediente) y no en click: un click de compatibilidad de esa MISMA pulsación
+// de apertura podía aterrizar sobre el fondo recién aparecido y cerrarlo al instante.
+// La guarda de tiempo es un segundo seguro por si el navegador ordena los eventos distinto.
+document.addEventListener('DOMContentLoaded', () => {
+    applySizeMode();
+
+    const zm = document.getElementById('zoom-modal');
+    if (zm) {
+        zm.addEventListener('pointerdown', (e) => {
+            if (e.target !== e.currentTarget) return;
+            if (Date.now() - zoomModalOpenedAt < 300) return;
+            closeZoomModal();
+        });
+    }
+});
+
+function updateSizeMode(value) {
+    sizeMode = parseInt(value, 10);
+    localStorage.setItem('bioBreachSizeMode', String(sizeMode));
     playSFX('click');
+    applySizeMode();
+}
+
+function applySizeMode() {
+    document.body.classList.remove('size-medium', 'size-large');
+    if (sizeMode === 1) document.body.classList.add('size-medium');
+    else if (sizeMode === 2) document.body.classList.add('size-large');
+
+    const labels = ['PEQUEÑO (ESTÁNDAR)', 'MEDIANO', 'GRANDE'];
+    const display = document.getElementById('size-mode-display');
+    if (display) display.innerText = labels[sizeMode];
+    const slider = document.getElementById('slider-size-mode');
+    if (slider) slider.value = sizeMode;
+
+    // Las chinchetas y manijas son SVG dibujado por JS: hay que redibujarlas para que
+    // el nuevo tamaño se note de inmediato, no solo en la próxima que se cree.
+    if (gameActive) redrawAllConnections();
 }
 
         // === ANÁLISIS DEL RECORRIDO (botón "CERRAR CASO"): revisa TODOS los enlaces del tablero ===
@@ -5838,37 +5934,32 @@ if(isHost) {
     </script>
     
     <!-- MODAL DE ZOOM DINÁMICO -->
-<div id="zoom-modal" onclick="if(event.target===this) closeZoomModal();" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9000; display: none; justify-content: center; align-items: center; padding: 20px; overflow: hidden;">
+<div id="zoom-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9000; display: none; justify-content: center; align-items: center; padding: 20px; overflow: hidden;">
     <!-- La tarjeta del sospechoso -->
     <div id="zoom-content" style="background: #e6e0d4; border: 2px solid #000; max-width: 420px; width: 100%; position: relative; box-shadow: 10px 10px 0px rgba(0,0,0,0.5); min-height: 200px; display: flex; flex-direction: column; overflow: hidden; margin-right: 0;">
         <!-- Estandarte de género en el modal -->
         <div id="zoom-gender-banner" class="gender-banner" style="position: absolute; top: 15px; right: 25px; width: 20px; height: 28px; z-index: 5; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%);"></div>
         
         <!-- Contenido de la tarjeta ampliada -->
-        <div style="padding: 15px 15px 15px 20px; flex-grow: 1; overflow: hidden; display: flex; flex-direction: column;">
-            <div id="zoom-mugshot" class="mug-photo" style="width: 90px; margin: 0 auto 12px; flex-shrink: 0;">
-                <svg class="mug-silhouette" viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet">
-                    <circle cx="50" cy="36" r="19" fill="#54534f"></circle>
-                    <path d="M14,100 Q14,60 50,58 Q86,60 86,100 Z" fill="#54534f"></path>
-                </svg>
-                <div class="mug-question">?</div>
+        <div class="zoom-body" style="padding: 15px 15px 15px 20px; flex-grow: 1; overflow: hidden; display: flex; flex-direction: column;">
+            <div class="zoom-photo-col">
+                <div id="zoom-mugshot" class="mug-photo" style="width: 90px; margin: 0 auto 12px; flex-shrink: 0;">
+                    <svg class="mug-silhouette" viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet">
+                        <circle cx="50" cy="36" r="19" fill="#54534f"></circle>
+                        <path d="M14,100 Q14,60 50,58 Q86,60 86,100 Z" fill="#54534f"></path>
+                    </svg>
+                    <div class="mug-question">?</div>
+                </div>
             </div>
-            <h3 id="zoom-name" style="color: #000; text-align: center; border-bottom: 3px solid #000; padding-bottom: 10px; margin-top: 0; margin-bottom: 15px; font-family: var(--font-mono); font-size: 1.6rem; text-transform: uppercase; letter-spacing: 2px; flex-shrink: 0; font-weight: bold;"></h3>
-            
-            <div id="zoom-info" style="color: #111; font-family: var(--font-mono); font-size: 1rem; line-height: 1.3; flex-grow: 1; overflow: hidden;">
-                <!-- Los datos se llenarán dinámicamente -->
+            <div class="zoom-info-col">
+                <h3 id="zoom-name" style="color: #000; text-align: center; border-bottom: 3px solid #000; padding-bottom: 10px; margin-top: 0; margin-bottom: 15px; font-family: var(--font-mono); font-size: 1.6rem; text-transform: uppercase; letter-spacing: 2px; flex-shrink: 0; font-weight: bold;"></h3>
+                
+                <div id="zoom-info" style="color: #111; font-family: var(--font-mono); font-size: 1rem; line-height: 1.3; flex-grow: 1; overflow: hidden;">
+                    <!-- Los datos se llenarán dinámicamente -->
+                </div>
             </div>
         </div>
         <button id="zoom-link-btn" onclick="startLinkFromZoom()" style="width: 100%; border: none; border-top: 2px solid #000; background: var(--gold); color: #000; font-family: var(--font-mono); font-weight: bold; letter-spacing: 2px; font-size: 1rem; padding: 12px 0; cursor: pointer; flex-shrink: 0;">🧵 ENLAZAR</button>
-    </div>
-    
-    <!-- Botón MANTENER como banderita adhesiva (FUERA de la tarjeta) -->
-    <div id="zoom-buttons-container" class="zoom-buttons-absolute" style="display: none;">
-        <!-- Banderita MANTENER (la original) -->
-        <button id="zoom-keep-btn" class="bookmark-btn" 
-        style="background: var(--victory); color: #000; padding: 0; border: none; font-family: var(--font-mono); font-weight: bold; cursor: pointer; width: 80px; height: 80px; font-size: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 10px; box-shadow: 5px 5px 0px rgba(0,0,0,0.5);">
-    📥
-</button>
     </div>
 </div>
 </body>
