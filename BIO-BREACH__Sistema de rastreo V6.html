@@ -1444,9 +1444,9 @@ body.game-ending {
 .falling-string { stroke: #8a1414 !important; }
 
 .tack {
-    stroke: #2a2a2a;
-    stroke-width: 1;
-    filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.6));
+    stroke: #1c1c1c;
+    stroke-width: 1.4;
+    filter: drop-shadow(1px 2px 1.5px rgba(0,0,0,0.75));
 }
 
 .dangle-handle {
@@ -1460,20 +1460,37 @@ body.game-ending {
 
 /* --- FOTOS DE EXPEDIENTE (MUGSHOTS) --- */
 .mug-card {
+    --card-w: clamp(58px, 15vw, 92px);
     position: absolute;
-    width: clamp(58px, 15vw, 92px);
+    width: var(--card-w);
+    /* MARCO BLANCO tipo foto instantánea: margen fino arriba y a los lados; la base
+       (donde antes iba el nombre) va debajo, vacía. Se calcula sobre el ancho de la ficha
+       para que escale igual en los tres tamaños. */
+    padding: calc(var(--card-w) * 0.07) calc(var(--card-w) * 0.07) 0;
+    background: #fbfaf7;
+    box-shadow: 3px 4px 7px rgba(0,0,0,0.65);
     cursor: pointer;
     user-select: none;
     z-index: 10;
-    transition: filter 0.4s ease, opacity 0.4s ease, width 0.3s ease;
+    transition: filter 0.4s ease, opacity 0.4s ease, width 0.3s ease, padding 0.3s ease;
 }
 /* TAMAÑO (Configuración → VISUAL): fichas más grandes para quien le cuesta sujetar un enlace.
    Pequeño/estándar = tamaño original, sin clase. */
 body.size-medium .mug-card {
-    width: clamp(74px, 19vw, 118px);
+    --card-w: clamp(74px, 19vw, 118px);
 }
 body.size-large .mug-card {
-    width: clamp(92px, 24vw, 148px);
+    --card-w: clamp(92px, 24vw, 148px);
+}
+/* Base blanca inferior de la foto (sin nombre) */
+.mug-base {
+    width: 100%;
+    aspect-ratio: 100 / 30;
+}
+/* Dentro del marco blanco la foto lleva solo un filo fino (la sombra ya la da la ficha) */
+.mug-card .mug-photo {
+    border: 1px solid #1a1a1a;
+    box-shadow: none;
 }
 
 .mug-photo {
@@ -2199,7 +2216,6 @@ body.size-large .mug-card {
                 <span id="case-id-display">CASO #----</span>
                 <span id="game-points" style="color: var(--terminal-green)">PTS: 0</span>
                 <span id="comp-timer-display" style="display:none; color: var(--ranking-blue); font-weight: bold;">10:00</span>
-                <button id="btn-new-case" class="btn-mini" onclick="initGame()">NUEVO CASO</button>
             </div>
             <div class="info-row">
                 <span><span class="diff-label">DIFICULTAD</span><span id="case-difficulty-display" style="color: var(--gold);"></span></span>
@@ -2908,8 +2924,11 @@ let tempVolSFX    = volSFX;
                          (Math.abs(prevMusic  - tempVolMusic)  > 0.0001) ||
                          (Math.abs(prevSfx    - tempVolSFX)    > 0.0001);
 
+    // Detectar cambio de tamaño de fichas (Configuración → VISUAL)
+    const sizeChanged = (tempSizeMode !== sizeMode);
+
     // Si NO hubo cambios, cerramos sin sonido ni barra de carga
-    if (!audioChanged) {
+    if (!audioChanged && !sizeChanged) {
         document.getElementById('settings-modal').style.display = 'none';
         return;
     }
@@ -2920,6 +2939,16 @@ let tempVolSFX    = volSFX;
     loaderBar.style.width = '0%';
     setTimeout(() => { loaderBar.style.width = '50%'; }, 300);
     setTimeout(() => { loaderBar.style.width = '100%'; }, 800);
+
+    // El tamaño se aplica con la barra ya llena y la carga aún tapando el tablero, para que
+    // la animación de las fichas y el redibujado de las chinchetas no se vean a medias.
+    if (sizeChanged) {
+        setTimeout(() => {
+            sizeMode = tempSizeMode;
+            localStorage.setItem('bioBreachSizeMode', String(sizeMode));
+            applySizeMode();
+        }, 900);
+    }
 
     // Aplicar y guardar cambios tras la animación (mismo tiempo que antes)
     setTimeout(() => {
@@ -3006,6 +3035,10 @@ openSettings = function() {
     if (musicSlider) musicSlider.value = tempVolMusic;
     const volDisplayMusic = document.getElementById('vol-display-music');
     if (volDisplayMusic) volDisplayMusic.innerText = Math.round(tempVolMusic * 100) + "%";
+
+    // El control de tamaño arranca siempre en el valor realmente guardado
+    tempSizeMode = sizeMode;
+    showSizeSelection(sizeMode);
 
     const sfxSlider = document.getElementById('slider-sfx');
     if (sfxSlider) sfxSlider.value = tempVolSFX;
@@ -3819,7 +3852,7 @@ openSettings = function() {
                     </div>
                     <div class="step">
                         <b>2. ENLACE POR PISTAS</b>
-                        Toque una foto, pulse "ENLAZAR" y arrastre la cinta hasta otra foto para agrupar sospechosos que crea que comparten una misma pista. Nada se valida al momento: todo se revisa recién cuando pulsa "CERRAR CASO". Para cerrar el expediente sin enlazar, toque fuera de la tarjeta. Si le cuesta sujetar una cinta, el botón 🔍 del expediente activa un modo con fichas más grandes.
+                        Toque una foto, pulse "ENLAZAR" y arrastre la cinta hasta otra foto para agrupar sospechosos que crea que comparten una misma pista. Nada se valida al momento: todo se revisa recién cuando pulsa "CERRAR CASO". Cada color nuevo exige una consulta nueva al sistema; seguir en el mismo color no. Para cerrar el expediente sin enlazar, toque fuera de la tarjeta.
                     </div>
                     <div class="step">
                         <b>3. TRES SECCIONES</b>
@@ -3838,11 +3871,11 @@ openSettings = function() {
                 tContent.innerHTML = `
                     <div class="step">
                         <b>1. INTERROGATORIO PRECISO</b>
-                        Pregunte por los datos que se le otorgan en las tarjetas de los sospechosos, ejemplo: "¿Tiene ojos azules?". La máquina tarda un momento en procesar y la respuesta sale impresa en papel, no en la pantalla. Cada 3 preguntas necesita recargar: espere el conteo antes de volver a preguntar. Los puntos de cada consulta no se acreditan al momento: se suman todos juntos recién cuando cierra el caso, gane o pierda. Cada foto ya tiene su chincheta clavada, pero no sujeta cinta hasta que haga al menos una consulta.
+                        Pregunte por los datos que se le otorgan en las tarjetas de los sospechosos, ejemplo: "¿Tiene ojos azules?". La máquina tarda un momento en procesar y la respuesta sale impresa en papel, no en la pantalla. Cada 3 preguntas necesita recargar: espere el conteo antes de volver a preguntar. Los puntos de cada consulta no se acreditan al momento: se suman todos juntos recién cuando cierra el caso, gane o pierda. Cada foto ya tiene su chincheta clavada, pero no sujeta cinta hasta que haga una consulta, y cada color nuevo (un grupo nuevo) exige otra consulta; seguir en el mismo color no.
                     </div>
                     <div class="step">
                         <b>2. ENLACE POR PISTAS</b>
-                        Toque una foto para ver su expediente y pulse "ENLAZAR" para clavar una chincheta. Sujete la cinta y llévela hasta otra foto que crea que comparte esa misma pista, formando grupos de un mismo color. Puede enlazar varias cintas por sospechoso, y solo usted decide cuándo cortar una: toque la chincheta del otro extremo para soltarla, o la chincheta raíz para retirar la cinta entera. Para cerrar el expediente sin enlazar, toque fuera de la tarjeta. Si le cuesta sujetar una cinta, el botón 🔍 del expediente activa un modo con fichas y chinchetas más grandes.
+                        Toque una foto para ver su expediente y pulse "ENLAZAR" para clavar una chincheta. Sujete la cinta y llévela hasta otra foto que crea que comparte esa misma pista, formando grupos de un mismo color. Puede enlazar varias cintas por sospechoso, y solo usted decide cuándo cortar una: toque la chincheta del otro extremo para soltarla, o la chincheta raíz para retirar la cinta entera. Para cerrar el expediente sin enlazar, toque fuera de la tarjeta.
                     </div>
                     <div class="step">
                         <b>3. TRES SECCIONES</b>
@@ -4041,16 +4074,13 @@ openSettings = function() {
             pointsPool = 0;
             document.getElementById('game-points').innerText = "PTS: " + matchPoints;
 
-            const btnNewCase = document.getElementById('btn-new-case');
             const timerDisplay = document.getElementById('comp-timer-display');
 
             if (isCompetitiveMode) {
                 document.getElementById('case-id-display').innerText = `CASO #${compRound}`; 
-                btnNewCase.style.display = 'none';
                 timerDisplay.style.display = 'inline';
             } else {
                 document.getElementById('case-id-display').innerText = `CASO #${Math.floor(Math.random() * 9000) + 1000}`;
-                btnNewCase.style.display = 'inline';
                 timerDisplay.style.display = 'none';
                 if(compTimerInterval) clearInterval(compTimerInterval);
             }
@@ -4282,6 +4312,7 @@ window.addEventListener('orientationchange', () => {
                 </svg>
                 <div class="mug-question">?</div>
             </div>
+            <div class="mug-base"></div>
         `;
         board.appendChild(card);
     });
@@ -4407,7 +4438,7 @@ function computeScatterPositions(names, layout) {
         const jitterY = (Math.random() - 0.5) * cellHpx * 0.25;
         const xPx = Math.min(canvasW - cellWpx * 0.3, Math.max(cellWpx * 0.3, cell.cx + jitterX));
         const yPx = Math.min(canvasH - cellHpx * 0.3, Math.max(cellHpx * 0.3, cell.cy + jitterY));
-        const rot = (Math.random() - 0.5) * 12;
+        const rot = 0; // todas las fotos van rectas, sin inclinación
         positions[name] = { x: (xPx / canvasW) * 100, y: (yPx / canvasH) * 100, rot };
     });
     return positions;
@@ -4532,22 +4563,46 @@ function shadeColor(hex, percent) {
     return `rgb(${r},${g},${b})`;
 }
 
+// === REGLA DE CONSULTAS: sin preguntar, el juego no deja avanzar ===
+// Un "enlace nuevo" es un COLOR nuevo (un grupo nuevo). Para abrir el primer color de una sección
+// hay que haber interrogado al sistema, y cada color posterior exige una consulta nueva.
+// Seguir tirando cinta dentro de un grupo que ya existe (mismo color) NO gasta consulta.
+// Cortar todas las cintas de un color libera su cupo. Ajustable: cuántos colores (grupos)
+// da cada consulta (1 = un color por consulta).
+const GROUPS_PER_QUESTION = 1;
+
+function canStartNewLink(name, fromZoom) {
+    const linksThisSection = stringLinks.filter(l => l.section === currentSection);
+    // Si esta foto ya está en un grupo de la sección, la cinta hereda ese color: no es un color nuevo
+    const joinsExistingGroup = linksThisSection.some(l => l.a === name || l.b === name);
+    if (joinsExistingGroup && questionsThisSection > 0) return true;
+    const groupsThisSection = new Set(linksThisSection.map(l => l.color)).size;
+    if (groupsThisSection < questionsThisSection * GROUPS_PER_QUESTION) return true;
+    playSFX('error');
+    const msg = questionsThisSection === 0
+        ? "PRIMERO INTERROGUE AL SISTEMA. LA CHINCHETA NO SUJETA CINTA TODAVÍA."
+        : "CADA COLOR NUEVO EXIGE UNA CONSULTA NUEVA. INTERROGUE AL SISTEMA ANTES DE EMPEZAR OTRO GRUPO.";
+    if (fromZoom) {
+        // el expediente tapa la terminal: se cierra para que se vea el aviso
+        closeZoomModal();
+        setTimeout(() => typeWriter(msg, "out", 8), 350);
+    } else {
+        typeWriter(msg, "out", 8);
+    }
+    return false;
+}
+
 // === INICIAR UN ENLACE DESDE EL EXPEDIENTE (botón ENLAZAR) ===
 function startLinkFromZoom() {
     if (!currentZoomSuspect) return;
     const name = currentZoomSuspect.n;
-    if (questionsThisSection === 0) {
-        playSFX('error');
-        typeWriter("PRIMERO INTERROGUE AL SISTEMA. LA CHINCHETA NO SUJETA CINTA TODAVÍA.", "out", 8);
-        return;
-    }
+    if (!canStartNewLink(name, true)) return;
     closeZoomModal();
     const color = pickColorForNewLink(name);
     const id = 'link_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
     stringLinks.push({ id, a: name, b: null, color, section: currentSection });
     activeDangleDrag = null;
     redrawAllConnections();
-    document.getElementById('btn-new-case').style.display = 'none';
     setTimeout(() => typeWriter(`CINTA LISTA EN ${name}. LLÉVELA HASTA OTRA FOTO.`, "out", 8), 350);
 }
 
@@ -4560,11 +4615,21 @@ function sagPath(p1, p2) {
     return `M${p1.x.toFixed(1)},${p1.y.toFixed(1)} Q${midX.toFixed(1)},${midY.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
 }
 
+// Altura de la chincheta medida desde el borde superior de la ficha (fracción del alto total).
+// Sube o baja todas las chinchetas a la vez: 0 = centrada justo sobre el borde (medio círculo
+// fuera y medio dentro de la foto), 0.15 = algo más adentro, 0.5 = en el centro de la ficha.
+const TACK_TOP_RATIO = 0;
+
 function nameCenterPx(name) {
     const pos = boardPositions[name];
-    // Se desplaza un poco hacia arriba (como si la chincheta pinchara la parte alta de la foto),
-    // así el toque para abrir el expediente y el toque sobre la chincheta no se pisan.
-    return { x: (pos.x / 100) * canvasSize.w, y: (pos.y / 100) * canvasSize.h - 14 * SIZE_SCALES[sizeMode] };
+    const cx = (pos.x / 100) * canvasSize.w;
+    const cy = (pos.y / 100) * canvasSize.h;
+    // La chincheta se mide contra la ficha real (marco blanco + foto + base), no con un valor
+    // fijo: así queda en el mismo punto relativo de la ficha en los tres tamaños.
+    const cardEl = document.getElementById('card-' + name);
+    const h = cardEl ? cardEl.offsetHeight : 0;
+    if (!h) return { x: cx, y: cy - 43 * SIZE_SCALES[sizeMode] };
+    return { x: cx, y: cy - h * (0.5 - TACK_TOP_RATIO) };   // las fichas ya no giran
 }
 
 // Toque simple sobre una chincheta = corta la última cinta que toque a ese sospechoso,
@@ -4619,14 +4684,14 @@ function drawTack(name) {
     const tack = document.createElementNS(SVG_NS, 'circle');
     tack.setAttribute('class', 'tack');
     tack.setAttribute('cx', p.x); tack.setAttribute('cy', p.y); tack.setAttribute('r', 7 * scale);
-    tack.setAttribute('fill', '#d6b066');
+    tack.setAttribute('fill', '#c3c7cc'); // gris plata: se distingue sobre el corcho oscuro, el marco blanco y la foto gris
     tack.style.pointerEvents = 'none';
     svg.appendChild(tack);
 
     const shine = document.createElementNS(SVG_NS, 'circle');
     shine.setAttribute('class', 'tack-shine');
     shine.setAttribute('cx', p.x - 1.9 * scale); shine.setAttribute('cy', p.y - 1.9 * scale); shine.setAttribute('r', 1.7 * scale);
-    shine.setAttribute('fill', 'rgba(255,255,255,0.7)');
+    shine.setAttribute('fill', 'rgba(255,255,255,0.9)');
     shine.style.pointerEvents = 'none';
     svg.appendChild(shine);
 }
@@ -4759,11 +4824,7 @@ document.addEventListener('pointermove', (e) => {
             // Se convirtió en arrastre: nace una cinta nueva desde esta misma chincheta
             const name = pendingTackPress.name;
             pendingTackPress = null;
-            if (questionsThisSection === 0) {
-                playSFX('error');
-                typeWriter("PRIMERO INTERROGUE AL SISTEMA. LA CHINCHETA NO SUJETA CINTA TODAVÍA.", "out", 8);
-                return;
-            }
+            if (!canStartNewLink(name, false)) return;
             const color = pickColorForNewLink(name);
             const id = 'link_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
             stringLinks.push({ id, a: name, b: null, color, section: currentSection });
@@ -4986,11 +5047,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// El tamaño ya no se aplica al mover el control: se elige aquí (temporal) y se aplica al pulsar
+// "CERRAR / GUARDAR", pasando por la pantalla de carga como el resto de cambios.
+let tempSizeMode = sizeMode;
+const SIZE_LABELS = ['PEQUEÑO (ESTÁNDAR)', 'MEDIANO', 'GRANDE'];
+
+function showSizeSelection(mode) {
+    const display = document.getElementById('size-mode-display');
+    if (display) display.innerText = SIZE_LABELS[mode];
+    const slider = document.getElementById('slider-size-mode');
+    if (slider) slider.value = mode;
+}
+
 function updateSizeMode(value) {
-    sizeMode = parseInt(value, 10);
-    localStorage.setItem('bioBreachSizeMode', String(sizeMode));
+    tempSizeMode = parseInt(value, 10);
     playSFX('click');
-    applySizeMode();
+    showSizeSelection(tempSizeMode);
 }
 
 function applySizeMode() {
@@ -4998,15 +5070,17 @@ function applySizeMode() {
     if (sizeMode === 1) document.body.classList.add('size-medium');
     else if (sizeMode === 2) document.body.classList.add('size-large');
 
-    const labels = ['PEQUEÑO (ESTÁNDAR)', 'MEDIANO', 'GRANDE'];
-    const display = document.getElementById('size-mode-display');
-    if (display) display.innerText = labels[sizeMode];
-    const slider = document.getElementById('slider-size-mode');
-    if (slider) slider.value = sizeMode;
+    tempSizeMode = sizeMode;
+    showSizeSelection(sizeMode);
 
     // Las chinchetas y manijas son SVG dibujado por JS: hay que redibujarlas para que
     // el nuevo tamaño se note de inmediato, no solo en la próxima que se cree.
-    if (gameActive) redrawAllConnections();
+    // Las fichas animan su ancho (0.3s) y la chincheta se mide contra su altura real,
+    // así que se vuelve a colocar cuando termina la animación.
+    if (gameActive) {
+        redrawAllConnections();
+        setTimeout(() => { if (gameActive) redrawAllConnections(); }, 350);
+    }
 }
 
         // === ANÁLISIS DEL RECORRIDO (botón "CERRAR CASO"): revisa TODOS los enlaces del tablero ===
