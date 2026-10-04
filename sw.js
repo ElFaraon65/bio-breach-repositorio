@@ -1,4 +1,4 @@
-const CACHE_NAME = "bio-breach-v6";
+const CACHE_NAME = "bio-breach-v6.1";
 const DATA_CACHE = "bio-breach-db-v21"; // Base de datos para guardar hora de salida
 const ASSETS = [
   "./",
