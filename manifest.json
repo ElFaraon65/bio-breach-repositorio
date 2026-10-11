@@ -36,19 +36,19 @@
   ],
   "screenshots": [
     {
-      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Screenshots/Screenshot_20260107_210229.jpg",
+      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/refs/heads/main/Screenshots/Screenshot_20261010_211429.jpg",
       "form_factor": "narrow",
-      "label": "Inicio del Hub"
+      "label": "Menú Principal"
     },
     {
-      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Screenshots/Screenshot_20260107_210251.jpg",
+      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/refs/heads/main/Screenshots/Screenshot_20261010_211436.jpg",
       "form_factor": "narrow",
-      "label": "Interfaz de Versiones"
+      "label": "Selección de modos"
     },
     {
-      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Screenshots/Screenshot_20260107_210245.jpg",
+      "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/refs/heads/main/Screenshots/Screenshot_20261010_211443.jpg",
       "form_factor": "narrow",
-      "label": "Panel de Control"
+      "label": "Juego"
     },
     {
       "src": "https://raw.githubusercontent.com/ElFaraon65/bio-breach-repositorio/main/Screenshots/Screenshot_20260107_210513.jpg",
