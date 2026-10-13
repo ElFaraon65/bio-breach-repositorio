@@ -4491,9 +4491,9 @@ function goToNextSection() {
         return;
     }
 
-    // Si en esta sección hizo enlaces nuevos, pasan solo los que enlazó. Si no hizo ninguno,
-    // ya no hace falta uno (ni de color nuevo): siguen todos los que ya estaban enlazados.
-    const survivorLinks = thisSectionLinks.length ? thisSectionLinks : allDoneLinks;
+    // Pasan todos los sospechosos que siguen enlazados, con cintas de esta etapa o de las anteriores:
+    // el que se quedó sin ninguna cinta sale del tablero. (Antes, si se hacía un enlace nuevo, los de cintas viejas se perdían.)
+    const survivorLinks = allDoneLinks;
     const survivorNames = new Set();
     survivorLinks.forEach(l => { survivorNames.add(l.a); survivorNames.add(l.b); });
 
@@ -4697,7 +4697,11 @@ window.addEventListener('orientationchange', () => scheduleBoardRedraw(400));
 
 // === COLORES DE LAS CINTAS (una por cada grupo que arma el jugador) ===
 const LINK_COLORS = ['#c0392b', '#2471a3', '#1e8449', '#8e44ad', '#ca8a04', '#0e7c73', '#b7472a', '#5b5b5b'];
+// Interruptor de los enlaces de varios colores: en false todas las cintas son del mismo color (el primero) y ya no hay cupo de
+// colores por consulta; basta haber interrogado al sistema una vez en la etapa. Para devolverlos, ponerlo en true.
+const MULTI_COLOR_LINKS = false;
 function pickColorForNewLink(rootName) {
+    if (!MULTI_COLOR_LINKS) return LINK_COLORS[0];
     // Si este sospechoso ya tiene un enlace de la sección ACTUAL, se mantiene el mismo color (mismo grupo).
     // Si sus únicos enlaces son de una sección anterior, es un grupo nuevo: el color cambia sí o sí.
     const existingThisSection = stringLinks.find(l => (l.a === rootName || l.b === rootName) && l.section === currentSection);
@@ -4724,6 +4728,12 @@ const GROUPS_PER_QUESTION = 1;
 
 function canStartNewLink(name, fromZoom) {
     if (isCutLocked(name)) { cutDenied(name); if (fromZoom) closeZoomModal(true); return false; }
+    if (!MULTI_COLOR_LINKS) {
+        // un solo color: la única condición es haber interrogado al sistema (sin ruido si todavía no)
+        if (questionsThisSection > 0) return true;
+        if (fromZoom) closeZoomModal(true);
+        return false;
+    }
     const linksThisSection = stringLinks.filter(l => l.section === currentSection);
     // Si esta foto ya está en un grupo de la sección, la cinta hereda ese color: no es un color nuevo
     const joinsExistingGroup = linksThisSection.some(l => l.a === name || l.b === name);
@@ -4812,7 +4822,6 @@ function cutLastTapeAt(name) {
         if (link.b === name) {
             // Caso 1: se desconecta el punto enlazado; la cinta queda pendiendo de su raíz
             link.b = null;
-            link.cutAt = ++linkCompletionCounter;   // para saber cuál fue la última que se cortó
         } else {
             // Caso 2: esta chincheta ES la raíz -> se retira la cinta entera y cae
             const idx = stringLinks.indexOf(link);
@@ -4999,15 +5008,6 @@ document.addEventListener('pointermove', (e) => {
             const name = pendingTackPress.name;
             const pid = pendingTackPress.pid;
             pendingTackPress = null;
-            // Si de esta chincheta ya cuelga una cinta suelta (un enlace que se cortó), lo que se saca es ESA misma cinta, no una nueva
-            let loose = null;
-            stringLinks.forEach(l => { if (l.a === name && !l.b && (!loose || (l.cutAt || 0) >= (loose.cutAt || 0))) loose = l; });
-            if (loose && !isCutLocked(name)) {
-                activeDangleDrag = { linkId: loose.id, pid, t: performance.now(), startX: e.clientX, startY: e.clientY, moved: true, fromHandle: false };
-                redrawAllConnections();
-                updateDangleTemp(e.clientX, e.clientY);
-                return;
-            }
             if (!canStartNewLink(name, false)) return;
             const color = pickColorForNewLink(name);
             const id = 'link_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
@@ -5149,6 +5149,9 @@ const SIZE_SCALES = [1, 1.27, 1.6];
 
 function openZoomModal(suspect) {
     // Desde la etapa II, la tarjeta de un sospechoso desenlazado (cinta cortada) ya no abre su expediente
+    // Durante la puerta de taller (inicio de la partida y cada cambio de etapa) los expedientes no se abren. El bloqueo tiene
+    // hora de fin (__doorUntil): pase lo que pase con la animación, nunca puede quedar trabado.
+    if (window.__doorUntil && performance.now() < window.__doorUntil) return;
     if (suspect && typeof isCutLocked === 'function' && isCutLocked(suspect.n)) return;   // sin sonido: simplemente no se abre
     currentZoomSuspect = suspect;
     const modal = document.getElementById('zoom-modal');
@@ -5194,42 +5197,14 @@ function openZoomModal(suspect) {
     // Información completa (muy compacta)
     if (infoEl) {
     infoEl.innerHTML = `
-        <div style="font-size: 1.1rem; line-height: 1.6; padding: 15px 20px; text-align: left;">
-            <!-- Cada fila como una tabla de 2 columnas -->
-            <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; align-items: center; margin-bottom: 8px;">
-                <span style="font-weight: bold; color: #000; text-align: right;">GÉNERO:</span>
-                <span style="color: #111; text-transform: uppercase; font-size: 1.2rem;">${suspect.g}</span>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; align-items: center; margin-bottom: 8px;">
-                <span style="font-weight: bold; color: #000; text-align: right;">ORIGEN:</span>
-                <span style="color: #111; font-size: 1.2rem;">${suspect.p}</span>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; align-items: center; margin-bottom: 8px;">
-                <span style="font-weight: bold; color: #000; text-align: right;">TEZ:</span>
-                <span style="color: #111; text-transform: uppercase; font-size: 1.2rem;">${suspect.t}</span>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; align-items: center; margin-bottom: 8px;">
-                <span style="font-weight: bold; color: #000; text-align: right;">OJOS:</span>
-                <span style="color: #111; text-transform: uppercase; font-size: 1.2rem;">${suspect.o}</span>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; align-items: center; margin-bottom: 8px;">
-                <span style="font-weight: bold; color: #000; text-align: right;">EDAD:</span>
-                <span style="color: #111; font-size: 1.2rem;">${suspect.edad} <span style="font-size: 0.9rem; color: #555;">AÑOS</span></span>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; align-items: center; margin-bottom: 8px;">
-                <span style="font-weight: bold; color: #000; text-align: right;">ALTURA:</span>
-                <span style="color: #111; font-size: 1.2rem;">${suspect.altura} <span style="font-size: 0.9rem; color: #555;">M</span></span>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; align-items: center; margin-bottom: 8px;">
-                <span style="font-weight: bold; color: #000; text-align: right;">ACCESORIO:</span>
-                <span style="color: #111; text-transform: uppercase; font-size: 1.2rem;">${suspect.accName}</span>
-            </div>
+        <div class="zi-grid">
+            <span class="zi-l">GÉNERO:</span><span class="zi-v">${suspect.g}</span>
+            <span class="zi-l">ORIGEN:</span><span class="zi-v">${suspect.p}</span>
+            <span class="zi-l">TEZ:</span><span class="zi-v">${suspect.t}</span>
+            <span class="zi-l">OJOS:</span><span class="zi-v">${suspect.o}</span>
+            <span class="zi-l">EDAD:</span><span class="zi-v">${suspect.edad} <small>AÑOS</small></span>
+            <span class="zi-l">ALTURA:</span><span class="zi-v">${suspect.altura} <small>M</small></span>
+            <span class="zi-l">ACCESORIO:</span><span class="zi-v">${suspect.accName}</span>
         </div>
     `;
 }
@@ -6217,29 +6192,91 @@ if(isHost) {
         pencilSnd.preload = 'auto';
         pencilSnd.loop = true;
         let nbPencilT = null, nbPencilFade = null;
-        function nbPencilStop() {
+        // ---- Respaldo (solo si el navegador no tuviera WebAudio): el fragmento en bucle de siempre ----
+        function nbPencilLegacyStop() {
             clearTimeout(nbPencilT); clearInterval(nbPencilFade);
             nbPencilT = null; nbPencilFade = null;
             try { pencilSnd.pause(); pencilSnd.currentTime = 0; } catch (e) {}
         }
-        function nbPencil(ms) {
-            nbPencilStop();
+        function nbPencilLegacy(ms) {
+            nbPencilLegacyStop();
             try {
-                if (volMaster <= 0.01 || volSFX <= 0.01) return;
                 const vol = Math.min(1, 0.7 * volSFX * volMaster);
                 pencilSnd.volume = vol;
                 pencilSnd.currentTime = 0;
                 const p = pencilSnd.play();
                 if (p && p.catch) p.catch(() => {});
-                // se corta justo cuando termina de escribirse la pregunta (con un fundido corto)
                 nbPencilT = setTimeout(() => {
                     let v = vol;
                     nbPencilFade = setInterval(() => {
                         v -= vol / 6;
-                        if (v <= 0.01) nbPencilStop(); else pencilSnd.volume = v;
+                        if (v <= 0.01) nbPencilLegacyStop(); else pencilSnd.volume = v;
                     }, 25);
                 }, Math.max(0, ms - 150));
             } catch (e) {}
+        }
+        // ---- Trazos: cada letra que aparece lleva su rasguño corto de lápiz, que termina justo cuando la letra aparece ----
+        let nbBuf = null, nbBufP = null, nbStrokes = [];
+        function nbPencilCtx() {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return null;
+            const c = (typeof actx !== 'undefined' && actx && actx.state !== 'closed') ? actx : (window.__bbAC || (window.__bbAC = new AC()));
+            if (c.state === 'suspended') c.resume();
+            return c;
+        }
+        function nbPencilLoad(c) {
+            if (nbBuf) return Promise.resolve(nbBuf);
+            if (!nbBufP) {
+                nbBufP = new Promise((res, rej) => {
+                    const bin = atob(pencilSnd.src.split(',')[1]), arr = new Uint8Array(bin.length);
+                    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+                    c.decodeAudioData(arr.buffer, res, rej);
+                }).then(b => (nbBuf = b)).catch(() => { nbBufP = null; return null; });
+            }
+            return nbBufP;
+        }
+        function nbPencilStop() {
+            nbPencilLegacyStop();
+            const list = nbStrokes; nbStrokes = [];
+            list.forEach(st => {
+                try {
+                    const t = st.c.currentTime;
+                    st.g.gain.cancelScheduledValues(t);
+                    st.g.gain.setValueAtTime(0.0001, t);
+                    st.src.stop(t + 0.01);
+                } catch (e) {}
+            });
+        }
+        function nbPencil(e) {
+            nbPencilStop();
+            try {
+                if (volMaster <= 0.01 || volSFX <= 0.01) return;
+                const c = nbPencilCtx();
+                if (!c) { nbPencilLegacy(e.dur); return; }
+                const vol = Math.min(1, 0.7 * volSFX * volMaster);
+                nbPencilLoad(c).then(buf => {
+                    if (!buf) { nbPencilLegacy(Math.max(0, e.dur - (performance.now() - e.t0))); return; }
+                    if (notebookEntries.indexOf(e) < 0) return;           // el caso ya terminó
+                    const base = c.currentTime, el = (performance.now() - e.t0) / 1000;
+                    e.q.split('').forEach((ch, i) => {
+                        if (/\s/.test(ch)) return;                         // en los espacios el lápiz no toca el papel
+                        const end = (i + 1) / NB_CHARS_PER_SEC - el;       // instante en que aparece esta letra
+                        const len = 0.22 + Math.random() * 0.1;
+                        if (end <= 0.04) return;
+                        const st0 = Math.max(0, end - len), dur = end - st0, when = base + st0;
+                        const att = Math.min(0.04, dur * 0.35), rel = Math.min(0.07, dur * 0.4);
+                        const src = c.createBufferSource(); src.buffer = buf;
+                        const g = c.createGain();
+                        g.gain.setValueAtTime(0.0001, when);
+                        g.gain.linearRampToValueAtTime(vol, when + att);
+                        g.gain.setValueAtTime(vol, when + dur - rel);
+                        g.gain.linearRampToValueAtTime(0.0001, when + dur);
+                        src.connect(g); g.connect(c.destination);
+                        src.start(when, Math.random() * Math.max(0, buf.duration - dur - 0.05), dur + 0.02);
+                        nbStrokes.push({ src, g, c });
+                    });
+                });
+            } catch (err) {}
         }
         window.bbPencilStop = nbPencilStop;
 
@@ -6350,7 +6387,7 @@ if(isHost) {
             const e = { q: String(q == null ? '' : q).trim(), a: String(a == null ? '' : a).trim(), t0: performance.now(), wasWriting: true };
             e.dur = e.q.length * 1000 / NB_CHARS_PER_SEC;
             notebookEntries.push(e);
-            nbPencil(e.dur);   // el lápiz suena lo que tarda en escribirse la pregunta
+            nbPencil(e);   // un trazo de lápiz por cada letra: suena lo que tarda en escribirse la pregunta
             if (nbIsOpen()) {
                 // el bloc está a la vista: se ve cómo se escribe la pregunta, dígito por dígito
                 paginateNotebook();
@@ -6997,14 +7034,14 @@ const ig1=window.initGame;window.initGame=function(){
 let OLD={sec:0,map:new Map()};
 function cap(){if(OLD.sec!==currentSection){OLD={sec:currentSection,map:new Map(stringLinks.filter(l=>l.b&&l.section<currentSection).map(l=>[l.id,l.color]))};}}
 const pc0=window.pickColorForNewLink;
-window.pickColorForNewLink=function(n){const ex=stringLinks.find(l=>(l.a===n||l.b===n)&&l.section===currentSection);if(ex)return ex.color;cap();
+window.pickColorForNewLink=function(n){if(!MULTI_COLOR_LINKS)return LINK_COLORS[0];const ex=stringLinks.find(l=>(l.a===n||l.b===n)&&l.section===currentSection);if(ex)return ex.color;cap();
  const bad=new Set(stringLinks.map(l=>l.color));if(OLD.sec===currentSection&&currentSection>1)OLD.map.forEach(c=>bad.add(c));return LINK_COLORS.find(c=>!bad.has(c))||pc0(n);};
 // ---- Pase de etapa: "Siguiente etapa" se habilita (y el botón central brilla) cuando los sospechosos que quedarían enlazados
 // son exactamente los que se relacionan con alguna pregunta hecha en ESTA etapa (los que coinciden con la respuesta de la máquina).
-// Quedan enlazados los de las cintas nuevas de la etapa; si no hay ninguna, los de todas las cintas completas (igual que al avanzar).
+// Quedan enlazados todos los que tienen alguna cinta completa, de esta etapa o de las anteriores (igual que al avanzar).
  window.bbStageGate=function(){try{
   const qs=queryHistory.filter(q=>q.section===currentSection);if(!qs.length)return false;
-  const done=stringLinks.filter(l=>l.b),mine=done.filter(l=>l.section===currentSection),src=mine.length?mine:done;
+  const src=stringLinks.filter(l=>l.b);
   const ends=new Set();src.forEach(l=>{ends.add(l.a);ends.add(l.b);});
   const linked=boardSuspects.filter(p=>ends.has(p.n));if(!linked.length)return false;
   return qs.some(q=>{const g=boardSuspects.filter(p=>q.checkFunc(p)===q.targetAnswer);return g.length===linked.length&&g.every(p=>ends.has(p.n));});
@@ -7569,19 +7606,19 @@ body.bb-locked #main-ui,body.bb-locked #main-ui *,body.bb-locked #zoom-modal,bod
 <script id="bb-v24-js">
 (function(){
  const card=document.getElementById('zoom-card'),rot=document.getElementById('zoom-rot');if(!card||!rot)return;
- let angle=0,g=null;
- const isBack=()=>Math.abs(Math.round(angle/180))%2===1;
- const face=()=>card.classList.toggle('on-back',isBack());
+ let back=false,g=null;
+ const face=()=>card.classList.toggle('on-back',back);
+ const rest=()=>back?-180:0;
  function put(deg,anim){rot.style.transition=anim?'':'none';rot.style.transform='rotateY('+deg+'deg)';}
- window.bbZoomIsBack=isBack;
+ window.bbZoomIsBack=()=>back;
  window.__zoomSwipedAt=0;
  // al abrir / cerrar el expediente la tarjeta vuelve a quedar por la foto
- window.bbZoomReset=function(){angle=0;g=null;put(0,false);void rot.offsetWidth;rot.style.transition='';face();};
- function flip(){angle-=180;put(angle,true);face();}
- // se voltea de vuelta hacia la foto y avisa al terminar
+ window.bbZoomReset=function(){back=false;g=null;put(0,false);void rot.offsetWidth;rot.style.transition='';face();};
+ function flip(){back=!back;put(rest(),true);face();}
+ // se voltea de vuelta hacia la foto (el mismo giro que con el dedo, de izquierda a derecha) y avisa al terminar
  window.bbZoomFlipFront=function(done){
-  if(!isBack()){if(done)done();return;}
-  angle=Math.ceil(angle/360)*360;put(angle,true);face();
+  if(!back){if(done)done();return;}
+  back=false;put(0,true);face();
   setTimeout(()=>{if(done)done();},520);};
  card.addEventListener('pointerdown',e=>{
   if(g||(e.pointerType==='mouse'&&e.button!==0))return;     // un solo dedo manda sobre la tarjeta
@@ -7590,7 +7627,7 @@ body.bb-locked #main-ui,body.bb-locked #main-ui *,body.bb-locked #zoom-modal,bod
   if(!g||e.pointerId!==g.pid)return;
   const dx=e.clientX-g.x,dy=e.clientY-g.y;
   if(!g.drag&&Math.abs(dx)>12&&Math.abs(dx)>Math.abs(dy)*1.2)g.drag=true;
-  if(g.drag){g.dx=dx;put(angle+Math.max(-60,Math.min(14,dx*.4)),false);}   // la tarjeta acompaña al dedo
+  if(g.drag){g.dx=dx;const pv=back?Math.max(-14,Math.min(60,dx*.4)):Math.max(-60,Math.min(14,dx*.4));put(rest()+pv,false);}   // la tarjeta acompaña al dedo
  });
  function end(e,cancel){
   if(!g||e.pointerId!==g.pid)return;
@@ -7598,8 +7635,9 @@ body.bb-locked #main-ui,body.bb-locked #main-ui *,body.bb-locked #zoom-modal,bod
   if(!d.drag)return;
   window.__zoomSwipedAt=Date.now();
   const v=Math.abs(d.dx)/Math.max(1,performance.now()-d.t);
-  // de derecha a izquierda y con rapidez (o un recorrido largo): da la vuelta; si no, vuelve a su sitio
-  if(!cancel&&d.dx<=-50&&(v>=.25||d.dx<=-card.offsetWidth*.35))flip();else put(angle,true);}
+  // foto -> información: de derecha a izquierda; información -> foto: de izquierda a derecha. Con rapidez (o un recorrido largo)
+  const dirOk=back?d.dx>=50:d.dx<=-50;
+  if(!cancel&&dirOk&&(v>=.25||Math.abs(d.dx)>=card.offsetWidth*.35))flip();else put(rest(),true);}
  document.addEventListener('pointerup',e=>end(e,false));
  document.addEventListener('pointercancel',e=>end(e,true));
 })();
@@ -7609,5 +7647,45 @@ body.bb-locked #main-ui,body.bb-locked #main-ui *,body.bb-locked #zoom-modal,bod
 #end-results .er-cell{position:relative;justify-content:center;min-height:5.4rem}
 #end-results .er-cell i{position:absolute;left:0;right:0;bottom:7px}
 </style>
+<style id="bb-v26-css">
+/* Resultados del caso: etiqueta arriba, número centrado en su tarjeta y aviso de nuevo récord abajo */
+#end-results .er-cell small{position:absolute;top:9px;left:0;right:0}
+#end-results .er-cell b{line-height:1.1}
+/* La tarjeta nunca es más alta que la pantalla (teléfonos en horizontal): el ancho se limita según el alto disponible, con la proporción de la foto */
+#zoom-card{max-width:min(420px,calc(82vh*.88))}
+/* Información del sospechoso: una sola rejilla (los valores arrancan en la misma columna) que se adapta al ancho de la tarjeta */
+#zoom-content{container-type:inline-size}
+#zoom-content .zoom-body{padding:clamp(14px,6cqw,26px) clamp(14px,7cqw,28px) clamp(14px,5cqw,22px)!important}
+#zoom-content #zoom-name{font-size:clamp(1.1rem,7.4cqw,1.6rem)!important;letter-spacing:clamp(0px,.6cqw,2px)!important;line-height:1.15;overflow-wrap:anywhere;margin-bottom:clamp(8px,3.4cqw,15px)!important;padding-bottom:clamp(6px,2.4cqw,10px)!important}
+.zi-grid{display:grid;grid-template-columns:max-content minmax(0,1fr);column-gap:clamp(8px,3.6cqw,16px);row-gap:clamp(7px,3cqw,13px);align-items:baseline;text-align:left;font-size:clamp(.8rem,4.2cqw,1.05rem)}
+.zi-l{font-weight:bold;color:#000;white-space:nowrap}
+.zi-v{color:#111;text-transform:uppercase;font-size:clamp(.9rem,5cqw,1.2rem);line-height:1.2;overflow-wrap:anywhere;min-width:0}
+.zi-v small{font-size:.75em;color:#555}
+</style>
+<script id="bb-v26-js">
+(function(){
+ // ---- Puerta de taller: mientras dura (y en el arranque de cada partida) no se abren expedientes. Siempre con hora de fin. ----
+ const psd=window.playSectionDoor;
+ if(typeof psd==='function')window.playSectionDoor=function(){window.__doorUntil=performance.now()+900*2+1700+250;return psd.apply(this,arguments);};
+ const ig=window.initGame;
+ if(typeof ig==='function')window.initGame=function(){window.__doorUntil=performance.now()+8000;return ig.apply(this,arguments);};   // hasta que arranque la puerta
+ // ---- Resultados: el número queda centrado de verdad en su tarjeta (se mide la tinta con la tipografía real del dispositivo) ----
+ function centerNums(){
+  document.querySelectorAll('#end-results .er-cell b').forEach(b=>{
+   try{
+    b.style.transform='';
+    const cs=getComputedStyle(b),fs=parseFloat(cs.fontSize),H=b.getBoundingClientRect().height;
+    const c=document.createElement('canvas').getContext('2d');c.font=cs.fontWeight+' '+fs+'px '+cs.fontFamily;
+    const m=c.measureText(b.textContent),As=m.actualBoundingBoxAscent,De=m.actualBoundingBoxDescent;
+    const FA=m.fontBoundingBoxAscent!==undefined?m.fontBoundingBoxAscent:As,FD=m.fontBoundingBoxDescent!==undefined?m.fontBoundingBoxDescent:De;
+    const baseline=(H-(FA+FD))/2+FA,inkCenter=baseline-(As-De)/2;
+    const dy=H/2-inkCenter;if(isFinite(dy))b.style.transform='translateY('+dy.toFixed(2)+'px)';
+   }catch(e){}
+  });
+ }
+ const se=window.showEndResults;
+ if(typeof se==='function')window.showEndResults=function(){const r=se.apply(this,arguments);centerNums();(document.fonts&&document.fonts.ready||Promise.resolve()).then(centerNums);return r;};
+})();
+</script>
 </body>
 </html>
