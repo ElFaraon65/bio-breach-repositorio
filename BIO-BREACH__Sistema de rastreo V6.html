@@ -2420,7 +2420,7 @@ html,body{overflow-x:hidden!important}#main-ui{overflow-x:clip}
             let musicMode = 0, targetMode = 0, modeToken = 0, endToken = 0;
             let timerId = null, nextNoteTime = 0, musicBeat = 0, beatBase = 0, currentTempo = 80, pausedAt = 0, keepEnter = false, savedKey = -1;
             let FORM = null;   // (epochOut / epochSax se declaran junto a switchEpoch, más abajo)
-            let phaseKey = -1, phaseEnter = 0, musicT0 = 0, endingNow = false, tempoNow = 0;
+            let phaseKey = -1, phaseEnter = 0, wallT0 = 0, loopOut = false, endingNow = false, tempoNow = 0;   // wallT0: hora real (ms) en que empezó la vuelta actual del tema
             // Plan de fases del Modo 3 (se calcula al empezar la partida según el tiempo elegido)
             let SURV = { on: false, T: 0, first: 1, at: [0, 0], ramp: 240 };
 
@@ -3083,25 +3083,37 @@ html,body{overflow-x:hidden!important}#main-ui{overflow-x:clip}
             // ==========================================
             // === RUN PATTERN (un beat) ===
             // ==========================================
+            // Textura de los últimos 4 compases del bucle (Modo 2): la banda va soltando instrumentos hasta quedar como suena la fase 1 (saxofón + vibráfono),
+            // así la vuelta al principio no es un corte sino la misma música aligerándose hasta resolver.
+            function thinForLoop(P, n) {
+                const drop = (...xs) => P.L.filter(x => !xs.includes(x));
+                if (n >= 4) return Object.assign({}, P, { L: drop('cello', 'pad', 'flute'), ost: 0, cel: 0, dr: 1 });
+                if (n === 3) return Object.assign({}, P, { L: drop('cello', 'pad', 'flute', 'clar'), ost: 0, cel: 0, dr: 0, kick: 0 });
+                if (n === 2) return Object.assign({}, P, { L: ['sax', 'vibes', 'bass'], ost: 0, cel: 0, dr: 0, kick: 0, bass: 'half' });
+                return Object.assign({}, P, { L: ['sax', 'vibes', 'bass'], ost: 0, cel: 0, dr: 0, kick: 0, bass: 'pedal', vg: 0.6 });
+            }
+
             function runPattern(t, b) {
                 if (endingNow) return;
                 b -= beatBase;   // posición dentro de la vuelta actual del tema (el bucle del Modo 2 vuelve a 0)
                 const mi = musicMode, M = MODES[mi], np = M.ph.length, surv = mi === 3 && SURV.on;
-                if (b === 0) { musicT0 = t; phaseKey = -1; }
-                let el = surv ? survElapsed(t) : t - musicT0;
+                const ahead = Math.max(0, t - actx.currentTime);   // cuánto falta para que suene este beat
+                if (b === 0) { wallT0 = Date.now() + ahead * 1000; phaseKey = -1; loopOut = false; }
+                // El reloj de las fases es el TIEMPO REAL del teléfono (Date.now) y no el del audio: si la pantalla se apaga o la app pasa a
+                // segundo plano, el audio se congela pero el tiempo sigue corriendo; al volver, la música está en la fase que le corresponde.
+                let el = surv ? survElapsed(t) : (Date.now() - wallT0) / 1000 + ahead;
                 if (M.endAt && el >= M.endAt) { endMusicWithHit(); return; }
 
-                // BUCLE (Modo 2): al cerrar una vuelta completa de la última fase, el tema regresa al inicio de la fase 1.
-                // La última nota queda en una dominante sin resolver, y lo que falta para resolverla es justo el principio del tema.
-                if (M.loop && b > 0 && b % (4 * M.len) === 0 && phaseKey === mi * 10 + np && el - phaseEnter >= M.len * 240 / currentTempo - 1) {
-                    switchEpoch(t, 0.3);
-                    beatBase += b; b = 0; musicT0 = t; el = 0; phaseKey = -1; FORM = null; tempoNow = 0;
+                // BUCLE (Modo 2): al cerrar la última fase la música vuelve al inicio de la fase 1 SIN corte. La última nota queda en una dominante
+                // sin resolver y lo que falta para resolverla es justo el principio del tema (técnica de los loops de los primeros Mario).
+                if (M.loop && loopOut && b > 0 && b % (4 * M.len) === 0) {
+                    beatBase += b; b = 0; wallT0 = Date.now() + ahead * 1000; el = 0; phaseKey = -1; FORM = null; tempoNow = 0; loopOut = false;
                 }
 
                 const phase = np === 1 ? 1
                     : surv ? Math.max(SURV.first, 1 + (el >= SURV.at[0] ? 1 : 0) + (el >= SURV.at[1] ? 1 : 0))
                     : 1 + M.phaseAt.filter(x => el >= x).length;
-                const P = M.ph[phase - 1];
+                const P0 = M.ph[phase - 1];
                 const changed = mi * 10 + phase !== phaseKey, jump = changed && phaseKey !== -1;   // jump = cambio de fase en pleno compás
                 if (changed) {
                     if (jump) switchEpoch(t);   // lo que sonaba de la fase anterior se apaga en 0.15 s
@@ -3109,8 +3121,13 @@ html,body{overflow-x:hidden!important}#main-ui{overflow-x:clip}
                     if (!(keepEnter && savedKey === phaseKey)) phaseEnter = el;   // al reanudar en la misma fase se conserva cuándo entró
                     keepEnter = false;
                 }
+                // ¿Esta es la vuelta que cierra el bucle? Se decide al empezar los 4 últimos compases: estando en la última fase y tras haberla
+                // sonado una forma completa, esos compases se aligeran y al terminar el tema vuelve a empezar.
+                if (M.loop && !loopOut && phase === np && b % (4 * M.len) === 4 * (M.len - 4) && el + 16 * 60 / currentTempo - phaseEnter >= M.len * 240 / currentTempo - 1) loopOut = true;
+                const barsLeft = M.len - (Math.floor(b / 4) % M.len);
+                const P = (M.loop && loopOut && barsLeft <= 4) ? thinForLoop(P0, barsLeft) : P0;
                 const rampLen = surv ? SURV.ramp : 240, rampFrom = surv ? SURV.at[1] : phaseEnter;
-                const tgt = Array.isArray(P.bpm) ? P.bpm[0] + (P.bpm[1] - P.bpm[0]) * Math.max(0, Math.min(1, (el - rampFrom) / rampLen)) : P.bpm;
+                const tgt = Array.isArray(P0.bpm) ? P0.bpm[0] + (P0.bpm[1] - P0.bpm[0]) * Math.max(0, Math.min(1, (el - rampFrom) / rampLen)) : P0.bpm;
                 tempoNow = (b === 0 || !tempoNow) ? tgt : tempoNow + Math.max(-8, Math.min(8, tgt - tempoNow));   // el tempo se desliza hacia el de la fase (máx. 8 BPM por beat)
                 currentTempo = tempoNow;
 
@@ -3194,7 +3211,7 @@ html,body{overflow-x:hidden!important}#main-ui{overflow-x:clip}
             function startMode(m) {   // arranca un modo desde cero
                 const t = actx.currentTime;
                 musicMode = m; targetMode = m; pendingStart = false;
-                musicBeat = 0; beatBase = 0; FORM = null; phaseKey = -1; tempoNow = 0; keepEnter = false;
+                musicBeat = 0; beatBase = 0; FORM = null; phaseKey = -1; tempoNow = 0; keepEnter = false; loopOut = false;
                 endingNow = false; paused = false; ended = false;
                 currentTempo = [72, 78, 80, 66][m];
                 nextNoteTime = t + 0.1;
@@ -3243,7 +3260,7 @@ html,body{overflow-x:hidden!important}#main-ui{overflow-x:clip}
                 const t = actx.currentTime;
                 if (paused) {
                     paused = false;
-                    // el reloj de fases NO se detiene en silencio: cuenta el tiempo que el jugador lleva en la partida (resultados incluidos)
+                    // el reloj de fases no se detiene en silencio: es la hora real del teléfono, cuenta todo el tiempo que el jugador lleva en la partida
                     nextNoteTime = t + 0.1;
                     phaseKey = -2; keepEnter = true;   // entra a mitad de compás como un cambio de fase (si pasó de fase mientras tanto, entra ya en la nueva)
                     setRunning(true);
@@ -7099,13 +7116,16 @@ window.consoleAlarm=function(ms){
  clearTimeout(alT);const seq=[['alRed',430],['alDark',260],['alRed',430],['alDark',260],['alSkull',560],['alDark',260]],t0=performance.now(),dur=ms||4000;let n=0;
  (function step(){if(performance.now()-t0>=dur||cState==='off'){alShow(null);return;}const f=seq[n++%seq.length];alShow(f[0]);alT=setTimeout(step,f[1]);})();
  return true;};
+window.consoleAlarmStop=function(){clearTimeout(alT);alShow(null);window.__hackUntil=0;};
 // Alerta de comando: la sirena suena SIEMPRE al recibir un ataque (se mire o no la consola); la imagen de la consola solo si está a la vista.
 // Quien lanza el comando solo ve el parpadeo. Ya no hay letrero.
-window.BB_SAB_MS={REORGANIZED:4000,DATABLIND:15000,ENCRYPTEDFILES:15000};   // lo que dura activo cada hackeo (ENCRYPTEDFILES: 15 s)
+window.BB_SAB_MS={REORGANIZED:15000,DATABLIND:15000,ENCRYPTEDFILES:15000};   // lo que dura la alarma de cada hackeo: 15 s para TODOS los comandos
 window.bbSabAlert=function(name,self){
- if(!self)window.__hackUntil=performance.now()+4000;   // pantalla tintineante: no se puede preguntar
- if(!self&&window.bbSiren)window.bbSiren((window.BB_SAB_MS&&window.BB_SAB_MS[name])||4000);
- if(!document.body.classList.contains('bb-pan'))window.consoleAlarm(4000);};
+ if(self)return;   // quien lanza el comando NO ve ni oye la alarma: es solo del hackeado
+ const ms=(window.BB_SAB_MS&&window.BB_SAB_MS[name])||15000;
+ if(window.bbSiren)window.bbSiren(ms);          // (primero la sirena: al arrancar corta cualquier alarma anterior)
+ window.__hackUntil=performance.now()+ms;       // pantalla titilante: no se puede preguntar mientras dura
+ window.consoleAlarm(ms);};                     // corre aunque se esté mirando otro objeto: al volver a la consola se ve lo que falta
 window.consoleShutdown=function(){const wasOff=(cState==='off');if(window.bbSirenStop)window.bbSirenStop();clr();paperOff();limitPending=false;clearTimeout(idleT);wrap.classList.remove('blink');if(cState==='type')qIn.blur();setS('off','off');if(!wasOff)offSound(true);return new Promise(r=>setTimeout(r,1800));};
 // Respuesta: "completado" SIN papel unos segundos -> imagen CON papel y, en ese mismo instante, la respuesta marcada
 function fmtHM(t){
@@ -7368,15 +7388,19 @@ window.bbBeep=function(){try{if(typeof volMaster!=='undefined'&&(volMaster<=.01|
   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0002,vol),t+.015);g.gain.exponentialRampToValueAtTime(.0001,t+.16);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+.18);});}catch(e){}};
 // Sirena de la alerta de comandos (sintetizada: respeta los volúmenes y no depende de archivos externos)
 window.bbSirenStop=function(){try{const n=window.__bbSirenN;if(!n)return;window.__bbSirenN=null;const t=n.a.currentTime;n.g.gain.cancelScheduledValues(t);n.g.gain.setValueAtTime(Math.max(.0002,n.g.gain.value||.0002),t);n.g.gain.exponentialRampToValueAtTime(.0001,t+.08);n.o.stop(t+.1);}catch(e){}};
+{const _s0=window.bbSirenStop;window.bbSirenStop=function(){try{_s0();}catch(e){}try{if(window.consoleAlarmStop)window.consoleAlarmStop();}catch(e){}};}
+// Sirena de la alerta de comandos: sintetizada, suave y por debajo de la música. Su nivel se ajusta con window.BB_SIREN_LEVEL (por defecto 0.09).
+// (Antes: onda de sierra a 0.26 con filtro a 2400 Hz, que se oía "al mil" aunque el volumen del teléfono estuviera bajo.)
+window.BB_SIREN_LEVEL=0.09;
 window.bbSiren=function(ms){try{
   window.bbSirenStop();
  if(typeof volMaster!=='undefined'&&(volMaster<=.01||volSFX<=.01))return;
  const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
  const a=(typeof actx!=='undefined'&&actx&&actx.state!=='closed')?actx:(window.__bbAC||(window.__bbAC=new AC()));if(a.state==='suspended')a.resume();
- const vol=Math.min(1,(typeof volSFX!=='undefined'?volSFX:1)*(typeof volMaster!=='undefined'?volMaster:1))*.26,dur=(ms||4000)/1000,t0=a.currentTime+.02,per=.9;
- const o=a.createOscillator(),f=a.createBiquadFilter(),g=a.createGain();o.type='sawtooth';f.type='lowpass';f.frequency.value=2400;
- for(let t=0;t<dur;t+=per){o.frequency.setValueAtTime(620,t0+t);o.frequency.linearRampToValueAtTime(980,t0+t+per*.5);o.frequency.linearRampToValueAtTime(620,t0+t+per);}
- g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(Math.max(.0002,vol),t0+.05);g.gain.setValueAtTime(Math.max(.0002,vol),t0+dur-.3);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+ const vol=Math.min(1,(typeof volSFX!=='undefined'?volSFX:1)*(typeof volMaster!=='undefined'?volMaster:1))*(window.BB_SIREN_LEVEL||.09),dur=(ms||15000)/1000,t0=a.currentTime+.02,per=1.2;
+ const o=a.createOscillator(),f=a.createBiquadFilter(),g=a.createGain();o.type='triangle';f.type='lowpass';f.frequency.value=1300;f.Q.value=.5;
+ for(let t=0;t<dur;t+=per){o.frequency.setValueAtTime(520,t0+t);o.frequency.linearRampToValueAtTime(760,t0+t+per*.5);o.frequency.linearRampToValueAtTime(520,t0+t+per);}
+ g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(Math.max(.0002,vol),t0+.3);g.gain.setValueAtTime(Math.max(.0002,vol),t0+Math.max(.3,dur-.5));g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
  o.connect(f);f.connect(g);g.connect(a.destination);o.start(t0);o.stop(t0+dur+.05);window.__bbSirenN={o:o,g:g,a:a};o.onended=()=>{if(window.__bbSirenN&&window.__bbSirenN.o===o)window.__bbSirenN=null;};}catch(e){}};
 // Al aceptar /POWER: letras verdes, números binarios de izquierda a derecha y de arriba abajo hasta llenar la pantalla,
 // el rectángulo parpadea 3 s al final y luego consoleCharged() muestra la consola encendida sin papel antes de "Escriba su consulta"
@@ -7619,12 +7643,19 @@ window.pickColorForNewLink=function(n){if(!MULTI_COLOR_LINKS)return LINK_COLORS[
   for(const q of qs){const g=boardSuspects.filter(p=>q.checkFunc(p)===q.targetAnswer);if(g.length===1)return g[0];}
   return null;
  }catch(e){return null;}};
+ // Se puede pasar de etapa cuando lo enlazado es exactamente la unión de los grupos de algunas preguntas de ESTA etapa (cada pregunta abre su propio color,
+ // así que enlazar el grupo de la pregunta 1 y luego el de la 2 es lo normal). Además, la oportunidad no se pierde: si en esta etapa ya estuvo en regla
+ // (el punto brilló) sigue habilitado mientras no se corte ninguna de las cintas que había; solo se vuelve a pedir "en regla" si se corta algo.
  window.bbStageGate=function(){try{
-  const qs=queryHistory.filter(q=>q.section===currentSection);if(!qs.length)return false;
-  const src=stringLinks.filter(l=>l.b);
-  const ends=new Set();src.forEach(l=>{ends.add(l.a);ends.add(l.b);});
-  const linked=boardSuspects.filter(p=>ends.has(p.n));if(!linked.length)return !!window.bbStageSolo();
-  return qs.some(q=>{const g=boardSuspects.filter(p=>q.checkFunc(p)===q.targetAnswer);return g.length===linked.length&&g.every(p=>ends.has(p.n));});
+  const qs=queryHistory.filter(q=>q.section===currentSection);if(!qs.length){window.__stageLatch=null;return false;}
+  const ends=new Set();stringLinks.filter(l=>l.b).forEach(l=>{ends.add(l.a);ends.add(l.b);});
+  const linked=boardSuspects.filter(p=>ends.has(p.n));if(!linked.length){window.__stageLatch=null;return !!window.bbStageSolo();}
+  const L=new Set(linked.map(p=>p.n));
+  const inc=qs.map(q=>boardSuspects.filter(p=>q.checkFunc(p)===q.targetAnswer).map(p=>p.n)).filter(g=>g.length&&g.every(n=>L.has(n)));   // grupos que quedaron completos
+  const uni=new Set();inc.forEach(g=>g.forEach(n=>uni.add(n)));
+  if(inc.length&&uni.size===L.size){window.__stageLatch={sec:currentSection,set:L};return true;}     // en regla (y se recuerda)
+  const lt=window.__stageLatch;
+  return !!(lt&&lt.sec===currentSection&&[...lt.set].every(n=>L.has(n)));                          // ya estuvo en regla y no se cortó nada
  }catch(e){return false;}};
  window.syncStageUI=function(){cap();const fin=currentSection>=TOTAL_SECTIONS,done=stringLinks.filter(l=>l.b),dartOk=fin&&!!window.__dartTarget,gate=window.bbStageGate?window.bbStageGate():false;
   const ok=fin?(dartOk||(done.length>0&&questionsThisSection>0)):gate,hint=fin?dartOk:gate;   // etapa 3: el brillo es solo del dardo
