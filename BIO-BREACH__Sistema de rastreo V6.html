@@ -3050,7 +3050,8 @@ html,body{overflow-x:hidden!important}#main-ui{overflow-x:clip}
 
             function scheduler() {
                 if (!running) return;
-                while (nextNoteTime < actx.currentTime + 0.1) {
+                while (nextNoteTime < actx.currentTime + 0.25) {   // margen de 250 ms: si el teléfono se atasca un instante, la música no se corta
+                    if (nextNoteTime < actx.currentTime - 0.05) nextNoteTime = actx.currentTime + 0.02;   // si ya se atrasó, no se apilan de golpe los beats vencidos
                     try { runPattern(nextNoteTime, musicBeat); } catch (e) { console.error('BBMusic:', e); }
                     nextNoteTime += 60.0 / currentTempo;
                     musicBeat++;
@@ -3110,9 +3111,13 @@ html,body{overflow-x:hidden!important}#main-ui{overflow-x:clip}
                     beatBase += b; b = 0; wallT0 = Date.now() + ahead * 1000; el = 0; phaseKey = -1; FORM = null; tempoNow = 0; loopOut = false;
                 }
 
-                const phase = np === 1 ? 1
+                let phase = np === 1 ? 1
                     : surv ? Math.max(SURV.first, 1 + (el >= SURV.at[0] ? 1 : 0) + (el >= SURV.at[1] ? 1 : 0))
                     : 1 + M.phaseAt.filter(x => el >= x).length;
+                // Un cambio de fase espera a la barra del siguiente compás: así ninguna nota se corta a media frase
+                // (antes el saxofón se apagaba en 0.15 s y volvía a entrar con otra nota a mitad del compás, y eso se oía como un corte).
+                const curP = phaseKey > 0 ? phaseKey - mi * 10 : 0;   // fase que está sonando (0 si acaba de empezar o de reanudar: ahí se entra enseguida)
+                if (curP >= 1 && curP <= np && phase !== curP && b % 4 !== 0) phase = curP;
                 const P0 = M.ph[phase - 1];
                 const changed = mi * 10 + phase !== phaseKey, jump = changed && phaseKey !== -1;   // jump = cambio de fase en pleno compás
                 if (changed) {
@@ -7643,19 +7648,25 @@ window.pickColorForNewLink=function(n){if(!MULTI_COLOR_LINKS)return LINK_COLORS[
   for(const q of qs){const g=boardSuspects.filter(p=>q.checkFunc(p)===q.targetAnswer);if(g.length===1)return g[0];}
   return null;
  }catch(e){return null;}};
- // Se puede pasar de etapa cuando lo enlazado es exactamente la unión de los grupos de algunas preguntas de ESTA etapa (cada pregunta abre su propio color,
- // así que enlazar el grupo de la pregunta 1 y luego el de la 2 es lo normal). Además, la oportunidad no se pierde: si en esta etapa ya estuvo en regla
- // (el punto brilló) sigue habilitado mientras no se corte ninguna de las cintas que había; solo se vuelve a pedir "en regla" si se corta algo.
+ // Se puede pasar de etapa cuando lo enlazado es exactamente lo que dejan las preguntas de ESTA etapa. Cada pregunta separa a los sospechosos en el grupo que
+ // comparte la respuesta del sistema y el resto; vale que lo enlazado sea: (a) lo que queda al CRUZAR las respuestas de algunas preguntas (una segunda pregunta
+ // descarta a parte del grupo de la primera y se desenlaza a los descartados), o (b) la unión de los grupos de varias preguntas (un color por pregunta).
+ // Además la oportunidad no se pierde: si en esta etapa ya estuvo en regla (el punto brilló) sigue habilitado mientras no se corte ninguna de las cintas que había.
  window.bbStageGate=function(){try{
   const qs=queryHistory.filter(q=>q.section===currentSection);if(!qs.length){window.__stageLatch=null;return false;}
   const ends=new Set();stringLinks.filter(l=>l.b).forEach(l=>{ends.add(l.a);ends.add(l.b);});
   const linked=boardSuspects.filter(p=>ends.has(p.n));if(!linked.length){window.__stageLatch=null;return !!window.bbStageSolo();}
-  const L=new Set(linked.map(p=>p.n));
-  const inc=qs.map(q=>boardSuspects.filter(p=>q.checkFunc(p)===q.targetAnswer).map(p=>p.n)).filter(g=>g.length&&g.every(n=>L.has(n)));   // grupos que quedaron completos
-  const uni=new Set();inc.forEach(g=>g.forEach(n=>uni.add(n)));
-  if(inc.length&&uni.size===L.size){window.__stageLatch={sec:currentSection,set:L};return true;}     // en regla (y se recuerda)
+  const L=new Set(linked.map(p=>p.n)),same=c=>c&&c.size>0&&c.size===L.size&&[...c].every(x=>L.has(x));
+  const gs=qs.map(q=>new Set(boardSuspects.filter(p=>q.checkFunc(p)===q.targetAnswer).map(p=>p.n)));
+  let ok=false;
+  // (a) intersección de las respuestas de algún subconjunto de preguntas
+  const n=Math.min(gs.length,12);
+  for(let m=1;m<(1<<n)&&!ok;m++){let c=null;for(let i=0;i<n;i++)if(m&(1<<i)){c=c?new Set([...c].filter(x=>gs[i].has(x))):new Set(gs[i]);if(!c.size)break;}if(same(c))ok=true;}
+  // (b) unión de los grupos que quedaron completos
+  if(!ok){const uni=new Set();let any=false;gs.forEach(g=>{if(g.size&&[...g].every(x=>L.has(x))){any=true;g.forEach(x=>uni.add(x));}});if(any&&same(uni))ok=true;}
+  if(ok){window.__stageLatch={sec:currentSection,set:L};return true;}                              // en regla (y se recuerda)
   const lt=window.__stageLatch;
-  return !!(lt&&lt.sec===currentSection&&[...lt.set].every(n=>L.has(n)));                          // ya estuvo en regla y no se cortó nada
+  return !!(lt&&lt.sec===currentSection&&[...lt.set].every(x=>L.has(x)));                          // ya estuvo en regla y no se cortó nada
  }catch(e){return false;}};
  window.syncStageUI=function(){cap();const fin=currentSection>=TOTAL_SECTIONS,done=stringLinks.filter(l=>l.b),dartOk=fin&&!!window.__dartTarget,gate=window.bbStageGate?window.bbStageGate():false;
   const ok=fin?(dartOk||(done.length>0&&questionsThisSection>0)):gate,hint=fin?dartOk:gate;   // etapa 3: el brillo es solo del dardo
