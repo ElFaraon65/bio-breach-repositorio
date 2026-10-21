@@ -176,7 +176,7 @@
     </div>
 
     <div id="game-view">
-        <iframe id="game-frame"></iframe>
+        <iframe id="game-frame" allow="fullscreen; autoplay" allowfullscreen></iframe>
     </div>
 
                         <script>
@@ -536,7 +536,24 @@
 
         // --- SISTEMA DE JUEGO & PUENTE DE COMUNICACIÓN ---
         
+        // V7: el toque en "INICIAR" es el gesto voluntario que Android exige: fuerza pantalla completa + horizontal y deja el audio desbloqueado.
+        function bbForzarHorizontal() {
+            try {
+                const d = document.documentElement;
+                const fs = d.requestFullscreen ? d.requestFullscreen({ navigationUI: 'hide' }) : Promise.resolve();
+                Promise.resolve(fs).catch(() => {}).then(() => { try { return screen.orientation.lock('landscape'); } catch (e) {} }).catch(() => {});
+            } catch (e) {}
+            try {
+                const AC = window.AudioContext || window.webkitAudioContext;
+                if (AC) { const c = new AC(); if (c.resume) c.resume(); setTimeout(() => { try { c.close(); } catch (e) {} }, 400); }
+            } catch (e) {}
+        }
+        function bbLiberarHorizontal() {
+            try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
+            try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen(); } catch (e) {}
+        }
         function lanzarMotor(id) {
+            bbForzarHorizontal();
             actualizacionesIgnoradas.add(id);
             
             // Limpieza visual inmediata
@@ -581,6 +598,7 @@
 
         // --- EL PUENTE RESTAURADO (NO BORRAR) ---
         function cerrarMotor() {
+            bbLiberarHorizontal();
             document.getElementById('game-view').style.display = "none";
             document.getElementById('game-frame').src = "about:blank"; // Mata el proceso del juego
             if (blobUrlActivo) { URL.revokeObjectURL(blobUrlActivo); blobUrlActivo = null; }
