@@ -124,6 +124,7 @@
         .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0px rgba(0,0,0,0.5); }
         .btn-play { background: var(--green); color: #fff; }
         .btn-download { background: var(--blue); color: #fff; }
+        .btn-delete { background: var(--red); color: #fff; margin-top: 5px; }
         
         .btn-update { background: transparent; border: 2px solid var(--gold); color: var(--gold); margin-top: 5px; box-shadow: none; }
         .btn-update:active { background: var(--gold); color: black; transform: none; }
@@ -262,6 +263,7 @@
         
         let actualizacionesIgnoradas = new Set(); 
         let blobUrlActivo = null; // URL del motor cargado actualmente, para poder liberarla al cerrar
+        let ultimosDatosNube = []; 
 
         window.onload = () => {
             actualizarInterfaz();
@@ -302,21 +304,25 @@
         }
 
         async function sincroServidor() {
-            const statusBar = document.getElementById('status-bar');
-            try {
-                const res = await cargarRecursoSeguro(URL_SERVIDOR + "versiones.json");
-                const nube = await res.json();
-                
-                statusBar.innerText = "SISTEMA EN LÍNEA";
-                statusBar.style.color = "var(--green)";
-                
-                renderNube(nube);
-            } catch (e) {
-                console.log("Offline");
-                statusBar.innerText = "MODO DESCONECTADO";
-                statusBar.style.color = "var(--orange)";
-            }
+    const statusBar = document.getElementById('status-bar');
+    try {
+        const res = await cargarRecursoSeguro(URL_SERVIDOR + "versiones.json");
+        const nube = await res.json();
+        ultimosDatosNube = nube; // <--- GUARDAMOS AQUÍ
+        
+        statusBar.innerText = "SISTEMA EN LÍNEA";
+        statusBar.style.color = "var(--green)";
+        
+        renderNube(nube);
+    } catch (e) {
+        console.log("Offline");
+        statusBar.innerText = "MODO DESCONECTADO";
+        statusBar.style.color = "var(--orange)";
+        if (ultimosDatosNube.length > 0) {
+            renderNube(ultimosDatosNube); // <--- RENDERIZA USANDO MEMORIA SI FALLA LA RED
         }
+    }
+}
 
         // LÓGICA SEMÁNTICA (Major y Minor activan UI, Patch es silencioso)
         function hayActualizacionImportante(vNube, vLocal) {
@@ -497,6 +503,22 @@
             
             actualizarInterfaz();
         }
+        
+        function borrarVersion(id) {
+    if (confirm("¿Estás seguro de que deseas borrar esta versión para liberar espacio?")) {
+        let locales = getVersionesLocales();
+        if (locales[id]) {
+            delete locales[id];
+            localStorage.setItem('bio_breach_v_data', JSON.stringify(locales));
+            
+            // Forzar actualización visual inmediata de ambas pestañas
+            actualizarInterfaz();
+            if (ultimosDatosNube.length > 0) {
+                renderNube(ultimosDatosNube);
+            }
+        }
+    }
+}
 
         function actualizarInterfaz() {
             const lista = document.getElementById('lista-versiones');
@@ -519,13 +541,14 @@
                     
                     // Aquí se muestra la versión actualizada (vX.X.X) gracias al parche silencioso
                     card.innerHTML = `
-                        <div class="v-name">${v.nombre}</div>
-                        <div class="v-status">
-                            <div class="dot active"></div> 
-                            Instalado (v${v.version || '?'})
-                        </div>
-                        <button class="btn btn-play" onclick="lanzarMotor('${id}')">INICIAR</button>
-                    `;
+    <div class="v-name">${v.nombre}</div>
+    <div class="v-status">
+        <div class="dot active"></div> 
+        Instalado (v${v.version || '?'})
+    </div>
+    <button class="btn btn-play" onclick="lanzarMotor('${id}')">INICIAR</button>
+    <button class="btn btn-delete" onclick="borrarVersion('${id}')">BORRAR</button>
+`;
                     lista.appendChild(card);
                 });
             } else {
