@@ -2516,7 +2516,8 @@ html,body{overflow-x:hidden!important}#main-ui{overflow-x:clip}
         function playSax(note, duration, technique = 'normal', volumeMultiplier = 1.0, when) {
             if(!running) return;
             
-            const t = when || actx.currentTime, atk = duration >= 0.6 ? 0.1 : 0.035;   // notas largas: igual que siempre; notas rápidas: ataque de lengua de 35 ms
+            const t = when || actx.currentTime, atk = duration >= 0.6 ? 0.1 : 0.035,
+                  tail = duration >= 0.6 ? Math.min(0.2, duration * 0.15) : 0;   // cola de la nota larga: sigue sonando un poco tras su final, mientras entra la siguiente   // notas largas: igual que siempre; notas rápidas: ataque de lengua de 35 ms
             volumeMultiplier *= Math.min(1, Math.pow(262 / note, 0.9));   // las notas agudas suenan más fuerte al oído: se compensan
             const carrier = actx.createOscillator(); 
             carrier.type = 'sawtooth'; 
@@ -2570,9 +2571,14 @@ html,body{overflow-x:hidden!important}#main-ui{overflow-x:clip}
             // VOLUMEN REDUCIDO para evitar saturación - CON MULTIPLICADOR
             masterGain.gain.setValueAtTime(0, t);
             if (duration >= 0.6) {   // nota larga: como siempre
+                // Se sostiene como siempre, pero la salida ya no es una caída empinada que deja la nota casi en silencio antes de la siguiente
+                // (eso se oía como un corte): arranca con una curva suave (coseno, sin "codo") y se prolonga un poco más allá de la nota,
+                // de modo que la siguiente entra mientras esta termina de apagarse, como un saxofón ligado.
                 masterGain.gain.linearRampToValueAtTime(0.3 * volumeMultiplier, t + atk); // Reducido de 0.5
-                masterGain.gain.exponentialRampToValueAtTime(0.2 * volumeMultiplier, t + duration * 0.6); // Reducido de 0.3
-                masterGain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+                masterGain.gain.exponentialRampToValueAtTime(0.22 * volumeMultiplier, t + duration * 0.6);
+                const relCurve = new Float32Array(48);
+                for (let ci = 0; ci < 48; ci++) relCurve[ci] = Math.max(0.0005, 0.22 * volumeMultiplier * 0.5 * (1 + Math.cos(Math.PI * ci / 47)));
+                masterGain.gain.setValueCurveAtTime(relCurve, t + duration * 0.6, duration * 0.4 + tail);
             } else {   // nota rápida y ligada: sostenido casi plano y salida corta (no un "pip" que se apaga), como suena un saxofón tocado rápido
                 const rel = Math.min(0.05, duration * 0.3);
                 masterGain.gain.linearRampToValueAtTime(0.28 * volumeMultiplier, t + atk);
@@ -2583,7 +2589,7 @@ html,body{overflow-x:hidden!important}#main-ui{overflow-x:clip}
             // Movimiento de filtro más suave
             dynFilter.frequency.setValueAtTime(note, t);
             dynFilter.frequency.exponentialRampToValueAtTime(Math.min(note * 3, 1400), t + Math.min(0.15, Math.max(0.05, duration * 0.4))); // Reducido de *4
-            dynFilter.frequency.linearRampToValueAtTime(note * 1.5, t + duration); // Reducido de *2
+            dynFilter.frequency.linearRampToValueAtTime(note * 1.5, t + duration + tail); // Reducido de *2
             
             carrier.connect(dynFilter); 
             breathSrc.connect(breathFilter); 
@@ -2613,10 +2619,10 @@ html,body{overflow-x:hidden!important}#main-ui{overflow-x:clip}
             modulator.start(t); 
             breathSrc.start(t); 
             vib.start(t);
-            carrier.stop(t + duration); 
-            modulator.stop(t + duration); 
-            breathSrc.stop(t + duration); 
-            vib.stop(t + duration);
+            carrier.stop(t + duration + tail); 
+            modulator.stop(t + duration + tail); 
+            breathSrc.stop(t + duration + tail); 
+            vib.stop(t + duration + tail);
         }
 
 
@@ -5058,6 +5064,9 @@ function goToNextSection() {
     const survivorNames = new Set();
     survivorLinks.forEach(l => { survivorNames.add(l.a); survivorNames.add(l.b); });
     if (soloSuspect) survivorNames.add(soloSuspect.n);
+    // Con la regla de la etapa (bbStageGate) pasan exactamente los sospechosos que coinciden con la respuesta; los que solo conservan cintas de etapas anteriores se descartan.
+    const stSet = window.__stageSet;
+    if (stSet && stSet.sec === currentSection && stSet.set && stSet.set.size) { survivorNames.clear(); stSet.set.forEach(nm => survivorNames.add(nm)); }
 
     // Se descarta cualquier cinta que quedó a medio arrastrar y cualquier enlace
     // (de esta o de una sección previa) cuyo otro extremo no sobrevivió.
@@ -6454,11 +6463,11 @@ if(isHost) {
                                 }
                                 checkFunc = p => p.cont === cont.n; validQuery = true; detectedTerm = cont.n; isAdjective = false; break; 
                             }
-                            if (hasWord(cont.adj) || hasWord(adjFem)) {
+                            if (hasWord(cont.adj) || hasWord(adjFem) || (cont.n === "AMÉRICA" && (hasWord("NORTEAMERICANO") || hasWord("NORTEAMERICANA") || hasWord("SUDAMERICANO") || hasWord("SUDAMERICANA") || hasWord("SURAMERICANO") || hasWord("SURAMERICANA")))) {
                                 if (cont.n === "AMÉRICA") {
                                     // Adjetivos compuestos
-                                    if (hasWord("NORTEAMERICANO") || hasWord("NORTEAMERICANA")) { checkFunc = p => p.cont === "AMÉRICA DEL NORTE"; validQuery = true; break; }
-                                    if (hasWord("SUDAMERICANO") || hasWord("SUDAMERICANA")) { checkFunc = p => p.cont === "AMÉRICA DEL SUR"; validQuery = true; break; }
+                                    if (hasWord("NORTEAMERICANO") || hasWord("NORTEAMERICANA")) { checkFunc = p => p.cont === "AMÉRICA DEL NORTE"; validQuery = true; detectedTerm = "NORTEAMERICANO"; isAdjective = true; break; }
+                                    if (hasWord("SUDAMERICANO") || hasWord("SUDAMERICANA") || hasWord("SURAMERICANO") || hasWord("SURAMERICANA")) { checkFunc = p => p.cont === "AMÉRICA DEL SUR"; validQuery = true; detectedTerm = "SUDAMERICANO"; isAdjective = true; break; }
                                 }
                                 checkFunc = (cont.n === "AMÉRICA") ? (p => p.cont.includes("AMÉRICA")) : (p => p.cont === cont.n);
                                 validQuery = true; detectedTerm = cont.adj; isAdjective = true; break;
@@ -7115,7 +7124,7 @@ window.bbJam=function(ms){
   if(['ask','type','scan','get','wait','done','rej'].indexOf(cState)>=0){
     if(cState==='type')qIn.blur();
     clr();paperOff();limitPending=false;setS('jam','pr2');
-    $('c-notice').textContent='';wrap.classList.add('cnotice','jam');
+    wrap.classList.add('jam');
   }
   clearTimeout(jamT);jamT=setTimeout(endJam,ms);};
 function endJam(){
@@ -7647,6 +7656,7 @@ const ig1=window.initGame;window.initGame=function(){
  if(window.__bbEnding){window.__bbEnding=false;window.bbDoneByCases();return;}
  if(isCompetitiveMode&&!sameCaseMode&&window.__bbWait){return;}
  if(isCompetitiveMode&&!sameCaseMode&&window.bbHasCase&&!window.bbHasCase()){window.bbDoneByCases();return;}
+ window.__stageLatch=null;window.__stageSet=null;   // un caso nuevo no hereda lo "en regla" del anterior
  document.body.classList.toggle('bb-mp',!!isCompetitiveMode);
  if(isCompetitiveMode&&sameCaseMode&&BB.special)seededRNGVal=(parseInt(String(BB.special).slice(1),10)||1)*7919;
  return ig1.apply(this,arguments);};
@@ -7671,23 +7681,32 @@ window.pickColorForNewLink=function(n){if(!MULTI_COLOR_LINKS)return LINK_COLORS[
  // descarta a parte del grupo de la primera y se desenlaza a los descartados), o (b) la unión de los grupos de varias preguntas (un color por pregunta).
  // Además la oportunidad no se pierde: si en esta etapa ya estuvo en regla (el punto brilló) sigue habilitado mientras no se corte ninguna de las cintas que había.
  window.bbStageGate=function(){try{
+  window.__stageSet=null;
   const qs=queryHistory.filter(q=>q.section===currentSection);if(!qs.length){window.__stageLatch=null;return false;}
   const ends=new Set();stringLinks.filter(l=>l.b).forEach(l=>{ends.add(l.a);ends.add(l.b);});
-  const linked=boardSuspects.filter(p=>ends.has(p.n));if(!linked.length){window.__stageLatch=null;return !!window.bbStageSolo();}
-  const L=new Set(linked.map(p=>p.n)),same=c=>c&&c.size>0&&c.size===L.size&&[...c].every(x=>L.has(x));
+  const cur=new Set();stringLinks.filter(l=>l.b&&l.section===currentSection).forEach(l=>{cur.add(l.a);cur.add(l.b);});   // enlazados con cintas de ESTA etapa
+  const linked=boardSuspects.filter(p=>ends.has(p.n));
+  if(!linked.length){window.__stageLatch=null;const so=window.bbStageSolo();if(so)window.__stageSet={sec:currentSection,set:new Set([so.n])};return !!so;}
+  const L=new Set(linked.map(p=>p.n)),eq=(c,S)=>!!c&&c.size>0&&c.size===S.size&&[...c].every(x=>S.has(x));
   const gs=qs.map(q=>new Set(boardSuspects.filter(p=>q.checkFunc(p)===q.targetAnswer).map(p=>p.n)));
-  let ok=false;
-  // (a) intersección de las respuestas de algún subconjunto de preguntas
-  const n=Math.min(gs.length,12);
-  for(let m=1;m<(1<<n)&&!ok;m++){let c=null;for(let i=0;i<n;i++)if(m&(1<<i)){c=c?new Set([...c].filter(x=>gs[i].has(x))):new Set(gs[i]);if(!c.size)break;}if(same(c))ok=true;}
-  // (b) unión de los grupos que quedaron completos
-  if(!ok){const uni=new Set();let any=false;gs.forEach(g=>{if(g.size&&[...g].every(x=>L.has(x))){any=true;g.forEach(x=>uni.add(x));}});if(any&&same(uni))ok=true;}
-  if(ok){window.__stageLatch={sec:currentSection,set:L};return true;}                              // en regla (y se recuerda)
+  const n=Math.min(gs.length,12),inter=[];
+  for(let m=1;m<(1<<n);m++){let c=null;for(let i=0;i<n;i++)if(m&(1<<i)){c=c?new Set([...c].filter(x=>gs[i].has(x))):new Set(gs[i]);if(!c.size)break;}if(c&&c.size)inter.push(c);}
+  // ¿lo enlazado S es exactamente lo que dejan las preguntas? (a) lo que queda al CRUZAR las respuestas de algunas preguntas, o (b) la unión de los grupos que quedaron completos
+  const match=S=>{for(const c of inter)if(eq(c,S))return c;
+   const uni=new Set();let any=false;gs.forEach(g=>{if(g.size&&[...g].every(x=>S.has(x))){any=true;g.forEach(x=>uni.add(x));}});
+   return (any&&eq(uni,S))?uni:null;};
+  let surv=null;
+  const strict=match(L);                                   // todo lo enlazado (con cintas de esta etapa o de las anteriores) es justo lo relacionado
+  if(strict)surv=L;
+  else if(cur.size){const lenient=match(cur);if(lenient)surv=lenient;}   // como en la 1.ª etapa: basta con enlazar, con cintas de ESTA etapa, a todos los relacionados; los que solo conservan cintas viejas se descartan al pasar
+  else{const one=inter.find(c=>c.size===1);if(one)surv=one;}            // una pregunta dejó a un único sospechoso y no hay cintas nuevas que lo contradigan
+  if(surv){window.__stageLatch={sec:currentSection,set:surv};window.__stageSet={sec:currentSection,set:surv};return true;}   // en regla (y se recuerda)
   const lt=window.__stageLatch;
-  return !!(lt&&lt.sec===currentSection&&[...lt.set].every(x=>L.has(x)));                          // ya estuvo en regla y no se cortó nada
+  if(lt&&lt.sec===currentSection&&[...lt.set].every(x=>L.has(x))){window.__stageSet={sec:currentSection,set:lt.set};return true;}   // ya estuvo en regla y no se cortó nada
+  return false;
  }catch(e){return false;}};
  window.syncStageUI=function(){cap();const fin=currentSection>=TOTAL_SECTIONS,done=stringLinks.filter(l=>l.b),dartOk=fin&&!!window.__dartTarget,gate=window.bbStageGate?window.bbStageGate():false;
-  const ok=fin?(dartOk||(done.length>0&&questionsThisSection>0)):gate,hint=fin?dartOk:gate;   // etapa 3: el brillo es solo del dardo
+  const ok=fin?dartOk:gate,hint=fin?dartOk:gate;   // etapa 3: "Cerrar caso" y el brillo dependen solo del dardo clavado en el culpable
   const b=$('btn-stage-next');b.textContent=fin?'CERRAR CASO':'SIGUIENTE ETAPA';b.disabled=!ok;b.classList.toggle('ready',ok);b.classList.toggle('blink',hint);$('menu-circle').classList.toggle('blink',hint);};
 setInterval(()=>{try{if(gameActive)syncStageUI();}catch(e){}},500);
 })();
@@ -8340,7 +8359,6 @@ body.bb-locked #main-ui,body.bb-locked #main-ui *,body.bb-locked #zoom-modal,bod
 /* /POWER se escribe en mayúsculas, igual que las preguntas */
 #disk-cmd{text-transform:uppercase!important}
 /* Respuesta trabada: el aviso tapa el texto de la pantalla de la fase de impresión */
-#console-wrap.jam #c-notice{display:flex;left:17.5%;top:24%;width:43.5%;height:23.5%;background:rgba(7,15,9,.98);border-radius:5%;box-shadow:0 0 1.6cqw 1.1cqw rgba(7,15,9,.98)}
 </style>
 <script id="bb-v28-js">
 (function(){
